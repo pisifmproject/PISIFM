@@ -10,8 +10,17 @@
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM"],
     "baseUrl": ".",
-    "paths": { "@/*": ["src_unused.txt/*"] },
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "types": ["vite/client"]
   },
-  "include": ["src_unused.txt/**/*", "env.d.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "env.d.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
 }

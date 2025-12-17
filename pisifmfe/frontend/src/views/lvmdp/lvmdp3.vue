@@ -895,18 +895,82 @@ function getStatusClass(status: ShiftStatus): string {
   gap: 1rem;
 }
 
+.metrics-row {
+  display: flex;
+  align-items: stretch;
+  gap: 1.5rem;
+}
+
+.metric-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-primary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+}
+
+.metric-primary.muted {
+  opacity: 0.7;
+}
+
+.value-large {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3b82f6;
+  line-height: 1;
+}
+
+.metric-primary .unit {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.metric-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metric-secondary.muted {
+  opacity: 0.7;
+}
+
+.metric-secondary .value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.metric-secondary .comparison {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.metric-divider-vertical {
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, #334155, transparent);
+  flex-shrink: 0;
+}
+
 .metric-group {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.metric-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .metric-values {

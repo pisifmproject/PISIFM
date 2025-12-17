@@ -254,30 +254,46 @@ function getStatusClass(status: ShiftStatus): string {
               </div>
 
               <div class="shift-body">
-                <div class="metric-group">
-                  <span class="metric-label">Today</span>
-                  <div class="metric-values">
-                    <span class="value-primary"
-                      >{{ s1.avgPower.toFixed(1) }} <small>kW</small></span
-                    >
-                    <span class="value-secondary"
-                      >{{ s1.avgCurrent.toFixed(1) }} A</span
-                    >
+                <div class="metrics-row">
+                  <div class="metric-column">
+                    <span class="metric-label">Today</span>
+                    <div class="metric-primary">
+                      <span class="value-large">{{
+                        s1.avgPower.toFixed(1)
+                      }}</span>
+                      <span class="unit">kW</span>
+                    </div>
+                    <div class="metric-secondary">
+                      <span class="value"
+                        >{{ s1.avgCurrent.toFixed(1) }} A</span
+                      >
+                      <span class="comparison"
+                        >({{ ((s1.avgCurrent / 2500) * 100).toFixed(1) }}% of
+                        2500 A)</span
+                      >
+                    </div>
                   </div>
-                </div>
 
-                <div class="metric-divider"></div>
+                  <div class="metric-divider-vertical"></div>
 
-                <div class="metric-group">
-                  <span class="metric-label">Yesterday</span>
-                  <div class="metric-values">
-                    <span class="value-primary muted"
-                      >{{ s1Yesterday.avgPower.toFixed(1) }}
-                      <small>kW</small></span
-                    >
-                    <span class="value-secondary muted"
-                      >{{ s1Yesterday.avgCurrent.toFixed(1) }} A</span
-                    >
+                  <div class="metric-column">
+                    <span class="metric-label">Yesterday</span>
+                    <div class="metric-primary muted">
+                      <span class="value-large">{{
+                        s1Yesterday.avgPower.toFixed(1)
+                      }}</span>
+                      <span class="unit">kW</span>
+                    </div>
+                    <div class="metric-secondary muted">
+                      <span class="value"
+                        >{{ s1Yesterday.avgCurrent.toFixed(1) }} A</span
+                      >
+                      <span class="comparison"
+                        >({{
+                          ((s1Yesterday.avgCurrent / 2500) * 100).toFixed(1)
+                        }}% of 2500 A)</span
+                      >
+                    </div>
                   </div>
                 </div>
               </div>
@@ -364,40 +380,46 @@ function getStatusClass(status: ShiftStatus): string {
               </div>
 
               <div class="shift-body">
-                <div class="metric-group">
-                  <span class="metric-label">Today</span>
-                  <div class="metric-values">
-                    <span class="value-primary"
-                      >{{ s2.avgPower.toFixed(1) }} <small>kW</small></span
-                    >
-                    <span class="value-secondary"
-                      >{{ s2.avgCurrent.toFixed(1) }} A
-                      <span class="current-percent"
-                        >({{
-                          ((s2.avgCurrent / 2500) * 100).toFixed(1)
-                        }}%)</span
+                <div class="metrics-row">
+                  <div class="metric-column">
+                    <span class="metric-label">Today</span>
+                    <div class="metric-primary">
+                      <span class="value-large">{{
+                        s2.avgPower.toFixed(1)
+                      }}</span>
+                      <span class="unit">kW</span>
+                    </div>
+                    <div class="metric-secondary">
+                      <span class="value"
+                        >{{ s2.avgCurrent.toFixed(1) }} A</span
                       >
-                    </span>
+                      <span class="comparison"
+                        >({{ ((s2.avgCurrent / 2500) * 100).toFixed(1) }}% of
+                        2500 A)</span
+                      >
+                    </div>
                   </div>
-                </div>
 
-                <div class="metric-divider"></div>
+                  <div class="metric-divider-vertical"></div>
 
-                <div class="metric-group">
-                  <span class="metric-label">Yesterday</span>
-                  <div class="metric-values">
-                    <span class="value-primary muted"
-                      >{{ s2Yesterday.avgPower.toFixed(1) }}
-                      <small>kW</small></span
-                    >
-                    <span class="value-secondary muted"
-                      >{{ s2Yesterday.avgCurrent.toFixed(1) }} A
-                      <span class="current-percent"
+                  <div class="metric-column">
+                    <span class="metric-label">Yesterday</span>
+                    <div class="metric-primary muted">
+                      <span class="value-large">{{
+                        s2Yesterday.avgPower.toFixed(1)
+                      }}</span>
+                      <span class="unit">kW</span>
+                    </div>
+                    <div class="metric-secondary muted">
+                      <span class="value"
+                        >{{ s2Yesterday.avgCurrent.toFixed(1) }} A</span
+                      >
+                      <span class="comparison"
                         >({{
                           ((s2Yesterday.avgCurrent / 2500) * 100).toFixed(1)
-                        }}%)</span
+                        }}% of 2500 A)</span
                       >
-                    </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -484,40 +506,46 @@ function getStatusClass(status: ShiftStatus): string {
               </div>
 
               <div class="shift-body">
-                <div class="metric-group">
-                  <span class="metric-label">Today</span>
-                  <div class="metric-values">
-                    <span class="value-primary"
-                      >{{ s3.avgPower.toFixed(1) }} <small>kW</small></span
-                    >
-                    <span class="value-secondary"
-                      >{{ s3.avgCurrent.toFixed(1) }} A
-                      <span class="current-percent"
-                        >({{
-                          ((s3.avgCurrent / 2500) * 100).toFixed(1)
-                        }}%)</span
+                <div class="metrics-row">
+                  <div class="metric-column">
+                    <span class="metric-label">Today</span>
+                    <div class="metric-primary">
+                      <span class="value-large">{{
+                        s3.avgPower.toFixed(1)
+                      }}</span>
+                      <span class="unit">kW</span>
+                    </div>
+                    <div class="metric-secondary">
+                      <span class="value"
+                        >{{ s3.avgCurrent.toFixed(1) }} A</span
                       >
-                    </span>
+                      <span class="comparison"
+                        >({{ ((s3.avgCurrent / 2500) * 100).toFixed(1) }}% of
+                        2500 A)</span
+                      >
+                    </div>
                   </div>
-                </div>
 
-                <div class="metric-divider"></div>
+                  <div class="metric-divider-vertical"></div>
 
-                <div class="metric-group">
-                  <span class="metric-label">Yesterday</span>
-                  <div class="metric-values">
-                    <span class="value-primary muted"
-                      >{{ s3Yesterday.avgPower.toFixed(1) }}
-                      <small>kW</small></span
-                    >
-                    <span class="value-secondary muted"
-                      >{{ s3Yesterday.avgCurrent.toFixed(1) }} A
-                      <span class="current-percent"
+                  <div class="metric-column">
+                    <span class="metric-label">Yesterday</span>
+                    <div class="metric-primary muted">
+                      <span class="value-large">{{
+                        s3Yesterday.avgPower.toFixed(1)
+                      }}</span>
+                      <span class="unit">kW</span>
+                    </div>
+                    <div class="metric-secondary muted">
+                      <span class="value"
+                        >{{ s3Yesterday.avgCurrent.toFixed(1) }} A</span
+                      >
+                      <span class="comparison"
                         >({{
                           ((s3Yesterday.avgCurrent / 2500) * 100).toFixed(1)
-                        }}%)</span
+                        }}% of 2500 A)</span
                       >
-                    </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -867,18 +895,82 @@ function getStatusClass(status: ShiftStatus): string {
   gap: 1rem;
 }
 
+.metrics-row {
+  display: flex;
+  align-items: stretch;
+  gap: 1.5rem;
+}
+
+.metric-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-primary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+}
+
+.metric-primary.muted {
+  opacity: 0.7;
+}
+
+.value-large {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3b82f6;
+  line-height: 1;
+}
+
+.metric-primary .unit {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.metric-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metric-secondary.muted {
+  opacity: 0.7;
+}
+
+.metric-secondary .value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.metric-secondary .comparison {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.metric-divider-vertical {
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, #334155, transparent);
+  flex-shrink: 0;
+}
+
 .metric-group {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.metric-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .metric-values {
