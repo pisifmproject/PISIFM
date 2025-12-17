@@ -4,7 +4,7 @@ import Gauge from "@/components/gaugeSimple.vue";
 import ReportButton from "@/components/reportButton.vue";
 import { useLvmdpLive } from "@/composables/useLvmdpLive";
 import { useShiftAverages } from "@/composables/useShiftAverage";
-import { computed } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 
 // Today's shift data
 const { s1, s2, s3 } = useShiftAverages(1);
@@ -38,6 +38,87 @@ function getLoadClass(loadRatio: number): string {
   if (percentage >= 75) return "load-high";
   if (percentage >= 50) return "load-medium";
   return "load-normal";
+}
+
+// Shift status logic
+const currentTime = ref(new Date());
+let timeInterval: number | null = null;
+
+onMounted(() => {
+  // Update current time every minute
+  timeInterval = window.setInterval(() => {
+    currentTime.value = new Date();
+  }, 60000); // Update every minute
+});
+
+onUnmounted(() => {
+  if (timeInterval) {
+    clearInterval(timeInterval);
+  }
+});
+
+type ShiftStatus = "completed" | "active" | "upcoming";
+
+function getShiftStatus(shiftNumber: 1 | 2 | 3): ShiftStatus {
+  const now = currentTime.value;
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const totalMinutes = hours * 60 + minutes;
+
+  // Shift 1: 07:01 - 14:30 (421 - 870 minutes)
+  // Shift 2: 14:31 - 22:00 (871 - 1320 minutes)
+  // Shift 3: 22:01 - 07:00 (1321+ and 0 - 420 minutes)
+
+  const shift1Start = 7 * 60 + 1; // 421
+  const shift1End = 14 * 60 + 30; // 870
+  const shift2Start = 14 * 60 + 31; // 871
+  const shift2End = 22 * 60; // 1320
+  const shift3Start = 22 * 60 + 1; // 1321
+  const shift3End = 7 * 60; // 420 (next day)
+
+  if (shiftNumber === 1) {
+    if (totalMinutes >= shift1Start && totalMinutes <= shift1End) {
+      return "active";
+    } else if (totalMinutes < shift1Start) {
+      return "upcoming";
+    } else {
+      return "completed";
+    }
+  } else if (shiftNumber === 2) {
+    if (totalMinutes >= shift2Start && totalMinutes <= shift2End) {
+      return "active";
+    } else if (totalMinutes < shift2Start) {
+      return "upcoming";
+    } else {
+      return "completed";
+    }
+  } else {
+    // Shift 3 crosses midnight
+    if (totalMinutes >= shift3Start || totalMinutes <= shift3End) {
+      return "active";
+    } else if (totalMinutes > shift3End && totalMinutes < shift1Start) {
+      return "upcoming";
+    } else {
+      return "completed";
+    }
+  }
+}
+
+const shift1Status = computed(() => getShiftStatus(1));
+const shift2Status = computed(() => getShiftStatus(2));
+const shift3Status = computed(() => getShiftStatus(3));
+
+function getStatusLabel(status: ShiftStatus): string {
+  const labels = {
+    completed: "Completed",
+    active: "Active",
+    upcoming: "Upcoming",
+  };
+  return labels[status];
+}
+
+function getStatusClass(status: ShiftStatus): string {
+  return `status-${status}`;
 }
 </script>
 
@@ -90,6 +171,9 @@ function getLoadClass(loadRatio: number): string {
                 <div class="shift-details">
                   <h3>Morning Shift</h3>
                   <span>07:01 - 14:30</span>
+                </div>
+                <div class="shift-status" :class="getStatusClass(shift1Status)">
+                  {{ getStatusLabel(shift1Status) }}
                 </div>
               </div>
 
@@ -202,6 +286,9 @@ function getLoadClass(loadRatio: number): string {
                   <h3>Afternoon Shift</h3>
                   <span>14:31 - 22:00</span>
                 </div>
+                <div class="shift-status" :class="getStatusClass(shift2Status)">
+                  {{ getStatusLabel(shift2Status) }}
+                </div>
               </div>
 
               <div class="shift-body">
@@ -312,6 +399,9 @@ function getLoadClass(loadRatio: number): string {
                 <div class="shift-details">
                   <h3>Night Shift</h3>
                   <span>22:01 - 07:00</span>
+                </div>
+                <div class="shift-status" :class="getStatusClass(shift3Status)">
+                  {{ getStatusLabel(shift3Status) }}
                 </div>
               </div>
 
@@ -668,6 +758,7 @@ function getLoadClass(loadRatio: number): string {
   align-items: center;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  position: relative;
 }
 
 .shift-badge {
@@ -684,6 +775,10 @@ function getLoadClass(loadRatio: number): string {
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
 }
 
+.shift-details {
+  flex: 1;
+}
+
 .shift-details h3 {
   margin: 0;
   font-size: 1.125rem;
@@ -695,6 +790,46 @@ function getLoadClass(loadRatio: number): string {
   font-size: 0.875rem;
   color: #94a3b8;
   font-weight: 500;
+}
+
+/* Shift Status Indicator */
+.shift-status {
+  padding: 0.375rem 0.875rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.shift-status.status-completed {
+  background-color: #334155;
+  color: #94a3b8;
+}
+
+.shift-status.status-active {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  animation: pulse-status 2s infinite;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+}
+
+.shift-status.status-upcoming {
+  background-color: #fbbf24;
+  color: #78350f;
+}
+
+@keyframes pulse-status {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
 }
 
 .shift-body {
