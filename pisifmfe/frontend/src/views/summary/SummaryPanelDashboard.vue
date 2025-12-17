@@ -20,9 +20,31 @@
             </svg>
           </div>
           <div>
-            <h1 class="page-title">Power Distribution Dashboard</h1>
+            <h1 class="page-title">Electrical Dashboard</h1>
             <p class="page-subtitle">Real-time electrical monitoring system</p>
           </div>
+          <button
+            class="help-icon-btn"
+            @click="showHelpModal = true"
+            title="Help & Information"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span class="help-text">Help</span>
+          </button>
         </div>
         <div class="header-right">
           <div class="live-badge">
@@ -47,6 +69,29 @@
         </div>
       </div>
     </div>
+
+    <!-- Connection Warning Banner -->
+    <transition name="slide-down">
+      <div v-if="showConnectionWarning" class="connection-warning">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+          />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+        <span>Data connection issue detected. Values may not be current.</span>
+        <button @click="dismissWarning" class="dismiss-btn">×</button>
+      </div>
+    </transition>
 
     <!-- Loading State -->
     <div v-if="loading && !error" class="loading-state">
@@ -102,6 +147,14 @@
               </select>
             </div>
 
+            <div class="selector-group">
+              <label>Date Type:</label>
+              <select v-model="dateType" class="report-type-select">
+                <option value="nasional">By Nasional</option>
+                <option value="indofood">By Indofood</option>
+              </select>
+            </div>
+
             <div v-if="reportType === 'day'" class="selector-group">
               <label>Select Date:</label>
               <input
@@ -120,6 +173,26 @@
                 class="month-picker"
                 :max="getCurrentMonth()"
               />
+              <div
+                v-if="reportType === 'month' && selectedMonth"
+                class="date-range-info"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                {{ displayDateRange }}
+              </div>
             </div>
 
             <button @click="downloadSelectedReport" class="download-btn">
@@ -212,6 +285,10 @@
             <div class="panel-kva-display">
               <span class="kva-number">{{ formatNumber(panel.kva) }}</span>
               <span class="kva-text">kVA</span>
+              <span class="kva-percent"
+                >({{ ((panel.kva / 5540) * 100).toFixed(1) }}% of 5540
+                kVA)</span
+              >
             </div>
           </div>
 
@@ -279,8 +356,12 @@
                   <span class="metric-label">Current</span>
                   <span class="metric-value"
                     >{{ formatNumber(panel.current) }}
-                    <span class="unit">A</span></span
-                  >
+                    <span class="unit">A</span>
+                    <span class="metric-percent"
+                      >({{ ((panel.current / 2500) * 100).toFixed(1) }}% of 2500
+                      A)</span
+                    >
+                  </span>
                 </div>
               </div>
 
@@ -324,6 +405,76 @@
         </div>
       </div>
     </div>
+
+    <HelpModal
+      :isOpen="showHelpModal"
+      @close="showHelpModal = false"
+      title="LVMDP Information"
+    >
+      <div class="help-content">
+        <div class="help-section">
+          <h3>LVMDP 1 - Main Production Area</h3>
+          <p>
+            Low Voltage Main Distribution Panel 1 supplies electrical power to
+            the main production hall, including packaging lines, conveyors, and
+            quality control stations. This panel handles the primary
+            manufacturing operations with a rated capacity of 2500A at 400V.
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h3>LVMDP 2 - Processing & Storage</h3>
+          <p>
+            LVMDP 2 distributes power to the food processing units, cold storage
+            facilities, and material handling equipment. It ensures consistent
+            power supply to temperature-critical operations and automated
+            storage systems.
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h3>LVMDP 3 - Support Services</h3>
+          <p>
+            This panel serves the facility's support infrastructure including
+            HVAC systems, lighting, office areas, and utility rooms. LVMDP 3
+            maintains environmental controls and general facility operations.
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h3>LVMDP 4 - Auxiliary Systems</h3>
+          <p>
+            LVMDP 4 powers auxiliary equipment such as water treatment, waste
+            management systems, and backup facilities. It provides electrical
+            distribution for supporting plant operations and emergency systems.
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h3>Key Metrics</h3>
+          <ul>
+            <li>
+              <strong>kVA (Apparent Power):</strong> Total power drawn including
+              reactive power
+            </li>
+            <li>
+              <strong>kW (Real Power):</strong> Actual power consumed by
+              equipment
+            </li>
+            <li>
+              <strong>Current (A):</strong> Electrical current flow per phase
+            </li>
+            <li>
+              <strong>Power Factor:</strong> Efficiency of power usage (0-1)
+            </li>
+            <li>
+              <strong>Capacity:</strong> Maximum rated capacity is 5540 kVA and
+              2500 A per panel
+            </li>
+          </ul>
+        </div>
+      </div>
+    </HelpModal>
   </div>
 </template>
 
@@ -333,6 +484,7 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import HelpModal from "@/components/HelpModal.vue";
 // PROFESSIONAL REPORTING SYSTEM - Import new API client
 import { useElectricalReport } from "@/composables/useElectricalReport";
 import type { ElectricalReportData } from "@/composables/useElectricalReport";
@@ -350,6 +502,7 @@ const {
 const reportType = ref<"day" | "month">("day");
 const selectedDate = ref(getTodayDate());
 const selectedMonth = ref(getCurrentMonth());
+const dateType = ref<"nasional" | "indofood">("nasional");
 
 // Helper to get current month in YYYY-MM format
 function getCurrentMonth(): string {
@@ -357,6 +510,28 @@ function getCurrentMonth(): string {
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   return `${year}-${month}`;
+}
+
+function getMonthDateRange(yearMonth: string, type: "nasional" | "indofood") {
+  const [year, month] = yearMonth.split("-").map(Number);
+
+  if (type === "nasional") {
+    // Calendar month: 1st to last day of month
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+    return {
+      start: firstDay.toISOString().split("T")[0],
+      end: lastDay.toISOString().split("T")[0],
+    };
+  } else {
+    // Indofood: 26th of previous month to 25th of current month
+    const startDate = new Date(year, month - 2, 26); // Previous month's 26th
+    const endDate = new Date(year, month - 1, 25); // Current month's 25th
+    return {
+      start: startDate.toISOString().split("T")[0],
+      end: endDate.toISOString().split("T")[0],
+    };
+  }
 }
 
 /**
@@ -405,6 +580,11 @@ interface SummaryData {
 const loading = ref(true);
 const error = ref("");
 const isInitialLoad = ref(true);
+const showHelpModal = ref(false);
+const showConnectionWarning = ref(false);
+const lastDataUpdateTime = ref<number>(Date.now());
+const warningDismissed = ref(false);
+
 const summaryData = ref<SummaryData>({
   totalKVA: 0,
   installedCapacity: 5540,
@@ -467,6 +647,12 @@ const fetchData = async () => {
       if (loadHistory.value.length > 100) {
         loadHistory.value.shift();
       }
+
+      // Update last data time and clear warning if data is fresh
+      lastDataUpdateTime.value = Date.now();
+      if (!warningDismissed.value) {
+        showConnectionWarning.value = false;
+      }
     } else {
       error.value = "Failed to fetch data";
     }
@@ -476,11 +662,41 @@ const fetchData = async () => {
       err.response?.data?.message ||
       err.message ||
       "Failed to connect to server";
+
+    // Show connection warning on error (if not dismissed)
+    if (!warningDismissed.value) {
+      showConnectionWarning.value = true;
+    }
   } finally {
     if (isInitialLoad.value) {
       loading.value = false;
       isInitialLoad.value = false;
     }
+  }
+};
+
+const dismissWarning = () => {
+  showConnectionWarning.value = false;
+  warningDismissed.value = true;
+
+  // Reset dismissal after 5 minutes
+  setTimeout(() => {
+    warningDismissed.value = false;
+  }, 5 * 60 * 1000);
+};
+
+// Check for stale data frequently
+const checkDataFreshness = () => {
+  const now = Date.now();
+  const timeSinceLastUpdate = now - lastDataUpdateTime.value;
+
+  // If data is older than 10 seconds and not dismissed, show warning
+  if (
+    timeSinceLastUpdate > 10000 &&
+    !warningDismissed.value &&
+    !loading.value
+  ) {
+    showConnectionWarning.value = true;
   }
 };
 
@@ -496,19 +712,62 @@ const formatNumber = (value: number): string => {
   });
 };
 
+const displayDateRange = computed(() => {
+  if (reportType.value === "month" && selectedMonth.value) {
+    const range = getMonthDateRange(selectedMonth.value, dateType.value);
+    return `Period: ${formatDateDisplay(range.start)} - ${formatDateDisplay(
+      range.end
+    )}`;
+  }
+  return "";
+});
+
+function formatDateDisplay(dateStr: string) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 const downloadSelectedReport = async () => {
   try {
     let reportData: ElectricalReportData | null = null;
+    let customDateRange = "";
 
     if (reportType.value === "day") {
       // Download daily report for selected date
       console.log("[Report] Downloading daily report for:", selectedDate.value);
       reportData = await fetchDailyReport(selectedDate.value);
+
+      // Format single date for daily report
+      const date = new Date(selectedDate.value);
+      customDateRange = date.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
     } else {
       // Download monthly report for selected month
       const [year, month] = selectedMonth.value.split("-").map(Number);
       console.log("[Report] Downloading monthly report for:", year, month);
       reportData = await fetchMonthlyReport(year, month);
+
+      // Calculate date range based on date type (Nasional/Indofood)
+      const range = getMonthDateRange(selectedMonth.value, dateType.value);
+      const startDate = new Date(range.start);
+      const endDate = new Date(range.end);
+
+      customDateRange = `${startDate.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })} - ${endDate.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })}`;
     }
 
     if (!reportData) {
@@ -517,6 +776,9 @@ const downloadSelectedReport = async () => {
       );
       return;
     }
+
+    // Override the dateRange.formatted with our custom range
+    reportData.dateRange.formatted = customDateRange;
 
     // Generate PDF using aggregated data
     generatePDFReport(reportData, reportType.value);
@@ -639,7 +901,7 @@ const generatePDFReport = async (
 
   // Title
   centerText(
-    "POWER DISTRIBUTION DASHBOARD",
+    "ELECTRICAL DASHBOARD",
     yPos,
     16,
     "helvetica",
@@ -657,10 +919,19 @@ const generatePDFReport = async (
   );
   yPos += 15;
 
-  // 2. Report Info Bar
+  // 2. Report Info Bar - Redesigned for clarity
+  const infoBarHeight = 32;
   doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 20, 2, 2, "FD");
+  doc.roundedRect(
+    margin,
+    yPos,
+    pageWidth - margin * 2,
+    infoBarHeight,
+    3,
+    3,
+    "FD"
+  );
 
   const reportDate = new Date().toLocaleDateString("id-ID", {
     day: "2-digit",
@@ -670,33 +941,50 @@ const generatePDFReport = async (
     minute: "2-digit",
   });
 
+  // Left Column
+  doc.setFontSize(9);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFont("helvetica", "bold");
+  doc.text("Report Generated:", margin + 5, yPos + 10);
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  doc.text(reportDate, margin + 5, yPos + 16);
+
+  // Period section - separate area
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Period:", margin + 5, yPos + 24);
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  doc.text(reportData.dateRange.formatted, margin + 20, yPos + 24);
+
+  // Right Column - Summary Stats
+  const rightColX = pageWidth / 2 + 15;
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Total Energy:", rightColX, yPos + 10);
+
   doc.setFontSize(10);
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.setFont("helvetica", "bold");
-  doc.text("Report Generated:", margin + 5, yPos + 8);
-  doc.text("Period:", margin + 5, yPos + 15);
-
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-  doc.text(reportDate, margin + 45, yPos + 8);
-
-  // Use report data for period text
-  doc.text(reportData.dateRange.formatted, margin + 45, yPos + 15);
-
-  // Right side of info bar (Summary Stats from aggregated data)
-  const rightColX = pageWidth / 2 + 10;
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("Total Energy:", rightColX, yPos + 8);
-  doc.text("Status:", rightColX, yPos + 15);
-
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
   doc.text(
     `${reportData.summary.totalEnergy_kWh.toFixed(2)} kWh`,
-    rightColX + 30,
-    yPos + 8
+    rightColX,
+    yPos + 18
   );
+
+  // Status with colored badge
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Status:", rightColX, yPos + 26);
 
   const utilization = reportData.summary.utilization_percent;
   const status =
@@ -708,11 +996,21 @@ const generatePDFReport = async (
       ? [245, 158, 11]
       : [22, 163, 74];
 
+  doc.setFontSize(9);
   doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
   doc.setFont("helvetica", "bold");
-  doc.text(status, rightColX + 30, yPos + 15);
 
-  yPos += 30;
+  // Draw status badge background
+  const statusWidth = doc.getTextWidth(status);
+  doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
+  doc.setDrawColor(statusColor[0], statusColor[1], statusColor[2]);
+  doc.roundedRect(rightColX + 18, yPos + 22, statusWidth + 8, 6, 2, 2, "F");
+
+  // Draw status text in white
+  doc.setTextColor(255, 255, 255);
+  doc.text(status, rightColX + 22, yPos + 26);
+
+  yPos += infoBarHeight + 12;
 
   // 3. Key Metrics Cards (using aggregated data)
   const cardWidth = (pageWidth - margin * 2 - 10) / 3;
@@ -874,14 +1172,14 @@ const generatePDFReport = async (
       { align: "right" }
     );
     doc.text(
-      "Smart Monitoring Plant - Power Distribution System",
+      "Smart Monitoring Plant - Electrical System",
       margin,
       pageHeight - 10
     );
   }
 
   doc.save(
-    `Power_Distribution_Report_${type}_${new Date()
+    `Electrical_Dashboard_Report_${type}_${new Date()
       .toISOString()
       .slice(0, 10)}.pdf`
   );
@@ -891,6 +1189,9 @@ onMounted(() => {
   fetchData();
   // Refresh every 10 seconds instead of 3 to reduce "flashing" effect
   refreshInterval = window.setInterval(fetchData, 10000);
+
+  // Check data freshness every 5 seconds for quick detection
+  const freshnessInterval = window.setInterval(checkDataFreshness, 5000);
 });
 
 onUnmounted(() => {
@@ -1023,6 +1324,78 @@ onUnmounted(() => {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
   border: 1px solid #334155;
   color: #e2e8f0;
+}
+
+/* Connection Warning */
+.connection-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.15) 0%,
+    rgba(217, 119, 6, 0.15) 100%
+  );
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 10px;
+  padding: 0.875rem 1.25rem;
+  color: #fbbf24;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+}
+
+.connection-warning svg {
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.4));
+}
+
+.connection-warning span {
+  flex: 1;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.connection-warning .dismiss-btn {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.connection-warning .dismiss-btn:hover {
+  background: rgba(245, 158, 11, 0.3);
+  border-color: #f59e0b;
+  transform: scale(1.1);
+}
+
+/* Slide Down Animation */
+.slide-down-enter-active {
+  animation: slideDown 0.3s ease-out;
+}
+
+.slide-down-leave-active {
+  animation: slideDown 0.3s ease-out reverse;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .spinner {
@@ -1184,6 +1557,23 @@ onUnmounted(() => {
 .download-btn svg {
   width: 18px;
   height: 18px;
+}
+
+.date-range-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  color: #60a5fa;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.date-range-info svg {
+  flex-shrink: 0;
 }
 
 .report-buttons {
@@ -1498,6 +1888,14 @@ onUnmounted(() => {
   margin-left: 0.25rem;
 }
 
+.kva-percent {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
 .panel-card-body {
   padding: 1.5rem;
 }
@@ -1584,6 +1982,13 @@ onUnmounted(() => {
   margin-left: 0.25rem;
 }
 
+.metric-percent {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-left: 0.375rem;
+}
+
 .panel-card-footer {
   display: flex;
   justify-content: space-between;
@@ -1602,6 +2007,102 @@ onUnmounted(() => {
 
 .panel-card:hover .panel-card-footer svg {
   transform: translateX(4px);
+}
+
+.help-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.2) 0%,
+    rgba(37, 99, 235, 0.2) 100%
+  );
+  border: 2px solid #3b82f6;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  color: #60a5fa;
+  transition: all 0.3s ease;
+  margin-left: 1rem;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25),
+    0 0 20px rgba(59, 130, 246, 0.15);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.help-icon-btn svg {
+  flex-shrink: 0;
+}
+
+.help-text {
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.help-icon-btn:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.3) 0%,
+    rgba(37, 99, 235, 0.3) 100%
+  );
+  border-color: #60a5fa;
+  color: #93c5fd;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35),
+    0 0 30px rgba(59, 130, 246, 0.2);
+}
+
+.help-icon-btn:active {
+  transform: translateY(0);
+}
+
+.help-content {
+  color: #e2e8f0;
+}
+
+.help-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #0f172a;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+
+.help-section:last-child {
+  margin-bottom: 0;
+}
+
+.help-section h3 {
+  color: #3b82f6;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.help-section p {
+  color: #cbd5e1;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.help-section ul {
+  margin: 0.75rem 0 0 0;
+  padding-left: 1.5rem;
+  color: #cbd5e1;
+}
+
+.help-section li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.help-section strong {
+  color: #f1f5f9;
+  font-weight: 600;
 }
 
 /* Responsive */

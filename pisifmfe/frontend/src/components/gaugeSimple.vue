@@ -12,6 +12,7 @@ interface Props {
   min: number;
   max: number;
   unit: string;
+  subtitle?: string; // Optional subtitle for capacity info
 }
 const props = defineProps<Props>();
 
@@ -125,6 +126,7 @@ watch(() => [props.value, props.min, props.max], setOption);
   <div class="gauge-e">
     <div ref="el" class="chart"></div>
     <div class="title">{{ title }}</div>
+    <div v-if="subtitle" class="subtitle">{{ subtitle }}</div>
   </div>
 </template>
 
@@ -148,6 +150,14 @@ watch(() => [props.value, props.min, props.max], setOption);
   color: #e2e8f0;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+  text-align: center;
+}
+
+.subtitle {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #94a3b8;
   text-align: center;
 }
 

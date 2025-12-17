@@ -326,10 +326,10 @@ const mainMenus = computed(() => [
         icon: Zap,
         summaryRoute: "summary", // Add summary route
         children: [
-          { id: "lvmdp1", name: "Panel 1", routeName: "lvmdp1" },
-          { id: "lvmdp2", name: "Panel 2", routeName: "lvmdp2" },
-          { id: "lvmdp3", name: "Panel 3", routeName: "lvmdp3" },
-          { id: "lvmdp4", name: "Panel 4", routeName: "lvmdp4" },
+          { id: "lvmdp1", name: "LVMDP 1", routeName: "lvmdp1" },
+          { id: "lvmdp2", name: "LVMDP 2", routeName: "lvmdp2" },
+          { id: "lvmdp3", name: "LVMDP 3", routeName: "lvmdp3" },
+          { id: "lvmdp4", name: "LVMDP 4", routeName: "lvmdp4" },
         ],
       },
     ],

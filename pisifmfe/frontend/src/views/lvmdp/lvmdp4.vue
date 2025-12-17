@@ -20,7 +20,8 @@ const {
 } = useShiftAverages(4, yesterdayStr);
 
 // Live data with kVA and kVAR
-const { isConnected, power, apparentPower, cosPhi, voltage } = useLvmdpLive(4);
+const { isConnected, power, apparentPower, cosPhi, voltage, avgCurrent } =
+  useLvmdpLive(4);
 
 // Calculate kVAR from kVA and kW: kVAR = sqrt(kVA² - kW²)
 const reactiveCalc = computed(() => {
@@ -88,12 +89,13 @@ function getShiftStatus(shiftNumber: 1 | 2 | 3): ShiftStatus {
       return "completed";
     }
   } else {
+    // Shift 3 crosses midnight (22:01 - 07:00)
     if (totalMinutes >= shift3Start || totalMinutes <= shift3End) {
       return "active";
-    } else if (totalMinutes > shift3End && totalMinutes < shift1Start) {
+    } else if (totalMinutes > shift3End && totalMinutes < shift3Start) {
       return "upcoming";
     } else {
-      return "completed";
+      return "upcoming"; // This shouldn't happen, but default to upcoming
     }
   }
 }
@@ -146,13 +148,93 @@ function getStatusClass(status: ShiftStatus): string {
 
       <!-- Main Content -->
       <div class="content-wrapper">
+        <!-- Real-Time Metrics Section -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <div class="section-title-wrapper">
+              <h2 class="section-title">Real-Time Monitoring</h2>
+              <p class="section-subtitle">Live electrical parameters</p>
+            </div>
+          </div>
+
+          <div class="gauges-grid">
+            <!-- Current -->
+            <div class="gauge-card">
+              <Gauge
+                title="Current"
+                :value="avgCurrent ?? 0"
+                :min="0"
+                :max="2500"
+                unit="A"
+                subtitle="of 2500 A"
+              />
+            </div>
+
+            <!-- Active Power (kW) -->
+            <div class="gauge-card">
+              <Gauge
+                title="Active Power"
+                :value="power ?? 0"
+                :min="0"
+                :max="2000"
+                unit="kW"
+              />
+            </div>
+
+            <!-- Voltage Average -->
+            <div class="gauge-card">
+              <Gauge
+                title="Voltage"
+                :value="voltage ?? 0"
+                :min="0"
+                :max="500"
+                unit="V"
+              />
+            </div>
+
+            <!-- Apparent Power (kVA) -->
+            <div class="gauge-card">
+              <Gauge
+                title="Apparent Power"
+                :value="apparentPower ?? 0"
+                :min="0"
+                :max="5440"
+                unit="kVA"
+                subtitle="of 5440 kVA"
+              />
+            </div>
+
+            <!-- Reactive Power (kVAR) -->
+            <div class="gauge-card">
+              <Gauge
+                title="Reactive Power"
+                :value="reactiveCalc"
+                :min="0"
+                :max="2000"
+                unit="kVAR"
+              />
+            </div>
+
+            <!-- Power Factor -->
+            <div class="gauge-card">
+              <Gauge
+                title="Power Factor"
+                :value="cosPhi ?? 0"
+                :min="0"
+                :max="1"
+                unit=""
+              />
+            </div>
+          </div>
+        </section>
+
         <!-- Shift Performance Section -->
         <section class="dashboard-section">
           <div class="section-header">
             <div class="section-title-wrapper">
               <h2 class="section-title">Shift Performance</h2>
               <p class="section-subtitle">
-                Daily energy consumption comparison
+                Daily electrical consumption comparison
               </p>
             </div>
           </div>
@@ -238,10 +320,6 @@ function getStatusClass(status: ShiftStatus): string {
                       >{{ s1.maxCurrent.toFixed(1) }} A</span
                     >
                   </div>
-                  <div class="current-stat">
-                    <span class="stat-label">Capacity</span>
-                    <span class="stat-value">2500 A</span>
-                  </div>
                 </div>
               </div>
 
@@ -293,8 +371,13 @@ function getStatusClass(status: ShiftStatus): string {
                       >{{ s2.avgPower.toFixed(1) }} <small>kW</small></span
                     >
                     <span class="value-secondary"
-                      >{{ s2.avgCurrent.toFixed(1) }} A</span
-                    >
+                      >{{ s2.avgCurrent.toFixed(1) }} A
+                      <span class="current-percent"
+                        >({{
+                          ((s2.avgCurrent / 2500) * 100).toFixed(1)
+                        }}%)</span
+                      >
+                    </span>
                   </div>
                 </div>
 
@@ -308,8 +391,13 @@ function getStatusClass(status: ShiftStatus): string {
                       <small>kW</small></span
                     >
                     <span class="value-secondary muted"
-                      >{{ s2Yesterday.avgCurrent.toFixed(1) }} A</span
-                    >
+                      >{{ s2Yesterday.avgCurrent.toFixed(1) }} A
+                      <span class="current-percent"
+                        >({{
+                          ((s2Yesterday.avgCurrent / 2500) * 100).toFixed(1)
+                        }}%)</span
+                      >
+                    </span>
                   </div>
                 </div>
               </div>
@@ -351,10 +439,6 @@ function getStatusClass(status: ShiftStatus): string {
                     <span class="stat-value"
                       >{{ s2.maxCurrent.toFixed(1) }} A</span
                     >
-                  </div>
-                  <div class="current-stat">
-                    <span class="stat-label">Capacity</span>
-                    <span class="stat-value">2500 A</span>
                   </div>
                 </div>
               </div>
@@ -407,8 +491,13 @@ function getStatusClass(status: ShiftStatus): string {
                       >{{ s3.avgPower.toFixed(1) }} <small>kW</small></span
                     >
                     <span class="value-secondary"
-                      >{{ s3.avgCurrent.toFixed(1) }} A</span
-                    >
+                      >{{ s3.avgCurrent.toFixed(1) }} A
+                      <span class="current-percent"
+                        >({{
+                          ((s3.avgCurrent / 2500) * 100).toFixed(1)
+                        }}%)</span
+                      >
+                    </span>
                   </div>
                 </div>
 
@@ -422,8 +511,13 @@ function getStatusClass(status: ShiftStatus): string {
                       <small>kW</small></span
                     >
                     <span class="value-secondary muted"
-                      >{{ s3Yesterday.avgCurrent.toFixed(1) }} A</span
-                    >
+                      >{{ s3Yesterday.avgCurrent.toFixed(1) }} A
+                      <span class="current-percent"
+                        >({{
+                          ((s3Yesterday.avgCurrent / 2500) * 100).toFixed(1)
+                        }}%)</span
+                      >
+                    </span>
                   </div>
                 </div>
               </div>
@@ -466,10 +560,6 @@ function getStatusClass(status: ShiftStatus): string {
                       >{{ s3.maxCurrent.toFixed(1) }} A</span
                     >
                   </div>
-                  <div class="current-stat">
-                    <span class="stat-label">Capacity</span>
-                    <span class="stat-value">2500 A</span>
-                  </div>
                 </div>
               </div>
 
@@ -498,73 +588,6 @@ function getStatusClass(status: ShiftStatus): string {
                   >
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Real-Time Metrics Section -->
-        <section class="dashboard-section">
-          <div class="section-header">
-            <div class="section-title-wrapper">
-              <h2 class="section-title">Real-Time Monitoring</h2>
-              <p class="section-subtitle">Live electrical parameters</p>
-            </div>
-          </div>
-
-          <div class="gauges-grid">
-            <!-- Active Power (kW) -->
-            <div class="gauge-card">
-              <Gauge
-                title="Active Power"
-                :value="power ?? 0"
-                :min="0"
-                :max="2000"
-                unit="kW"
-              />
-            </div>
-
-            <!-- Voltage Average -->
-            <div class="gauge-card">
-              <Gauge
-                title="Voltage"
-                :value="voltage ?? 0"
-                :min="0"
-                :max="500"
-                unit="V"
-              />
-            </div>
-
-            <!-- Apparent Power (kVA) -->
-            <div class="gauge-card">
-              <Gauge
-                title="Apparent Power"
-                :value="apparentPower ?? 0"
-                :min="0"
-                :max="2000"
-                unit="kVA"
-              />
-            </div>
-
-            <!-- Reactive Power (kVAR) -->
-            <div class="gauge-card">
-              <Gauge
-                title="Reactive Power"
-                :value="reactiveCalc"
-                :min="0"
-                :max="2000"
-                unit="kVAR"
-              />
-            </div>
-
-            <!-- Power Factor -->
-            <div class="gauge-card">
-              <Gauge
-                title="Power Factor"
-                :value="cosPhi ?? 0"
-                :min="0"
-                :max="1"
-                unit=""
-              />
             </div>
           </div>
         </section>
@@ -728,8 +751,20 @@ function getStatusClass(status: ShiftStatus): string {
 /* Shift Cards */
 .shift-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: 1.5rem;
+}
+
+@media (min-width: 1400px) {
+  .shift-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1399px) {
+  .shift-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
 }
 
 .shift-card {
@@ -872,6 +907,13 @@ function getStatusClass(status: ShiftStatus): string {
   font-weight: 500;
 }
 
+.current-percent {
+  font-size: 0.7rem;
+  color: #475569;
+  font-weight: 500;
+  margin-left: 0.375rem;
+}
+
 .value-primary.muted,
 .value-secondary.muted {
   opacity: 0.7;
@@ -916,8 +958,21 @@ function getStatusClass(status: ShiftStatus): string {
 /* Gauges Grid */
 .gauges-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 1200px) {
+  .gauges-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .gauges-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .gauge-card {
@@ -1059,15 +1114,18 @@ function getStatusClass(status: ShiftStatus): string {
 }
 
 .current-details {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  display: flex;
+  justify-content: space-around;
+  gap: 16px;
+  padding: 0.5rem 0;
 }
 
 .current-stat {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
 }
 
 .stat-label {
@@ -1079,8 +1137,8 @@ function getStatusClass(status: ShiftStatus): string {
 }
 
 .stat-value {
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: #e2e8f0;
 }
 </style>

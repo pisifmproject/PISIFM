@@ -29,6 +29,9 @@ const selectedDate = ref<string>(new Date().toISOString().split("T")[0]);
 const minDate = ref<string>("2024-01-01");
 const maxDate = computed(() => new Date().toISOString().split("T")[0]);
 
+// Date type selector (Nasional / Indofood)
+const dateType = ref<"nasional" | "indofood">("nasional");
+
 const dateInput = ref<HTMLInputElement | null>(null);
 function openDatePicker() {
   const el = dateInput.value as HTMLInputElement & { showPicker?: () => void };
@@ -543,6 +546,15 @@ onUnmounted(() => {
               </span>
             </div>
 
+            <!-- DATE TYPE SELECTOR -->
+            <div class="date-type-selector">
+              <label class="date-type-label">Date Type:</label>
+              <select v-model="dateType" class="date-type-dropdown">
+                <option value="nasional">By Nasional</option>
+                <option value="indofood">By Indofood</option>
+              </select>
+            </div>
+
             <!-- Download Dropdown (click toggle) -->
             <div class="download-menu" @click.stop>
               <button
@@ -813,6 +825,47 @@ onUnmounted(() => {
   font-size: 0.9rem;
   opacity: 0.9;
   font-weight: 500;
+}
+
+/* Date Type Selector */
+.date-type-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.date-type-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+}
+
+.date-type-dropdown {
+  padding: 8px 14px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 2px solid rgba(59, 130, 246, 0.4);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.date-type-dropdown:hover {
+  border-color: #3b82f6;
+  background: rgba(30, 41, 59, 1);
+}
+
+.date-type-dropdown:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.date-type-dropdown option {
+  background: #1e293b;
+  color: #e2e8f0;
 }
 
 /* Download Menu */
