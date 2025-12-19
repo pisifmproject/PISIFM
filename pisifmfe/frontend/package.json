@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "vue-tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -13,6 +13,7 @@
     "echarts": "^6.0.0",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
+    "lucide-vue-next": "^0.562.0",
     "socket.io-client": "^4.8.1",
     "vue": "^3.5.22",
     "vue-echarts": "^8.0.1",
