@@ -188,7 +188,7 @@ router.get("/hourly/:date", async (req, res) => {
     }
 });
 /**
- * GET /api/lvmdp1/daily-report/:date
+ * GET /api/lvmdp3/daily-report/:date
  * :date = 'YYYY-MM-DD'
  * Ambil daily report untuk satu hari
  */
@@ -224,7 +224,7 @@ router.get("/:date", async (req, res) => {
     }
 });
 /**
- * POST /api/lvmdp1/daily-report/generate?date=YYYY-MM-DD
+ * POST /api/lvmdp3/daily-report/generate?date=YYYY-MM-DD
  * Generate & simpan daily report untuk satu hari
  * Kalau ?date gak diisi → default hari ini
  */

@@ -62,13 +62,6 @@ export const saveShiftReport = async (
   const shifts = await getShiftAveragesLVMDP1(dateStr);
   const shiftData = shifts[`shift${shiftNumber}` as keyof typeof shifts];
 
-  // Debug log
-  console.log(`[LVMDP1] Shift ${shiftNumber} data:`, {
-    totalKwh: shiftData.totalKwh,
-    avgKwh: shiftData.avgKwh,
-    count: shiftData.count,
-  });
-
   // Check if report exists
   const reportDate = makeUtcDateFromYmd(dateStr);
   const existing = await getDailyReportByDate(reportDate);

@@ -145,9 +145,7 @@ router.get("/hourly/:date", async (req, res) => {
     const { date } = req.params; // 'YYYY-MM-DD'
 
     // Auto-generate shift report untuk tanggal ini kalau belum ada
-    const { getDailyReportByDate } = await import(
-      "./lvmdp_3.dailyReport.repository"
-    );
+    const { getDailyReportByDate } = await import("./lvmdp_3.dailyReport.repository");
     const existing = await getDailyReportByDate(new Date(date));
     if (!existing || existing.length === 0) {
       try {
@@ -175,7 +173,7 @@ router.get("/hourly/:date", async (req, res) => {
 });
 
 /**
- * GET /api/lvmdp1/daily-report/:date
+ * GET /api/lvmdp3/daily-report/:date
  * :date = 'YYYY-MM-DD'
  * Ambil daily report untuk satu hari
  */
@@ -215,7 +213,7 @@ router.get("/:date", async (req, res) => {
 });
 
 /**
- * POST /api/lvmdp1/daily-report/generate?date=YYYY-MM-DD
+ * POST /api/lvmdp3/daily-report/generate?date=YYYY-MM-DD
  * Generate & simpan daily report untuk satu hari
  * Kalau ?date gak diisi → default hari ini
  */

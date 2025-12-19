@@ -49,12 +49,6 @@ const saveShiftReport = async (dateStr, shiftNumber) => {
     // Get shift data
     const shifts = await (0, lvmdp_1_services_1.getShiftAveragesLVMDP1)(dateStr);
     const shiftData = shifts[`shift${shiftNumber}`];
-    // Debug log
-    console.log(`[LVMDP1] Shift ${shiftNumber} data:`, {
-        totalKwh: shiftData.totalKwh,
-        avgKwh: shiftData.avgKwh,
-        count: shiftData.count,
-    });
     // Check if report exists
     const reportDate = makeUtcDateFromYmd(dateStr);
     const existing = await (0, lvmdp_1_dailyReport_repository_1.getDailyReportByDate)(reportDate);

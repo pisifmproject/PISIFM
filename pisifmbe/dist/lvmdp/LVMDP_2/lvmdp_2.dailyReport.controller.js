@@ -80,98 +80,47 @@ function formatLocalYMD(d) {
  */
 router.get("/all", async (req, res) => {
     try {
-        let reports = await (0, lvmdp_2_dailyReport_services_1.fetchAllDailyReports)();
-        // Auto-fill today's current shift if not exist or incomplete
-        const { getCurrentShift } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.dailyReport.services")));
-        const { shift: currentShift, date: todayStr } = getCurrentShift();
-        // Check if today's report exists
-        const todayReport = reports.find((r) => {
-            const rDate = formatLocalYMD(r.reportDate);
-            return rDate === todayStr;
-        });
-        // If today's report doesn't exist or current shift is empty, generate it
-        const needsCurrentShift = !todayReport ||
-            (currentShift === 1 &&
-                (!todayReport.shift1Count || todayReport.shift1Count === 0)) ||
-            (currentShift === 2 &&
-                (!todayReport.shift2Count || todayReport.shift2Count === 0)) ||
-            (currentShift === 3 &&
-                (!todayReport.shift3Count || todayReport.shift3Count === 0));
-        if (needsCurrentShift) {
-            try {
-                const { saveCurrentShiftReport } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.dailyReport.services")));
-                await saveCurrentShiftReport();
-                // Refresh reports after save
-                reports = await (0, lvmdp_2_dailyReport_services_1.fetchAllDailyReports)();
-            }
-            catch (err) {
-                console.error("[LVMDP2] Auto-fill current shift failed:", err);
-            }
+        // Always calculate from raw data to include cosPhi
+        const { getShiftAveragesLVMDP2 } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.services")));
+        // Generate for last 30 days
+        const dates = [];
+        for (let i = 0; i < 30; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = new Intl.DateTimeFormat("sv-SE").format(d);
+            dates.push(dateStr);
         }
-        // Jika belum ada data sama sekali, generate on-the-fly dari raw data
-        if (reports.length === 0) {
+        // Paralelisasi dengan Promise.all untuk speed up
+        const computedReports = await Promise.all(dates.map(async (dateStr) => {
             try {
-                console.log(`[AUTO-GEN] No reports found, computing on-the-fly for recent dates`);
-                const { getShiftAveragesLVMDP2 } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.services")));
-                // Generate for last 30 days
-                const dates = [];
-                for (let i = 0; i < 30; i++) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    const dateStr = new Intl.DateTimeFormat("sv-SE").format(d);
-                    dates.push(dateStr);
-                }
-                // Paralelisasi dengan Promise.all untuk speed up
-                const computedReports = await Promise.all(dates.map(async (dateStr) => {
-                    try {
-                        const shifts = await getShiftAveragesLVMDP2(dateStr);
-                        return {
-                            reportDate: dateStr,
-                            date: dateStr,
-                            shift1TotalKwh: shifts.shift1?.totalKwh || 0,
-                            shift1AvgKwh: shifts.shift1?.avgKwh || 0,
-                            shift1AvgCurrent: shifts.shift1?.avgCurrent || 0,
-                            shift1CosPhi: shifts.shift1?.avgCosPhi || 0,
-                            shift2TotalKwh: shifts.shift2?.totalKwh || 0,
-                            shift2AvgKwh: shifts.shift2?.avgKwh || 0,
-                            shift2AvgCurrent: shifts.shift2?.avgCurrent || 0,
-                            shift2CosPhi: shifts.shift2?.avgCosPhi || 0,
-                            shift3TotalKwh: shifts.shift3?.totalKwh || 0,
-                            shift3AvgKwh: shifts.shift3?.avgKwh || 0,
-                            shift3AvgCurrent: shifts.shift3?.avgCurrent || 0,
-                            shift3CosPhi: shifts.shift3?.avgCosPhi || 0,
-                        };
-                    }
-                    catch (e) {
-                        return null;
-                    }
-                }));
-                const validReports = computedReports.filter((r) => r !== null);
-                return res.json({
-                    success: true,
-                    data: computedReports,
-                });
+                const shifts = await getShiftAveragesLVMDP2(dateStr);
+                return {
+                    reportDate: dateStr,
+                    date: dateStr,
+                    shift1TotalKwh: shifts.shift1?.totalKwh || 0,
+                    shift1AvgKwh: shifts.shift1?.avgKwh || 0,
+                    shift1AvgCurrent: shifts.shift1?.avgCurrent || 0,
+                    shift1CosPhi: shifts.shift1?.avgCosPhi || 0,
+                    shift2TotalKwh: shifts.shift2?.totalKwh || 0,
+                    shift2AvgKwh: shifts.shift2?.avgKwh || 0,
+                    shift2AvgCurrent: shifts.shift2?.avgCurrent || 0,
+                    shift2CosPhi: shifts.shift2?.avgCosPhi || 0,
+                    shift3TotalKwh: shifts.shift3?.totalKwh || 0,
+                    shift3AvgKwh: shifts.shift3?.avgKwh || 0,
+                    shift3AvgCurrent: shifts.shift3?.avgCurrent || 0,
+                    shift3CosPhi: shifts.shift3?.avgCosPhi || 0,
+                };
             }
-            catch (genErr) {
-                // lanjut dengan empty array
+            catch (e) {
+                // Return null for error dates, filter later
+                return null;
             }
-        }
-        const data = reports.map((r) => ({
-            ...r,
-            // Use stored totalKwh if available, otherwise calculate from avgKwh * count
-            shift1TotalKwh: r.shift1TotalKwh ?? (r.shift1AvgKwh || 0) * (r.shift1Count || 1),
-            shift1CosPhi: r.shift1AvgCosPhi || 0,
-            shift2TotalKwh: r.shift2TotalKwh ?? (r.shift2AvgKwh || 0) * (r.shift2Count || 1),
-            shift2CosPhi: r.shift2AvgCosPhi || 0,
-            shift3TotalKwh: r.shift3TotalKwh ?? (r.shift3AvgKwh || 0) * (r.shift3Count || 1),
-            shift3CosPhi: r.shift3AvgCosPhi || 0,
-            // field tambahan khusus buat frontend
-            date: formatLocalYMD(r.reportDate || r.reportDate),
         }));
-        // kirim data yang sudah dinormalisasi
-        res.json({
+        // Filter out null entries
+        const validReports = computedReports.filter((r) => r !== null);
+        return res.json({
             success: true,
-            data,
+            data: validReports,
         });
     }
     catch (err) {
@@ -209,49 +158,28 @@ router.get("/month", async (req, res) => {
         });
     }
 });
-/**
- * GET /api/lvmdp1/daily-report/hourly/:date
- * :date = 'YYYY-MM-DD'
- * Ambil hourly aggregates untuk satu hari
- */
-// router.get("/hourly/:date", async (req, res) => {
-//   try {
-//     const dateStr = req.params.date;
-//     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-//     if (!dateRegex.test(dateStr)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: `Invalid date format: ${dateStr}. Expected YYYY-MM-DD`,
-//       });
-//     }
-//     const hourlyData = await fetchHourlyAggregates(dateStr);
-//     res.json({
-//       success: true,
-//       data: hourlyData,
-//     });
-//   } catch (err: any) {
-//     console.error("fetchHourlyAggregates error:", err);
-//     res.status(500).json({
-//       success: false,
-//       message: err?.message || "Failed to load hourly data",
-//     });
-//   }
-// });
 router.get("/hourly/:date", async (req, res) => {
     try {
         const { date } = req.params; // 'YYYY-MM-DD'
-        // Use raw data calculation untuk konsistensi dengan shift report
-        const { getHourlyAveragesLVMDP2 } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.services")));
-        const hourlyData = await getHourlyAveragesLVMDP2(date);
-        // Format untuk frontend
-        const formatted = hourlyData.map((h) => ({
-            hour: h.hour,
-            totalKwh: h.totalKwh,
-            avgKwh: h.avgKwh,
-            cosPhi: h.cosPhi || 0,
-            avgCurrent: h.avgCurrent,
-            minCurrent: h.minCurrent || 0,
-            maxCurrent: h.maxCurrent || 0,
+        // Auto-generate shift report untuk tanggal ini kalau belum ada
+        const { getDailyReportByDate } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.dailyReport.repository")));
+        const existing = await getDailyReportByDate(new Date(date));
+        if (!existing || existing.length === 0) {
+            try {
+                await (0, lvmdp_2_dailyReport_services_1.generateAndSaveDailyReport)(date);
+            }
+            catch (genErr) {
+                // lanjut, tidak perlu error
+            }
+        }
+        const rows = await (0, lvmdp_2_dailyReport_services_1.fetchHourlyAggregates)(date);
+        // Format untuk frontend dengan field names yang konsisten
+        const formatted = rows.map((h) => ({
+            hour: h.hour instanceof Date ? h.hour.toISOString() : h.hour,
+            totalKwh: h.totalKwh || h.total_kwh || 0,
+            avgKwh: h.avgKwh || h.avg_kwh || 0,
+            cosPhi: h.cosPhi || h.cos_phi || 0,
+            avgCurrent: h.avgCurrent || h.avg_current || 0,
         }));
         res.json(formatted);
     }
@@ -349,6 +277,8 @@ router.get("/hourly/:date", async (req, res) => {
             totalKwh: h.totalKwh || 0,
             avgKwh: h.avgKwh || 0,
             avgCurrent: h.avgCurrent || 0,
+            minCurrent: h.minCurrent || 0,
+            maxCurrent: h.maxCurrent || 0,
             cosPhi: h.avgCosPhi || 0,
         }));
         return res.json(transformed);
@@ -358,64 +288,6 @@ router.get("/hourly/:date", async (req, res) => {
         return res.status(500).json({
             success: false,
             message: err?.message || "Failed to fetch hourly data",
-        });
-    }
-});
-/**
- * POST /api/lvmdp2/daily-report/save-shift
- * Manual trigger untuk save shift specific
- */
-router.post("/save-shift", async (req, res) => {
-    try {
-        const { date, shift } = req.body;
-        if (!date || !shift) {
-            return res.status(400).json({
-                success: false,
-                message: "Missing date or shift parameter",
-            });
-        }
-        if (shift < 1 || shift > 3) {
-            return res.status(400).json({
-                success: false,
-                message: "Shift must be 1, 2, or 3",
-            });
-        }
-        const { saveShiftReport } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.dailyReport.services")));
-        const result = await saveShiftReport(date, shift);
-        return res.json({
-            success: true,
-            message: `Shift ${shift} for ${date} saved successfully`,
-            data: result,
-        });
-    }
-    catch (err) {
-        console.error("[LVMDP2 Daily Controller] Error saving shift:", err);
-        return res.status(500).json({
-            success: false,
-            message: err?.message || "Failed to save shift",
-        });
-    }
-});
-/**
- * GET /api/lvmdp2/daily-report/debug/:date
- */
-router.get("/debug/:date", async (req, res) => {
-    try {
-        const dateStr = req.params.date;
-        const { getShiftAveragesLVMDP2 } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.services")));
-        const shifts = await getShiftAveragesLVMDP2(dateStr);
-        return res.json({
-            success: true,
-            date: dateStr,
-            shifts: shifts,
-            message: "This is what will be saved to daily report",
-        });
-    }
-    catch (err) {
-        console.error("[LVMDP2 Daily Controller] Error in debug:", err);
-        return res.status(500).json({
-            success: false,
-            message: err?.message || "Failed to fetch debug data",
         });
     }
 });

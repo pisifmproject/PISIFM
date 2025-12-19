@@ -8,7 +8,7 @@ import { sql } from "drizzle-orm";
 
 async function regenerateAllLVMDPs() {
   try {
-    const today = "2025-12-11";
+    const today = "2025-12-19";
 
     console.log("=== Regenerating All LVMDPs ===\n");
     console.log("Date:", today);

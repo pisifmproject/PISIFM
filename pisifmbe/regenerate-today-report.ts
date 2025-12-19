@@ -5,7 +5,7 @@ import { sql } from "drizzle-orm";
 
 async function regenerateToday() {
   try {
-    const today = "2025-12-11";
+    const today = "2025-12-19";
 
     console.log("=== Regenerating Today's Report ===\n");
     console.log("Date:", today);
