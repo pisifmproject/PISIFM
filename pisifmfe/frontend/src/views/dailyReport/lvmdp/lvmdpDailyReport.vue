@@ -4,6 +4,10 @@ import { useRoute } from "vue-router";
 import { getDailyReportAll, getDailyHourly } from "@/lib/api";
 import { useExcelExport } from "@/composables/useExcelExport";
 import {
+  filterByIndofoodMonth,
+  filterByIndofoodWeek,
+} from "@/utils/indofoodCalendar";
+import {
   Download,
   CalendarSearch,
   HardDriveUpload,
@@ -90,15 +94,13 @@ function formatNumber(v: any) {
   return numberFormatter.format(n);
 }
 
-function formatTime(dateStr: string) {
+function formatTime(hour: number | string) {
   try {
-    const d = new Date(dateStr);
-    return d.toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const h = typeof hour === "string" ? parseInt(hour, 10) : hour;
+    if (isNaN(h) || h < 0 || h > 23) return String(hour);
+    return String(h).padStart(2, "0") + ":00";
   } catch {
-    return dateStr;
+    return String(hour);
   }
 }
 
@@ -484,11 +486,19 @@ async function downloadByMonth() {
     const allData = await getDailyReportAll(panelId);
     if (!Array.isArray(allData)) return;
 
-    const monthData = allData.filter((row) => {
-      const rowDate = row.date || row.reportDate;
-      if (!rowDate) return false;
-      return rowDate.startsWith(monthFormatted);
-    });
+    let monthData: any[];
+
+    if (dateType.value === "indofood") {
+      // Use Indofood calendar filtering - filters by all weeks in the month
+      monthData = filterByIndofoodMonth(allData, monthFormatted);
+    } else {
+      // Standard calendar filtering - filters by month number
+      monthData = allData.filter((row) => {
+        const rowDate = row.date || row.reportDate;
+        if (!rowDate) return false;
+        return rowDate.startsWith(monthFormatted);
+      });
+    }
 
     if (monthData.length === 0) return;
 

@@ -23,17 +23,18 @@ const generateHourlyReportsFromView = async (dateStr) => {
     const t0 = Date.now();
     // Query dengan agregasi di database - SUPER CEPAT!
     // totalKwh = SUM(real_power) × (3/3600) karena sampling rate 3 detik
+    // minCurrent & maxCurrent: hitung dari phase R,S,T (bukan dari avg_current!)
     const query = (0, drizzle_orm_1.sql) `
     SELECT 
       DATE(waktu AT TIME ZONE 'Asia/Jakarta') as report_date,
       EXTRACT(HOUR FROM waktu AT TIME ZONE 'Asia/Jakarta')::integer as hour,
       COUNT(*)::integer as count,
-      (SUM(real_power::double precision) * (3.0 / 3600.0))::double precision as total_kwh,
-      AVG(real_power::double precision)::double precision as avg_kwh,
-      AVG(avg_current::double precision)::double precision as avg_current,
-      MIN(avg_current::double precision)::double precision as min_current,
-      MAX(avg_current::double precision)::double precision as max_current,
-      AVG(cos_phi::double precision)::double precision as avg_cos_phi
+      (SUM((real_power::text)::double precision) * (3.0 / 3600.0))::double precision as total_kwh,
+      AVG((real_power::text)::double precision)::double precision as avg_kwh,
+      AVG((avg_current::text)::double precision)::double precision as avg_current,
+      MIN(LEAST(NULLIF((current_r::text)::double precision, 0), NULLIF((current_s::text)::double precision, 0), NULLIF((current_t::text)::double precision, 0)))::double precision as min_current,
+      MAX(GREATEST(NULLIF((current_r::text)::double precision, 0), NULLIF((current_s::text)::double precision, 0), NULLIF((current_t::text)::double precision, 0)))::double precision as max_current,
+      AVG((cos_phi::text)::double precision)::double precision as avg_cos_phi
     FROM public.v_lvmdp_1
     WHERE waktu >= ${dateStr}::date 
       AND waktu < (${dateStr}::date + interval '1 day')
@@ -79,12 +80,12 @@ const generateSingleHourReport = async (dateStr, hour) => {
     const query = (0, drizzle_orm_1.sql) `
     SELECT 
       COUNT(*)::integer as count,
-      (SUM(real_power::double precision) * (3.0 / 3600.0))::double precision as total_kwh,
-      AVG(real_power::double precision)::double precision as avg_kwh,
-      AVG(avg_current::double precision)::double precision as avg_current,
-      MIN(avg_current::double precision)::double precision as min_current,
-      MAX(avg_current::double precision)::double precision as max_current,
-      AVG(cos_phi::double precision)::double precision as avg_cos_phi
+      (SUM((real_power::text)::double precision) * (3.0 / 3600.0))::double precision as total_kwh,
+      AVG((real_power::text)::double precision)::double precision as avg_kwh,
+      AVG((avg_current::text)::double precision)::double precision as avg_current,
+      MIN(LEAST(NULLIF((current_r::text)::double precision, 0), NULLIF((current_s::text)::double precision, 0), NULLIF((current_t::text)::double precision, 0)))::double precision as min_current,
+      MAX(GREATEST(NULLIF((current_r::text)::double precision, 0), NULLIF((current_s::text)::double precision, 0), NULLIF((current_t::text)::double precision, 0)))::double precision as max_current,
+      AVG((cos_phi::text)::double precision)::double precision as avg_cos_phi
     FROM public.v_lvmdp_1
     WHERE DATE(waktu AT TIME ZONE 'Asia/Jakarta') = ${dateStr}::date
       AND EXTRACT(HOUR FROM waktu AT TIME ZONE 'Asia/Jakarta')::integer = ${hour}

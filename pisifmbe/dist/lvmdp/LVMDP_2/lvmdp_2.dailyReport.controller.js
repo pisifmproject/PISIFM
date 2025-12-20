@@ -80,51 +80,43 @@ function formatLocalYMD(d) {
  */
 router.get("/all", async (req, res) => {
     try {
-        // Always calculate from raw data to include cosPhi
-        const { getShiftAveragesLVMDP2 } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.services")));
-        // Generate for last 30 days
-        const dates = [];
-        for (let i = 0; i < 30; i++) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            const dateStr = new Intl.DateTimeFormat("sv-SE").format(d);
-            dates.push(dateStr);
-        }
-        // Paralelisasi dengan Promise.all untuk speed up
-        const computedReports = await Promise.all(dates.map(async (dateStr) => {
-            try {
-                const shifts = await getShiftAveragesLVMDP2(dateStr);
-                return {
-                    reportDate: dateStr,
-                    date: dateStr,
-                    shift1TotalKwh: shifts.shift1?.totalKwh || 0,
-                    shift1AvgKwh: shifts.shift1?.avgKwh || 0,
-                    shift1AvgCurrent: shifts.shift1?.avgCurrent || 0,
-                    shift1CosPhi: shifts.shift1?.avgCosPhi || 0,
-                    shift2TotalKwh: shifts.shift2?.totalKwh || 0,
-                    shift2AvgKwh: shifts.shift2?.avgKwh || 0,
-                    shift2AvgCurrent: shifts.shift2?.avgCurrent || 0,
-                    shift2CosPhi: shifts.shift2?.avgCosPhi || 0,
-                    shift3TotalKwh: shifts.shift3?.totalKwh || 0,
-                    shift3AvgKwh: shifts.shift3?.avgKwh || 0,
-                    shift3AvgCurrent: shifts.shift3?.avgCurrent || 0,
-                    shift3CosPhi: shifts.shift3?.avgCosPhi || 0,
-                };
-            }
-            catch (e) {
-                // Return null for error dates, filter later
-                return null;
-            }
+        const t0 = Date.now();
+        // Gunakan pre-aggregated daily reports (SUPER FAST!)
+        const { getAllDailyReports } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.dailyReport.repository")));
+        // Fetch 30 most recent daily reports (DB-optimized with DESC order + LIMIT)
+        const allReports = await getAllDailyReports();
+        // Transform untuk format API
+        const formatted = allReports.map((r) => ({
+            reportDate: r.reportDate,
+            date: r.reportDate,
+            shift1TotalKwh: r.shift1TotalKwh || 0,
+            shift1AvgKwh: r.shift1AvgKwh || 0,
+            shift1AvgCurrent: r.shift1AvgCurrent || 0,
+            shift1MinCurrent: r.shift1MinCurrent || 0,
+            shift1MaxCurrent: r.shift1MaxCurrent || 0,
+            shift1CosPhi: r.shift1AvgCosPhi || 0,
+            shift2TotalKwh: r.shift2TotalKwh || 0,
+            shift2AvgKwh: r.shift2AvgKwh || 0,
+            shift2AvgCurrent: r.shift2AvgCurrent || 0,
+            shift2MinCurrent: r.shift2MinCurrent || 0,
+            shift2MaxCurrent: r.shift2MaxCurrent || 0,
+            shift2CosPhi: r.shift2AvgCosPhi || 0,
+            shift3TotalKwh: r.shift3TotalKwh || 0,
+            shift3AvgKwh: r.shift3AvgKwh || 0,
+            shift3AvgCurrent: r.shift3AvgCurrent || 0,
+            shift3MinCurrent: r.shift3MinCurrent || 0,
+            shift3MaxCurrent: r.shift3MaxCurrent || 0,
+            shift3CosPhi: r.shift3AvgCosPhi || 0,
         }));
-        // Filter out null entries
-        const validReports = computedReports.filter((r) => r !== null);
+        const t1 = Date.now();
+        console.log(`[LVMDP2 Daily /all] Fetched ${formatted.length} reports in ${t1 - t0}ms`);
         return res.json({
             success: true,
-            data: validReports,
+            data: formatted,
         });
     }
     catch (err) {
-        // console.error("fetchAllDailyReports error:", err);
+        console.error("fetchAllDailyReports error:", err);
         res.status(500).json({
             success: false,
             message: err?.message ?? "Failed get daily reports",
@@ -161,25 +153,18 @@ router.get("/month", async (req, res) => {
 router.get("/hourly/:date", async (req, res) => {
     try {
         const { date } = req.params; // 'YYYY-MM-DD'
-        // Auto-generate shift report untuk tanggal ini kalau belum ada
-        const { getDailyReportByDate } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.dailyReport.repository")));
-        const existing = await getDailyReportByDate(new Date(date));
-        if (!existing || existing.length === 0) {
-            try {
-                await (0, lvmdp_2_dailyReport_services_1.generateAndSaveDailyReport)(date);
-            }
-            catch (genErr) {
-                // lanjut, tidak perlu error
-            }
-        }
-        const rows = await (0, lvmdp_2_dailyReport_services_1.fetchHourlyAggregates)(date);
+        // Gunakan pre-aggregated hourly reports dari database (SUPER FAST!)
+        const { fetchHourlyReportByDate } = await Promise.resolve().then(() => __importStar(require("./lvmdp_2.hourlyReport.services")));
+        const data = await fetchHourlyReportByDate(date);
         // Format untuk frontend dengan field names yang konsisten
-        const formatted = rows.map((h) => ({
-            hour: h.hour instanceof Date ? h.hour.toISOString() : h.hour,
+        const formatted = data.map((h) => ({
+            hour: h.hour, // Keep as number 0-23
             totalKwh: h.totalKwh || h.total_kwh || 0,
             avgKwh: h.avgKwh || h.avg_kwh || 0,
-            cosPhi: h.cosPhi || h.cos_phi || 0,
+            cosPhi: h.avgCosPhi || h.avg_cos_phi || h.cos_phi || 0,
             avgCurrent: h.avgCurrent || h.avg_current || 0,
+            minCurrent: h.minCurrent || h.min_current || 0,
+            maxCurrent: h.maxCurrent || h.max_current || 0,
         }));
         res.json(formatted);
     }

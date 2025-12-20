@@ -39,15 +39,23 @@ function computeAverages(rows) {
     let n = 0;
     for (const r of rows) {
         const realPower = Number(r.realPower) || 0;
-        const I = Number(r.avgCurrent) || 0;
         const cosPhi = Number(r.cosPhi) || 0;
+        // === FIX: Use individual phase currents for min/max, not avgCurrent ===
+        const currents = [
+            Number(r.currentR),
+            Number(r.currentS),
+            Number(r.currentT),
+        ].filter((v) => Number.isFinite(v) && v > 0);
+        const avgI = currents.length > 0
+            ? currents.reduce((a, b) => a + b, 0) / currents.length
+            : 0;
         sumRealPower += realPower;
-        sumI += I;
+        sumI += avgI;
         sumCosPhi += cosPhi;
-        // Track min/max current
-        if (I > 0) {
-            minI = Math.min(minI, I);
-            maxI = Math.max(maxI, I);
+        // Track min/max from phase currents
+        if (currents.length > 0) {
+            minI = Math.min(minI, Math.min(...currents));
+            maxI = Math.max(maxI, Math.max(...currents));
         }
         n++;
     }

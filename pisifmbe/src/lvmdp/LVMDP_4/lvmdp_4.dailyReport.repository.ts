@@ -1,6 +1,6 @@
 import { db } from "../../db";
 import { dailyReportLVMDP4 } from "../../db/schema";
-import { gte, lt, and } from "drizzle-orm";
+import { gte, lt, and, desc } from "drizzle-orm";
 
 /**
  * Jika reportDate = DATE (tanpa jam) → aman.
@@ -116,5 +116,6 @@ export const getAllDailyReports = async () => {
   return await db
     .select()
     .from(dailyReportLVMDP4)
-    .orderBy(dailyReportLVMDP4.reportDate);
+    .orderBy(desc(dailyReportLVMDP4.reportDate))
+    .limit(30);
 };

@@ -97,6 +97,7 @@ const getAllDailyReports = async () => {
     return await db_1.db
         .select()
         .from(schema_1.dailyReportLVMDP1)
-        .orderBy(schema_1.dailyReportLVMDP1.reportDate);
+        .orderBy((0, drizzle_orm_1.desc)(schema_1.dailyReportLVMDP1.reportDate))
+        .limit(30);
 };
 exports.getAllDailyReports = getAllDailyReports;

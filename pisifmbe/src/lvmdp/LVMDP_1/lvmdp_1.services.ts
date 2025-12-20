@@ -57,38 +57,48 @@ function computeAverages(rows: Array<any>): ShiftAvg {
   let sumRealPower = 0;
   let sumI = 0;
   let sumCosPhi = 0;
+
   let minI = Infinity;
   let maxI = -Infinity;
   let n = 0;
 
   for (const r of rows) {
-    const realPower = Number(r.realPower) || 0;
-    const I = Number(r.avgCurrent) || 0;
-    const cosPhi = Number(r.cosPhi) || 0;
-    sumRealPower += realPower;
-    sumI += I;
-    sumCosPhi += cosPhi;
+    const realPower = Number(r.realPower);
+    const cosPhi = Number(r.cosPhi);
 
-    // Track min/max current
-    if (I > 0) {
-      minI = Math.min(minI, I);
-      maxI = Math.max(maxI, I);
-    }
+    // === 🔥 FIX UTAMA: PAKAI ARUS R/S/T ===
+    const currents = [
+      Number(r.currentR),
+      Number(r.currentS),
+      Number(r.currentT),
+    ].filter((v) => Number.isFinite(v) && v > 0);
+
+    if (currents.length === 0) continue;
+
+    const avgI = currents.reduce((a, b) => a + b, 0) / currents.length;
+    const minPhase = Math.min(...currents);
+    const maxPhase = Math.max(...currents);
+
+    sumRealPower += Number.isFinite(realPower) ? realPower : 0;
+    sumI += avgI;
+    sumCosPhi += Number.isFinite(cosPhi) ? cosPhi : 0;
+
+    minI = Math.min(minI, minPhase);
+    maxI = Math.max(maxI, maxPhase);
+
     n++;
   }
 
-  // Convert real_power sum to kWh: sampling rate 3 seconds
-  // totalKwh = SUM(real_power_kW) × (3 seconds / 3600 seconds)
-  const totalKwh = sumRealPower * (3.0 / 3600.0);
+  const totalKwh = sumRealPower * (3 / 3600);
 
   return {
     count: n,
-    totalKwh: totalKwh, // Sum converted to kWh
-    avgKwh: n ? sumRealPower / n : 0, // Average of real power (kW)
+    totalKwh,
+    avgKwh: n ? sumRealPower / n : 0,
     avgCurrent: n ? sumI / n : 0,
     minCurrent: minI === Infinity ? 0 : minI,
     maxCurrent: maxI === -Infinity ? 0 : maxI,
-    avgCosPhi: n ? sumCosPhi / n : 0, // Average power factor
+    avgCosPhi: n ? sumCosPhi / n : 0,
   };
 }
 
@@ -169,7 +179,6 @@ const getShiftAveragesLVMDP1 = async (dateStr?: string) => {
 
   return out;
 };
-
 
 /**
  * Ambil hourly aggregates untuk satu hari, dihitung dari raw data
