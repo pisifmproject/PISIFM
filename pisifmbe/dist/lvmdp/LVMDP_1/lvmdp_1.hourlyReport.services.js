@@ -138,7 +138,9 @@ const fetchHourlyReportByDate = async (dateStr) => {
                 totalKwh: 0,
                 avgKwh: 0,
                 avgCurrent: 0,
-                avgCosPhi: 0,
+                minCurrent: 0, // ✅ FIX
+                maxCurrent: 0, // ✅ FIX
+                avgCosPhi: 0, // ✅ biar konsisten
                 createdAt: null,
                 updatedAt: null,
             });

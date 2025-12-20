@@ -79,11 +79,25 @@ function computeAverages(rows: Array<any>): ShiftAvg {
 }
 
 const getShiftAveragesLVMDP2 = async (dateStr?: string) => {
+  // Gunakan local date (WIB) sebagai referensi hari
   const today = dateStr ?? new Date().toISOString().slice(0, 10);
-  // Pass date filter to reduce data fetched from DB
-  const allRows = await findLVMDPs(today);
 
-  // Data dari DB sudah dalam UTC (converted dari +07:00)
+  // Helper: tambah hari ke YYYY-MM-DD
+  function addDaysYmd(ymd: string, days: number) {
+    const [Y, M, D] = ymd.split("-").map(Number);
+    const dt = new Date(Date.UTC(Y, M - 1, D));
+    dt.setUTCDate(dt.getUTCDate() + days);
+    const y = dt.getUTCFullYear();
+    const m = String(dt.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(dt.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  // 🔴 WAJIB: ambil hari ini + besok (untuk SHIFT 3 lintas hari)
+  const tomorrow = addDaysYmd(today, 1);
+  const allRows = await findLVMDPs(today, tomorrow);
+
+  // Range check helper
   const inRange = (d: Date, start: Date, end: Date) => d >= start && d < end;
 
   const out: Record<string, ShiftAvg> = {} as any;
@@ -91,16 +105,22 @@ const getShiftAveragesLVMDP2 = async (dateStr?: string) => {
   for (const s of SHIFT) {
     const { start, end } = makeRange(today, s.start, s.end);
 
+    // Filter data sesuai window shift
     const rows = allRows.filter((r) => {
       const t: Date = r.waktu instanceof Date ? r.waktu : new Date(r.waktu);
       return inRange(t, start, end);
     });
 
-    // Group by hour first, then sum totalKwh from each hour
+    /* ===========================
+       Hitung kWh per jam dulu
+       (lebih akurat & stabil)
+    =========================== */
     const hourlyMap = new Map<string, any[]>();
 
     for (const r of rows) {
       const t: Date = r.waktu instanceof Date ? r.waktu : new Date(r.waktu);
+
+      // Convert ke WIB untuk grouping jam
       const wibTime = new Date(t.getTime() + 7 * 60 * 60 * 1000);
       const hourStr = `${String(wibTime.getUTCHours()).padStart(2, "0")}:00`;
 
@@ -110,28 +130,28 @@ const getShiftAveragesLVMDP2 = async (dateStr?: string) => {
       hourlyMap.get(hourStr)!.push(r);
     }
 
-    // Calculate totalKwh per hour, then sum them for the shift
     let shiftTotalKwh = 0;
-    const hourlyAverages = [];
 
-    for (const [hour, hourRows] of hourlyMap.entries()) {
+    for (const hourRows of hourlyMap.values()) {
       const hourAvg = computeAverages(hourRows);
-      shiftTotalKwh += hourAvg.totalKwh; // Sum up hourly totals
-      hourlyAverages.push(hourAvg);
+      shiftTotalKwh += hourAvg.totalKwh;
     }
 
-    // For shift averages (power, current, cos phi), use all rows
+    /* ===========================
+       Hitung average & min/max
+       dari SEMUA row shift
+    =========================== */
     const shiftAvg = computeAverages(rows);
 
-    // Override totalKwh with sum of hourly totals
     out[s.key] = {
       ...shiftAvg,
-      totalKwh: shiftTotalKwh, // Sum of hourly kWh totals
+      totalKwh: shiftTotalKwh,
     };
   }
 
   return out;
 };
+
 
 /**
  * Ambil hourly aggregates untuk satu hari, dihitung dari raw data

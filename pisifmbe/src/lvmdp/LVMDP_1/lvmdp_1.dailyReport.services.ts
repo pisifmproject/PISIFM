@@ -127,14 +127,13 @@ export const generateAndSaveDailyReport = async (dateStr: string) => {
     throw new Error(`Invalid date format: ${dateStr}. Expected YYYY-MM-DD`);
   }
 
-  // 💡 gunakan perhitungan yang SAMA EXACT-nya dengan endpoint /shift-avg
+  // gunakan perhitungan yang sama dengan endpoint /shift-avg
   const shifts = await getShiftAveragesLVMDP1(dateStr);
 
   const s1 = shifts.shift1;
   const s2 = shifts.shift2;
   const s3 = shifts.shift3;
 
-  // Use string 'YYYY-MM-DD' for reportDate when inserting (Drizzle/date column)
   const reportDate = dateStr;
   const now = new Date();
 
@@ -142,19 +141,31 @@ export const generateAndSaveDailyReport = async (dateStr: string) => {
     id: crypto.randomUUID(),
     reportDate,
 
+    // SHIFT 1
     shift1Count: s1.count,
+    shift1TotalKwh: s1.totalKwh,
     shift1AvgKwh: s1.avgKwh,
     shift1AvgCurrent: s1.avgCurrent,
+    shift1MinCurrent: s1.minCurrent,
+    shift1MaxCurrent: s1.maxCurrent,
     shift1AvgCosPhi: s1.avgCosPhi,
 
+    // SHIFT 2
     shift2Count: s2.count,
+    shift2TotalKwh: s2.totalKwh,
     shift2AvgKwh: s2.avgKwh,
     shift2AvgCurrent: s2.avgCurrent,
+    shift2MinCurrent: s2.minCurrent,
+    shift2MaxCurrent: s2.maxCurrent,
     shift2AvgCosPhi: s2.avgCosPhi,
 
+    // SHIFT 3
     shift3Count: s3.count,
+    shift3TotalKwh: s3.totalKwh,
     shift3AvgKwh: s3.avgKwh,
     shift3AvgCurrent: s3.avgCurrent,
+    shift3MinCurrent: s3.minCurrent,
+    shift3MaxCurrent: s3.maxCurrent,
     shift3AvgCosPhi: s3.avgCosPhi,
 
     createdAt: now,
@@ -163,6 +174,7 @@ export const generateAndSaveDailyReport = async (dateStr: string) => {
 
   return await saveDailyReport(reportData);
 };
+
 
 /* ===========================
    FETCH fungsi: by day / month / all
