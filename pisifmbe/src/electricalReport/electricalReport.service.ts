@@ -398,6 +398,9 @@ export async function generateWeeklyReport(
         reports.reduce((sum, r) => sum + r.dataCompletenessPercent, 0) /
         reports.length,
     },
+  };
+}
+
 /**
  * Generate monthly electrical report
  * Auto-generates missing daily data if needed
@@ -435,9 +438,7 @@ export async function generateMonthlyReport(
 
       if (dayReports.length === 0) {
         try {
-          console.log(
-            `[generateMonthlyReport] Generating data for ${dateStr}`
-          );
+          console.log(`[generateMonthlyReport] Generating data for ${dateStr}`);
           await aggregateAllPanelsForDate(dateStr);
         } catch (error) {
           console.warn(
@@ -517,10 +518,11 @@ export async function generateMonthlyReport(
   });
 
   // Formatted date range display
-  const formattedStart = new Date(startDateStr).toLocaleDateString(
-    "id-ID",
-    { day: "2-digit", month: "short", year: "numeric" }
-  );
+  const formattedStart = new Date(startDateStr).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
   const formattedEnd = new Date(endDateStr).toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "short",
@@ -548,7 +550,9 @@ export async function generateMonthlyReport(
       prevDateRange.endDate
     );
   } catch (error) {
-    console.warn("[generateMonthlyReport] Could not fetch previous period data");
+    console.warn(
+      "[generateMonthlyReport] Could not fetch previous period data"
+    );
   }
 
   const prevTotalEnergy = prevReports.reduce((sum, r) => sum + r.energyKwh, 0);

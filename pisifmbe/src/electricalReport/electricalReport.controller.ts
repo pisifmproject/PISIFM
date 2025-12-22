@@ -78,7 +78,9 @@ export async function getElectricalReport(req: Request, res: Response) {
 
       const yearNum = parseInt(year as string);
       const monthNum = parseInt(month as string);
-      const dateTypeParam = (dateType as string) || "nasional";
+      const dateTypeParam = ((dateType as string) || "nasional") as
+        | "nasional"
+        | "indofood";
 
       if (isNaN(yearNum) || isNaN(monthNum)) {
         return res.status(400).json({
