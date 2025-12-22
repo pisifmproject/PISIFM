@@ -82,6 +82,11 @@ function initDailyReportScheduler() {
         const dateStr = toYmd(yesterday);
         saveShiftForAllPanels(3, dateStr);
     });
+    // Full daily report generation at 23:00 for complete today's data
+    scheduleAt(23, 0, () => {
+        const today = toYmd(new Date());
+        generateForDate(today);
+    });
     console.log("[REPORT] Per-shift schedulers initialized");
 }
 // Legacy: Generate complete report for a date (used for backfill)
