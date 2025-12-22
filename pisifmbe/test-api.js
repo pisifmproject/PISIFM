@@ -1,6 +1,6 @@
 async function testAPI() {
   const today = "2025-12-22";
-  const panelId = 1;
+  const panelId = 2;
 
   const baseURL = "http://localhost:2000";
 

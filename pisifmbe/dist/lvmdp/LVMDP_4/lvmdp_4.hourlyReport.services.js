@@ -120,32 +120,13 @@ exports.generateSingleHourReport = generateSingleHourReport;
 /**
  * Fetch hourly data for a specific date
  * FAST: hanya query tabel kecil (24 rows max per hari)
+ * Hanya menampilkan jam yang ada datanya (jangan fill missing hours)
  */
 const fetchHourlyReportByDate = async (dateStr) => {
     const result = await (0, lvmdp_4_hourlyReport_repository_1.getHourlyReportByDate)(dateStr);
-    // Ensure all 24 hours are present (fill missing with zeros)
-    const hourMap = new Map(result.map((r) => [r.hour, r]));
-    const complete = [];
-    for (let h = 0; h < 24; h++) {
-        if (hourMap.has(h)) {
-            complete.push(hourMap.get(h));
-        }
-        else {
-            complete.push({
-                id: "",
-                reportDate: dateStr,
-                hour: h,
-                count: 0,
-                totalKwh: 0,
-                avgKwh: 0,
-                avgCurrent: 0,
-                avgCosPhi: 0,
-                createdAt: null,
-                updatedAt: null,
-            });
-        }
-    }
-    return complete;
+    // Return only hours dengan data (filter out zeros/empty)
+    // Jika ada data: count > 0 atau totalKwh > 0
+    return result.filter((r) => (r.count ?? 0) > 0 || (r.totalKwh ?? 0) > 0);
 };
 exports.fetchHourlyReportByDate = fetchHourlyReportByDate;
 /**
