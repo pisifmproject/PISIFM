@@ -147,7 +147,7 @@
               </select>
             </div>
 
-            <div class="selector-group">
+            <div v-if="reportType === 'month'" class="selector-group">
               <label>Date Type:</label>
               <select v-model="dateType" class="report-type-select">
                 <option value="nasional">By Nasional</option>

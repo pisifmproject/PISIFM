@@ -426,7 +426,6 @@ function generateHourlyCSV(): string {
     "Tanggal",
     "Waktu",
     "Total kWh",
-    "Avg Power (kW)",
     "Power Factor",
     "Avg Current (A)",
   ];
@@ -436,7 +435,6 @@ function generateHourlyCSV(): string {
     formatDate(selectedDate.value),
     formatTime(row.hour),
     row.totalKwh,
-    row.avgKwh,
     row.cosPhi,
     row.avgCurrent,
   ]);
@@ -679,7 +677,6 @@ onUnmounted(() => {
                 <tr>
                   <th>Waktu</th>
                   <th>Total kWh</th>
-                  <th>Avg Power (kW)</th>
                   <th>Avg Current (A)</th>
                   <th>Min Current (A)</th>
                   <th>Max Current (A)</th>
@@ -695,7 +692,6 @@ onUnmounted(() => {
                 >
                   <td class="time">{{ formatTime(row.hour) }}</td>
                   <td class="numeric">{{ formatNumber(row.totalKwh) }}</td>
-                  <td class="numeric">{{ formatNumber(row.avgKwh) }}</td>
                   <td class="numeric">{{ formatNumber(row.avgCurrent) }}</td>
                   <td class="numeric">
                     {{ formatNumber(row.minCurrent || 0) }}
