@@ -371,9 +371,8 @@ watch(selectedDate, () => {
 
   dateChangeTimer = setTimeout(() => {
     loadShiftReports();
-    if (activeTab.value === "hourly") {
-      loadHourlyReports();
-    }
+    // Always load hourly data when date changes, regardless of active tab
+    loadHourlyReports();
   }, 150); // 150ms debounce
 });
 
@@ -512,10 +511,8 @@ async function downloadByMonth() {
 
 onMounted(() => {
   loadShiftReports();
-  // Only load hourly if tab is active (lazy loading)
-  if (activeTab.value === "hourly") {
-    loadHourlyReports();
-  }
+  // Always load hourly data immediately, don't wait for tab switch
+  loadHourlyReports();
   window.addEventListener("click", handleWindowClick);
 });
 
