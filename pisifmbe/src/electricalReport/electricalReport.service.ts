@@ -4,6 +4,7 @@ import {
   saveDailyReport,
   getDailyReports,
 } from "./electricalReport.repository";
+import { getMonthDateRange } from "../utils/indofoodCalendar";
 
 /**
  * Service layer for electrical reporting
@@ -397,31 +398,33 @@ export async function generateWeeklyReport(
         reports.reduce((sum, r) => sum + r.dataCompletenessPercent, 0) /
         reports.length,
     },
-  };
-}
-
 /**
  * Generate monthly electrical report
  * Auto-generates missing daily data if needed
+ * Supports both "nasional" (calendar month) and "indofood" (operational calendar) date types
  */
 export async function generateMonthlyReport(
   year: number,
-  month: number
+  month: number,
+  dateType: "nasional" | "indofood" = "nasional"
 ): Promise<ElectricalReportResponse> {
-  // Get first and last day of month
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0); // Last day of month
-
-  const startDateStr = startDate.toISOString().split("T")[0];
-  const endDateStr = endDate.toISOString().split("T")[0];
+  // Get date range berdasarkan dateType
+  const dateRange = getMonthDateRange(year, month, dateType);
+  const startDateStr = dateRange.startDate;
+  const endDateStr = dateRange.endDate;
 
   let reports = await getDailyReports(startDateStr, endDateStr);
 
   // If incomplete, try to generate missing days
-  const expectedDays = endDate.getDate(); // Number of days in month
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+  const expectedDays = Math.ceil(
+    (endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000) + 1
+  );
+
   if (reports.length < expectedDays) {
     console.log(
-      `[generateMonthlyReport] Only ${reports.length}/${expectedDays} days available for ${year}-${month}, generating missing days...`
+      `[generateMonthlyReport] Only ${reports.length}/${expectedDays} days available for ${year}-${month} (${dateType}), generating missing days...`
     );
 
     // Generate all days in range
@@ -432,7 +435,9 @@ export async function generateMonthlyReport(
 
       if (dayReports.length === 0) {
         try {
-          console.log(`[generateMonthlyReport] Generating data for ${dateStr}`);
+          console.log(
+            `[generateMonthlyReport] Generating data for ${dateStr}`
+          );
           await aggregateAllPanelsForDate(dateStr);
         } catch (error) {
           console.warn(
@@ -451,7 +456,7 @@ export async function generateMonthlyReport(
 
   if (reports.length === 0) {
     throw new Error(
-      `No data available for ${year}-${month}. Raw data may not exist for this period.`
+      `No data available for ${year}-${month} (${dateType}). Raw data may not exist for this period.`
     );
   }
 
@@ -511,29 +516,53 @@ export async function generateMonthlyReport(
     p.contribution_percent = (p.energy_kWh / totalEnergy) * 100;
   });
 
-  // Previous month comparison
-  const prevMonth = month === 1 ? 12 : month - 1;
-  const prevYear = month === 1 ? year - 1 : year;
-  const prevStart = new Date(prevYear, prevMonth - 1, 1);
-  const prevEnd = new Date(prevYear, prevMonth, 0);
-
-  const prevReports = await getDailyReports(
-    prevStart.toISOString().split("T")[0],
-    prevEnd.toISOString().split("T")[0]
+  // Formatted date range display
+  const formattedStart = new Date(startDateStr).toLocaleDateString(
+    "id-ID",
+    { day: "2-digit", month: "short", year: "numeric" }
   );
+  const formattedEnd = new Date(endDateStr).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  // Previous month/period comparison
+  let prevReports: any[] = [];
+  try {
+    let prevDateRange;
+    if (dateType === "indofood") {
+      // For Indofood, get previous Indofood month
+      const prevMonth = month === 1 ? 12 : month - 1;
+      const prevYear = month === 1 ? year - 1 : year;
+      prevDateRange = getMonthDateRange(prevYear, prevMonth, "indofood");
+    } else {
+      // For calendar month, get previous calendar month
+      const prevMonth = month === 1 ? 12 : month - 1;
+      const prevYear = month === 1 ? year - 1 : year;
+      prevDateRange = getMonthDateRange(prevYear, prevMonth, "nasional");
+    }
+
+    prevReports = await getDailyReports(
+      prevDateRange.startDate,
+      prevDateRange.endDate
+    );
+  } catch (error) {
+    console.warn("[generateMonthlyReport] Could not fetch previous period data");
+  }
 
   const prevTotalEnergy = prevReports.reduce((sum, r) => sum + r.energyKwh, 0);
-  const prevPeakDemand = Math.max(...prevReports.map((r) => r.peakDemandKw), 0);
+  const prevPeakDemand =
+    prevReports.length > 0
+      ? Math.max(...prevReports.map((r) => r.peakDemandKw))
+      : 0;
 
   return {
     period: "month",
     dateRange: {
-      start: startDateStr + "T00:00:00Z",
-      end: endDateStr + "T23:59:59Z",
-      formatted: startDate.toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      }),
+      start: `${startDateStr}T00:00:00Z`,
+      end: `${endDateStr}T23:59:59Z`,
+      formatted: `${formattedStart} - ${formattedEnd} (${dateType})`,
     },
     summary: {
       totalEnergy_kWh: totalEnergy,

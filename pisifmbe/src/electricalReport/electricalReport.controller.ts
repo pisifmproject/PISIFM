@@ -21,7 +21,7 @@ import {
  */
 export async function getElectricalReport(req: Request, res: Response) {
   try {
-    const { period, date, weekStart, year, month } = req.query;
+    const { period, date, weekStart, year, month, dateType } = req.query;
 
     if (!period || !["day", "week", "month"].includes(period as string)) {
       return res.status(400).json({
@@ -78,6 +78,7 @@ export async function getElectricalReport(req: Request, res: Response) {
 
       const yearNum = parseInt(year as string);
       const monthNum = parseInt(month as string);
+      const dateTypeParam = (dateType as string) || "nasional";
 
       if (isNaN(yearNum) || isNaN(monthNum)) {
         return res.status(400).json({
@@ -91,7 +92,7 @@ export async function getElectricalReport(req: Request, res: Response) {
         });
       }
 
-      report = await generateMonthlyReport(yearNum, monthNum);
+      report = await generateMonthlyReport(yearNum, monthNum, dateTypeParam);
     }
 
     // Set cache headers (cache for 5 minutes for current day, longer for past data)

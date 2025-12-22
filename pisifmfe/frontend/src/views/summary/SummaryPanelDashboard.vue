@@ -485,6 +485,7 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import HelpModal from "@/components/HelpModal.vue";
+import { getIndofoodMonthRange } from "@/utils/indofoodCalendar";
 // PROFESSIONAL REPORTING SYSTEM - Import new API client
 import { useElectricalReport } from "@/composables/useElectricalReport";
 import type { ElectricalReportData } from "@/composables/useElectricalReport";
@@ -524,12 +525,18 @@ function getMonthDateRange(yearMonth: string, type: "nasional" | "indofood") {
       end: lastDay.toISOString().split("T")[0],
     };
   } else {
-    // Indofood: 26th of previous month to 25th of current month
-    const startDate = new Date(year, month - 2, 26); // Previous month's 26th
-    const endDate = new Date(year, month - 1, 25); // Current month's 25th
+    // Indofood: Use actual operational calendar date ranges
+    const range = getIndofoodMonthRange(yearMonth);
+    if (range) {
+      return {
+        start: range.start,
+        end: range.end,
+      };
+    }
+    // Fallback if calendar data not found
     return {
-      start: startDate.toISOString().split("T")[0],
-      end: endDate.toISOString().split("T")[0],
+      start: yearMonth + "-01",
+      end: new Date(year, month, 0).toISOString().split("T")[0],
     };
   }
 }
@@ -751,8 +758,14 @@ const downloadSelectedReport = async () => {
     } else {
       // Download monthly report for selected month
       const [year, month] = selectedMonth.value.split("-").map(Number);
-      console.log("[Report] Downloading monthly report for:", year, month);
-      reportData = await fetchMonthlyReport(year, month);
+      console.log(
+        "[Report] Downloading monthly report for:",
+        year,
+        month,
+        "dateType:",
+        dateType.value
+      );
+      reportData = await fetchMonthlyReport(year, month, dateType.value);
 
       // Calculate date range based on date type (Nasional/Indofood)
       const range = getMonthDateRange(selectedMonth.value, dateType.value);

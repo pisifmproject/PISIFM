@@ -141,13 +141,14 @@ export function useElectricalReport() {
    */
   async function fetchMonthlyReport(
     year: number,
-    month: number
+    month: number,
+    dateType: "nasional" | "indofood" = "nasional"
   ): Promise<ElectricalReportData | null> {
     loading.value = true;
     error.value = null;
 
     try {
-      const apiUrl = `${getBaseURL()}/api/report/electrical?period=month&year=${year}&month=${month}`;
+      const apiUrl = `${getBaseURL()}/api/report/electrical?period=month&year=${year}&month=${month}&dateType=${dateType}`;
       console.log("[ElectricalReport] Fetching monthly report:", apiUrl);
 
       const response = await fetch(apiUrl);
