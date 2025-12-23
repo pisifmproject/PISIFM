@@ -507,15 +507,38 @@ async function downloadByMonth() {
   }
 }
 
+// Auto-refresh intervals
+let shiftRefreshTimer: ReturnType<typeof setInterval> | null = null;
+let hourlyRefreshTimer: ReturnType<typeof setInterval> | null = null;
+
 onMounted(() => {
   loadShiftReports();
   // Always load hourly data immediately, don't wait for tab switch
   loadHourlyReports();
   window.addEventListener("click", handleWindowClick);
+
+  // Setup auto-refresh every 5 minutes (300000ms) for shift reports
+  shiftRefreshTimer = setInterval(() => {
+    if (selectedDate.value === new Date().toISOString().split("T")[0]) {
+      loadShiftReports();
+    }
+  }, 300000); // 5 minutes
+
+  // Setup auto-refresh every 1 minute (60000ms) for hourly reports
+  hourlyRefreshTimer = setInterval(() => {
+    if (selectedDate.value === new Date().toISOString().split("T")[0]) {
+      // Clear cache to force fresh data
+      localStorage.removeItem(cacheKey(selectedDate.value));
+      loadHourlyReports();
+    }
+  }, 60000); // 1 minute
 });
 
 onUnmounted(() => {
   window.removeEventListener("click", handleWindowClick);
+  // Clear auto-refresh timers on component unmount
+  if (shiftRefreshTimer) clearInterval(shiftRefreshTimer);
+  if (hourlyRefreshTimer) clearInterval(hourlyRefreshTimer);
 });
 </script>
 

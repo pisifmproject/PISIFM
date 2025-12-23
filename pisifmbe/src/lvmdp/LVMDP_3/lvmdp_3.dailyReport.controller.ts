@@ -55,13 +55,98 @@ router.get("/all", async (req, res) => {
   try {
     const t0 = Date.now();
 
-    // Gunakan pre-aggregated daily reports (SUPER FAST!)
     const { getAllDailyReports } = await import(
       "./lvmdp_3.dailyReport.repository"
     );
+    const { saveDailyReport } = await import(
+      "./lvmdp_3.dailyReport.repository"
+    );
 
-    // Fetch 30 most recent daily reports (DB-optimized with DESC order + LIMIT)
-    const allReports = await getAllDailyReports();
+    let allReports = await getAllDailyReports();
+
+    // Ensure today's record exists
+    const today = new Date().toISOString().split("T")[0];
+    const todayExists = allReports.some((r: any) => r.reportDate === today);
+
+    if (!todayExists) {
+      // Create placeholder for today if doesn't exist
+      await saveDailyReport({
+        id: `lvmdp3_${today}`,
+        reportDate: today,
+        shift1Count: 0,
+        shift1TotalKwh: 0,
+        shift1AvgKwh: 0,
+        shift1AvgCurrent: 0,
+        shift1MinCurrent: 0,
+        shift1MaxCurrent: 0,
+        shift1AvgCosPhi: 0,
+        shift2Count: 0,
+        shift2TotalKwh: 0,
+        shift2AvgKwh: 0,
+        shift2AvgCurrent: 0,
+        shift2MinCurrent: 0,
+        shift2MaxCurrent: 0,
+        shift2AvgCosPhi: 0,
+        shift3Count: 0,
+        shift3TotalKwh: 0,
+        shift3AvgKwh: 0,
+        shift3AvgCurrent: 0,
+        shift3MinCurrent: 0,
+        shift3MaxCurrent: 0,
+        shift3AvgCosPhi: 0,
+      });
+      // Re-fetch to include today
+      allReports = await getAllDailyReports();
+    }
+
+    // For today, calculate interim shift data from raw view
+    const todayReport = allReports.find((r: any) => r.reportDate === today);
+
+    if (todayReport) {
+      // Calculate interim shifts for today
+      const { getShiftAveragesLVMDP3 } = await import("./lvmdp_3.services");
+      const interimShifts = await getShiftAveragesLVMDP3(today);
+
+      // Update today's data with interim calculations
+      todayReport.shift1TotalKwh =
+        interimShifts.shift1?.totalKwh || todayReport.shift1TotalKwh;
+      todayReport.shift1AvgKwh =
+        interimShifts.shift1?.avgKwh || todayReport.shift1AvgKwh;
+      todayReport.shift1AvgCurrent =
+        interimShifts.shift1?.avgCurrent || todayReport.shift1AvgCurrent;
+      todayReport.shift1MinCurrent =
+        interimShifts.shift1?.minCurrent || todayReport.shift1MinCurrent;
+      todayReport.shift1MaxCurrent =
+        interimShifts.shift1?.maxCurrent || todayReport.shift1MaxCurrent;
+      todayReport.shift1AvgCosPhi =
+        interimShifts.shift1?.avgCosPhi || todayReport.shift1AvgCosPhi;
+
+      todayReport.shift2TotalKwh =
+        interimShifts.shift2?.totalKwh || todayReport.shift2TotalKwh;
+      todayReport.shift2AvgKwh =
+        interimShifts.shift2?.avgKwh || todayReport.shift2AvgKwh;
+      todayReport.shift2AvgCurrent =
+        interimShifts.shift2?.avgCurrent || todayReport.shift2AvgCurrent;
+      todayReport.shift2MinCurrent =
+        interimShifts.shift2?.minCurrent || todayReport.shift2MinCurrent;
+      todayReport.shift2MaxCurrent =
+        interimShifts.shift2?.maxCurrent || todayReport.shift2MaxCurrent;
+      todayReport.shift2AvgCosPhi =
+        interimShifts.shift2?.avgCosPhi || todayReport.shift2AvgCosPhi;
+
+      todayReport.shift3TotalKwh =
+        interimShifts.shift3?.totalKwh || todayReport.shift3TotalKwh;
+      todayReport.shift3AvgKwh =
+        interimShifts.shift3?.avgKwh || todayReport.shift3AvgKwh;
+      todayReport.shift3AvgCurrent =
+        interimShifts.shift3?.avgCurrent || todayReport.shift3AvgCurrent;
+      todayReport.shift3MinCurrent =
+        interimShifts.shift3?.minCurrent || todayReport.shift3MinCurrent;
+      todayReport.shift3MaxCurrent =
+        interimShifts.shift3?.maxCurrent || todayReport.shift3MaxCurrent;
+      todayReport.shift3AvgCosPhi =
+        interimShifts.shift3?.avgCosPhi || todayReport.shift3AvgCosPhi;
+    }
 
     // Transform untuk format API
     const formatted = allReports.map((r: any) => ({
@@ -85,6 +170,7 @@ router.get("/all", async (req, res) => {
       shift3MinCurrent: r.shift3MinCurrent || 0,
       shift3MaxCurrent: r.shift3MaxCurrent || 0,
       shift3CosPhi: r.shift3AvgCosPhi || 0,
+      isInterim: r.reportDate === today,
     }));
 
     const t1 = Date.now();
@@ -140,11 +226,30 @@ router.get("/hourly/:date", async (req, res) => {
   try {
     const { date } = req.params; // 'YYYY-MM-DD'
 
-    // Gunakan pre-aggregated hourly reports dari database (SUPER FAST!)
+    // Try to get pre-aggregated data from database first
     const { fetchHourlyReportByDate } = await import(
       "./lvmdp_3.hourlyReport.services"
     );
-    const data = await fetchHourlyReportByDate(date);
+    let data = await fetchHourlyReportByDate(date);
+
+    // If no data or incomplete, calculate interim from raw view
+    const isToday = date === new Date().toISOString().split("T")[0];
+    if (data.length === 0 || isToday) {
+      // Calculate interim from raw data for incomplete hours
+      const { generateHourlyReportsFromView } = await import(
+        "./lvmdp_3.hourlyReport.services"
+      );
+      const interimData = await generateHourlyReportsFromView(date);
+
+      if (interimData && interimData.length > 0) {
+        // Merge: prefer interim for today, use database for past dates
+        if (isToday) {
+          data = interimData; // Use calculated interim for today
+        } else {
+          data = data.length > 0 ? data : interimData; // Fallback to interim if DB empty
+        }
+      }
+    }
 
     // Format untuk frontend dengan field names yang konsisten
     const formatted = data.map((h: any) => ({
@@ -155,6 +260,7 @@ router.get("/hourly/:date", async (req, res) => {
       avgCurrent: h.avgCurrent || h.avg_current || 0,
       minCurrent: h.minCurrent || h.min_current || 0,
       maxCurrent: h.maxCurrent || h.max_current || 0,
+      isInterim: isToday ? true : false, // Flag untuk UI
     }));
 
     res.json(formatted);
