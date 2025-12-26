@@ -1797,8 +1797,27 @@ onUnmounted(() => {
 /* Panels Grid */
 .panels-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
+}
+
+/* Responsive grid */
+@media (max-width: 1600px) {
+  .panels-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1200px) {
+  .panels-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .panels-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .panel-card {
@@ -1809,6 +1828,9 @@ onUnmounted(() => {
   transition: all 0.3s;
   cursor: pointer;
   border: 2px solid #334155;
+  display: flex;
+  flex-direction: column;
+  min-height: 380px;
 }
 
 .panel-card:hover {
@@ -1911,6 +1933,9 @@ onUnmounted(() => {
 
 .panel-card-body {
   padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .metric-grid {
@@ -1921,13 +1946,16 @@ onUnmounted(() => {
 
 .metric-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
   background: #0f172a;
   border-radius: 10px;
   transition: all 0.2s;
   border: 1px solid #334155;
+  text-align: center;
 }
 
 .metric-item:hover {
@@ -1936,13 +1964,14 @@ onUnmounted(() => {
 }
 
 .metric-icon-sm {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin-bottom: 0.25rem;
 }
 
 .metric-icon-sm svg {
@@ -1968,24 +1997,25 @@ onUnmounted(() => {
 }
 
 .metric-data {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 }
 
 .metric-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #94a3b8;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.25rem;
+  width: 100%;
 }
 
 .metric-value {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #f1f5f9;
+  letter-spacing: -0.01em;
 }
 
 .metric-value .unit {
@@ -2003,12 +2033,13 @@ onUnmounted(() => {
 }
 
 .panel-card-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #334155;
+  background: rgba(0, 0, 0, 0.3);
+  margin-top: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  background: #0f172a;
-  border-top: 1px solid #334155;
   color: #60a5fa;
   font-size: 0.875rem;
   font-weight: 600;

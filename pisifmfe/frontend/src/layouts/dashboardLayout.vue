@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect, computed } from "vue";
+import { ref, watchEffect, computed, onMounted } from "vue";
 import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
 import SideBar from "@/components/sideBar.vue";
 import { useAuth } from "@/stores/auth";
@@ -8,8 +8,21 @@ const route = useRoute();
 const router = useRouter();
 const { username, userRole, logout } = useAuth();
 
-// kontrol buka/tutup sidebar
+// kontrol buka/tutup sidebar dengan localStorage persistence
 const isSidebarOpen = ref(true);
+
+// Load sidebar state dari localStorage saat component mount
+onMounted(() => {
+  const saved = localStorage.getItem("sidebarOpen");
+  if (saved !== null) {
+    isSidebarOpen.value = JSON.parse(saved);
+  }
+});
+
+// Save sidebar state ke localStorage saat berubah
+watchEffect(() => {
+  localStorage.setItem("sidebarOpen", JSON.stringify(isSidebarOpen.value));
+});
 
 // Handle logout
 function handleLogout() {
@@ -137,7 +150,7 @@ const toggleSidebar = () => {
   width: 100%;
   display: flex;
   position: relative;
-  background: #f8fafc;
+  background: #0f172a;
 }
 
 /* ======================
@@ -273,6 +286,7 @@ const toggleSidebar = () => {
   background: rgba(15, 23, 42, 0.55);
   z-index: 30;
   backdrop-filter: blur(2px);
+  pointer-events: auto;
 }
 
 /* ======================
@@ -287,26 +301,49 @@ const toggleSidebar = () => {
   transition: margin-left 0.3s ease;
 }
 
+/* Tablet Landscape / Square Screen (iPad, Projector) - Adjust for better responsiveness */
+@media (max-width: 1280px) and (min-aspect-ratio: 3/4) {
+  .main {
+    margin-left: 200px;
+  }
+
+  .topbar {
+    padding: 0 16px;
+    height: 60px;
+  }
+
+  .hamb {
+    margin-right: 8px;
+    padding: 6px;
+  }
+
+  .breadcrumb {
+    gap: 4px;
+    margin-left: 12px;
+    font-size: 0.9rem;
+  }
+}
+
 .topbar {
   height: 64px;
   display: flex;
   align-items: center;
   padding: 0 24px;
-  border-bottom: 1px solid #e2e8f0;
-  background: linear-gradient(to right, #ffffff, #f8fafc);
+  border-bottom: 1px solid #1f2937;
+  background: linear-gradient(to right, #111827, #0f172a);
   position: sticky;
   top: 0;
   z-index: 20;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .hamb {
   margin-right: 12px;
   padding: 8px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #f1f5f9;
-  color: #0f172a;
+  border: 1px solid #1f2937;
+  background: #1f2937;
+  color: #e5e7eb;
   cursor: pointer;
   display: inline-flex !important;
   align-items: center;
@@ -316,8 +353,8 @@ const toggleSidebar = () => {
 }
 
 .hamb:hover {
-  background: #e2e8f0;
-  border-color: #cbd5e1;
+  background: #2d3748;
+  border-color: #4b5563;
   transform: translateY(-1px);
 }
 
@@ -335,7 +372,7 @@ const toggleSidebar = () => {
 }
 
 .breadcrumb-item {
-  color: #64748b;
+  color: #9ca3af;
   font-weight: 500;
 }
 
@@ -345,7 +382,7 @@ const toggleSidebar = () => {
 }
 
 .breadcrumb-sep {
-  color: #cbd5e1;
+  color: #4b5563;
 }
 
 .topbar-title {
@@ -375,23 +412,19 @@ const toggleSidebar = () => {
   display: flex;
   box-sizing: border-box;
   position: relative;
+  padding: 24px;
+  justify-content: center;
 }
 
 .page > * {
   width: 100%;
-  max-width: 100%; /* Full width tanpa batasan */
+  max-width: 1600px;
+  padding: 0 24px;
 }
 
 /* Adjust main area when sidebar is hidden */
 .sidebar-hidden ~ .main {
   margin-left: 0;
-}
-
-/* Remove margin on mobile */
-@media (max-width: 1024px) {
-  .main {
-    margin-left: 0;
-  }
 }
 
 /* Animasi fade untuk submenu */
@@ -404,32 +437,76 @@ const toggleSidebar = () => {
   opacity: 0;
 }
 
-/* DESKTOP: sidebar toggle behavior */
-@media (min-width: 1024px) {
-  .layout {
-    display: flex;
-    width: 100%;
+/* Hamburger button always visible on all sizes */
+.hamb {
+  display: inline-flex !important;
+  visibility: visible !important;
+  z-index: 150;
+}
+
+/* All screens - Sidebar toggle behavior */
+@media (max-width: 1279px) {
+  .main {
+    margin-left: 0;
   }
 
   .sidebar-visible {
     transform: translateX(0) !important;
     opacity: 1 !important;
+    z-index: 1000;
+    pointer-events: auto !important;
   }
 
   .sidebar-hidden {
     transform: translateX(-100%) !important;
     opacity: 0 !important;
-    pointer-events: none;
+    pointer-events: none !important;
   }
 
+  /* Backdrop for tablet screens */
+  .backdrop {
+    display: block;
+    z-index: 999;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .sidebar-visible {
+    z-index: 1000;
+    width: 80vw;
+    max-width: 300px;
+  }
+
+  .backdrop {
+    z-index: 999;
+  }
+}
+
+/* DESKTOP: sidebar toggle-able with hamburger */
+@media (min-width: 1280px) {
   .main {
-    min-height: 100vh;
+    margin-left: 0;
   }
 
-  /* Ensure hamburger is always visible */
-  .hamb {
-    display: inline-flex !important;
-    visibility: visible !important;
+  .sidebar-visible {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    z-index: 1000;
+    pointer-events: auto !important;
+    width: 240px;
+  }
+
+  .sidebar-hidden {
+    transform: translateX(-100%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* Backdrop on desktop too */
+  .backdrop {
+    display: block;
+    z-index: 999;
   }
 }
 </style>
