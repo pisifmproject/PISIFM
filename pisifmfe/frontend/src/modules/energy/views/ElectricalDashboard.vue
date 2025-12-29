@@ -76,7 +76,7 @@ onMounted(() => {
             (data) => {
                 panels.value[index - 1] = data;
                 lastUpdate.value = new Date();
-                console.log(`[ElectricalDashboard] Updated LVMDP ${index} data`);
+                // console.log(`[ElectricalDashboard] Updated LVMDP ${index} data`);
             }
         );
         unwatchers.push(unsub);
@@ -106,13 +106,13 @@ const formatNumber = (num: number, decimals = 1) => {
                   <h1 class="page-title">Power Monitoring System</h1>
                   <div v-if="isRealData" class="live-badge">
                       <div class="live-dot"></div>
-                      <span>LIVE DATA</span>
+                      <span>LIVE</span>
                   </div>
               </div>
               <p class="subtitle">
                 {{ plant?.name }} • Installed Capacity: 5.540 kVA
                 <span v-if="isRealData" class="last-update">
-                  • Last Update: {{ lastUpdate.toLocaleTimeString() }}
+                  <!-- Last Update: {{ lastUpdate.toLocaleTimeString() }} -->
                 </span>
               </p>
           </div>
@@ -166,7 +166,7 @@ const formatNumber = (num: number, decimals = 1) => {
                </div>
                <div class="stat-item">
                    <label>AVG POWER FACTOR</label>
-                   <span class="stat-val text-green">{{ formatNumber(plantStats.avgPf, 3) }}</span>
+                   <span class="stat-val text-green">{{ formatNumber(plantStats.avgPf, 2) }}</span>
                </div>
                <div class="stat-item">
                    <label>MAX CURRENT (PLANT)</label>
