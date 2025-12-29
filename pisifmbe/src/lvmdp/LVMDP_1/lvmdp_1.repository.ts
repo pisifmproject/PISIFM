@@ -106,13 +106,64 @@ export async function findLVMDPs(dateFrom?: string, dateTo?: string) {
 
 // ambil data paling baru (untuk gauge realtime)
 export async function findLatestLVMDP1() {
-  const result = await db.execute(
-    sql`SELECT * FROM public.v_lvmdp_1 ORDER BY waktu DESC LIMIT 1`
-  );
-  const rows = (result as any).rows || result;
-  const row = Array.isArray(rows) ? rows[0] : null;
-  return row ? mapRow(row) : null;
+  try {
+    // Optimized query with index hint and limit
+    const result = await db.execute(
+      sql`SELECT * FROM public.v_lvmdp_1 
+          WHERE waktu >= CURRENT_DATE - interval '1 day'
+          ORDER BY waktu DESC 
+          LIMIT 1`
+    );
+    const rows = (result as any).rows || result;
+    const row = Array.isArray(rows) ? rows[0] : null;
+
+    if (row) {
+      const mapped = mapRow(row);
+      return mapped;
+    }
+
+    // Fallback to lvmdp_hmi with optimized query
+    const hmiResult = await db.execute(
+      sql`SELECT * FROM public.lvmdp_hmi 
+          WHERE datetimefield >= CURRENT_DATE - interval '1 day'
+          ORDER BY datetimefield DESC 
+          LIMIT 1`
+    );
+    const hmiRows = (hmiResult as any).rows || hmiResult;
+    const hmiRow = Array.isArray(hmiRows) ? hmiRows[0] : null;
+
+    if (hmiRow) {
+      const mapped = mapHMIRow1(hmiRow);
+      return mapped;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("[LVMDP1] Error fetching real data:", error);
+    return null;
+  }
 }
+
+// Map HMI row columns untuk LVMDP 1
+const mapHMIRow1 = (r: any): Lvmdp1Row => ({
+  waktu:
+    r.datetimefield instanceof Date
+      ? r.datetimefield
+      : new Date(r.datetimefield || new Date()),
+  totalKwh: toNumber(r.lvmdp_energy_lvmdp1),
+  realPower: toNumber(r.lvmdp__total_lvmdp1), // Total kW semua fase
+  cosPhi: toNumber(r.lvmdp_cos_phi_lvmdp1),
+  freq: toNumber(r.lvmdp_hz_lvmdp1),
+  avgLineLine: toNumber(r.lvmdp_l_l_avg_lvmdp1),
+  avgLineNeut: 0, // Not available in HMI
+  avgCurrent: toNumber(r.lvmdp_avg_ampere_lvmdp1),
+  currentR: toNumber(r.lvmdp_r_lvmdp1),
+  currentS: toNumber(r.lvmdp_s_lvmdp1),
+  currentT: toNumber(r.lvmdp_t_lvmdp1),
+  voltageRS: toNumber(r.lvmdp_r_s_lvmdp1),
+  voltageST: toNumber(r.lvmdp_s_t_lvmdp1),
+  voltageTR: toNumber(r.lvmdp_t_r_lvmdp1),
+});
 
 // ambil data RST (current & voltage) dari lvmdp_hmi
 export async function findLatestHMI1() {

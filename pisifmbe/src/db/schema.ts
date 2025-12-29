@@ -6,6 +6,8 @@ import {
   doublePrecision,
   date,
   integer,
+  boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 /* ===========================
@@ -15,6 +17,36 @@ export const user = pgTable("User", {
   id: text("id").primaryKey().notNull(),
   email: text("email").notNull(),
   name: text("name"),
+});
+
+/* ===========================
+   MULTI-PLANT TABLES
+=========================== */
+
+/** Plants table - stores the four plants */
+export const plants = pgTable("plants", {
+  plantId: text("plant_id").primaryKey().notNull(),
+  displayName: text("display_name").notNull(),
+  location: text("location"),
+  status: text("status").default("active").notNull(),
+  hasRealData: boolean("has_real_data").default(false).notNull(),
+  installedCapacityKva: doublePrecision("installed_capacity_kva").default(0),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+/** Machines table - stores all machines across all plants */
+export const machines = pgTable("machines", {
+  machineId: text("machine_id").primaryKey().notNull(),
+  plantId: text("plant_id").notNull().references(() => plants.plantId, { onDelete: "cascade" }),
+  machineName: text("machine_name").notNull(),
+  machineType: text("machine_type"), // 'production', 'packing', etc.
+  lineCategory: text("line_category"), // optional grouping
+  status: text("status").default("active").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 /* ===========================

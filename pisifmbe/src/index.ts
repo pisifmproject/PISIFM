@@ -13,6 +13,8 @@ import lvmdp4DailyReportController from "./lvmdp/LVMDP_4/lvmdp_4.dailyReport.con
 import productionController from "./production/production.controller";
 import packingController from "./packing/packing.controller";
 import dailyReportRouter from "./routes/dailyReport.router";
+import lvmdpRouter from "./routes/lvmdp.router";
+import debugRouter from "./routes/debug.router";
 import "./utils/pgTimezoneFix";
 
 const app = express();
@@ -49,7 +51,8 @@ app.get("/api", (_req, res) => {
   res.send("Sukses landing ke endpoint api");
 });
 
-app.use("/api/lvmdp", require("./routes/lvmdp.router").default);
+app.use("/api/lvmdp", lvmdpRouter);
+app.use("/debug", debugRouter);
 
 app.use("/api/user", userController);
 app.use("/api/lvmdp1", lvmdp1Controller);
@@ -83,6 +86,15 @@ app.use("/api/summary", summaryRouter);
 // Electrical Report routes (Professional reporting system)
 import electricalReportRouter from "./routes/electricalReport.router";
 app.use("/api/report", electricalReportRouter);
+
+// Multi-plant routes
+import metadataRouter from "./routes/metadata.router";
+import globalRouter from "./routes/global.router";
+import plantRouter from "./routes/plant.router";
+
+app.use("/api/metadata", metadataRouter);
+app.use("/api/global", globalRouter);
+app.use("/api/plants", plantRouter);
 
 // app.listen(PORT, () => {
 //   console.log(`Server is running on port ${PORT}`);

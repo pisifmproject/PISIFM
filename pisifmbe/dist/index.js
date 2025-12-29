@@ -18,6 +18,8 @@ const lvmdp_4_dailyReport_controller_1 = __importDefault(require("./lvmdp/LVMDP_
 const production_controller_1 = __importDefault(require("./production/production.controller"));
 const packing_controller_1 = __importDefault(require("./packing/packing.controller"));
 const dailyReport_router_1 = __importDefault(require("./routes/dailyReport.router"));
+const lvmdp_router_1 = __importDefault(require("./routes/lvmdp.router"));
+const debug_router_1 = __importDefault(require("./routes/debug.router"));
 require("./utils/pgTimezoneFix");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
@@ -44,7 +46,8 @@ app.use((req, res, next) => {
 app.get("/api", (_req, res) => {
     res.send("Sukses landing ke endpoint api");
 });
-app.use("/api/lvmdp", require("./routes/lvmdp.router").default);
+app.use("/api/lvmdp", lvmdp_router_1.default);
+app.use("/debug", debug_router_1.default);
 app.use("/api/user", user_controller_1.default);
 app.use("/api/lvmdp1", lvmdp_1_controller_1.default);
 app.use("/api/lvmdp1/daily-report", lvmdp_1_dailyReport_controller_1.default);
@@ -71,6 +74,13 @@ app.use("/api/summary", summary_router_1.default);
 // Electrical Report routes (Professional reporting system)
 const electricalReport_router_1 = __importDefault(require("./routes/electricalReport.router"));
 app.use("/api/report", electricalReport_router_1.default);
+// Multi-plant routes
+const metadata_router_1 = __importDefault(require("./routes/metadata.router"));
+const global_router_1 = __importDefault(require("./routes/global.router"));
+const plant_router_1 = __importDefault(require("./routes/plant.router"));
+app.use("/api/metadata", metadata_router_1.default);
+app.use("/api/global", global_router_1.default);
+app.use("/api/plants", plant_router_1.default);
 // app.listen(PORT, () => {
 //   console.log(`Server is running on port ${PORT}`);
 // });

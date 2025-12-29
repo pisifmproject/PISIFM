@@ -1,0 +1,413 @@
+<script setup lang="ts">
+import { computed, ref, defineProps } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { PLANTS, type PlantId } from "@/config/app.config";
+import {
+  LayoutDashboard,
+  Factory,
+  Zap,
+  Droplets,
+  Wind,
+  Flame,
+  CornerUpLeft,
+  ChevronDown,
+  ChevronRight,
+  Activity,
+} from "lucide-vue-next";
+
+const props = defineProps({
+  isOpen: {
+    type: Boolean,
+    default: true,
+  },
+});
+
+const route = useRoute();
+const router = useRouter();
+
+// Derived state
+const currentPlantId = computed(
+  () => route.params.plantId as PlantId | undefined
+);
+const isPlantView = computed(() => !!currentPlantId.value);
+const currentPlant = computed(() =>
+  currentPlantId.value ? PLANTS[currentPlantId.value] : null
+);
+
+// Sidebar grouping state
+const energyExpanded = ref(true);
+const electricityExpanded = ref(false);
+const productionExpanded = ref(true);
+
+const plantsList = Object.values(PLANTS);
+
+function navigateTo(path: string) {
+  router.push(path);
+}
+
+function toggleEnergy() {
+  energyExpanded.value = !energyExpanded.value;
+}
+
+function toggleElectricity() {
+  electricityExpanded.value = !electricityExpanded.value;
+}
+
+function toggleProduction() {
+  productionExpanded.value = !productionExpanded.value;
+}
+</script>
+
+<template>
+  <aside class="sidebar" :class="{ 'sidebar-closed': !isOpen }">
+    <div class="sidebar-header">
+      <div class="logo">
+        <Activity class="logo-icon" />
+        <span class="logo-text">PT Indofood Fortuna Makmur</span>
+      </div>
+      <div v-if="isPlantView && currentPlant" class="plant-badge">
+        {{ currentPlant.name }}
+      </div>
+      <div v-else class="plant-badge global">Corporate View</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <!-- GLOBAL VIEW NAVIGATION -->
+      <template v-if="!isPlantView">
+        <div class="nav-section">
+          <div class="nav-label">Overview</div>
+          <a class="nav-item active">
+            <LayoutDashboard class="nav-icon" />
+            <span>Global Dashboard</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-label">Plants</div>
+          <div
+            v-for="plant in plantsList"
+            :key="plant.id"
+            class="nav-item"
+            @click="navigateTo(`/plant/${plant.id}`)"
+          >
+            <Factory class="nav-icon" />
+            <span>{{ plant.name }}</span>
+          </div>
+        </div>
+      </template>
+
+      <!-- PLANT VIEW NAVIGATION -->
+      <template v-else>
+        <div class="nav-item back-link" @click="navigateTo('/global')">
+          <CornerUpLeft class="nav-icon" />
+          <span>Back to Global</span>
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <div
+          class="nav-item"
+          :class="{ active: route.name === 'PlantDashboard' }"
+          @click="navigateTo(`/plant/${currentPlantId}`)"
+        >
+          <LayoutDashboard class="nav-icon" />
+          <span>Dashboard</span>
+        </div>
+
+        <!-- Energy & Utilities Group -->
+        <div class="nav-group">
+          <div class="nav-item group-header" @click="toggleEnergy">
+            <Zap class="nav-icon" />
+            <span>Energy & Utilities</span>
+            <component
+              :is="energyExpanded ? ChevronDown : ChevronRight"
+              class="group-arrow"
+            />
+          </div>
+
+          <div v-if="energyExpanded" class="group-content">
+            <!-- Electricity with LVMDP submenu -->
+            <div class="nav-group">
+              <div
+                class="nav-item sub-item group-header"
+                :class="{
+                  active:
+                    route.path ===
+                      `/plant/${currentPlantId}/energy/electricity` &&
+                    !route.params.lvmdpId,
+                }"
+                @click="
+                  navigateTo(`/plant/${currentPlantId}/energy/electricity`)
+                "
+              >
+                <Zap class="nav-icon-small" />
+                <span>Electricity</span>
+                <component
+                  :is="electricityExpanded ? ChevronDown : ChevronRight"
+                  class="group-arrow-small"
+                  @click.stop="toggleElectricity"
+                />
+              </div>
+
+              <div v-if="electricityExpanded" class="sub-group-content">
+                <div
+                  v-for="i in 4"
+                  :key="`lvmdp-${i}`"
+                  class="nav-item leaf-item"
+                  :class="{ active: route.params.lvmdpId === String(i) }"
+                  @click="
+                    navigateTo(
+                      `/plant/${currentPlantId}/energy/electricity/lvmdp/${i}`
+                    )
+                  "
+                >
+                  <span>LVMDP {{ i }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="nav-item sub-item"
+              @click="navigateTo(`/plant/${currentPlantId}/energy/steam`)"
+            >
+              <Flame class="nav-icon-small" /> <span>Steam</span>
+            </div>
+            <div
+              class="nav-item sub-item"
+              @click="navigateTo(`/plant/${currentPlantId}/energy/water`)"
+            >
+              <Droplets class="nav-icon-small" /> <span>Water</span>
+            </div>
+            <div
+              class="nav-item sub-item"
+              @click="
+                navigateTo(`/plant/${currentPlantId}/energy/compressed-air`)
+              "
+            >
+              <Wind class="nav-icon-small" /> <span>Compressed Air</span>
+            </div>
+            <div
+              class="nav-item sub-item"
+              @click="navigateTo(`/plant/${currentPlantId}/energy/nitrogen`)"
+            >
+              <Wind class="nav-icon-small" /> <span>Nitrogen</span>
+            </div>
+            <div
+              class="nav-item sub-item"
+              @click="navigateTo(`/plant/${currentPlantId}/energy/gas`)"
+            >
+              <Flame class="nav-icon-small" /> <span>Gas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Production Lines (expandable group with machines) -->
+        <div class="nav-group">
+          <div class="nav-item group-header" @click="toggleProduction">
+            <Factory class="nav-icon" />
+            <span>Production Lines</span>
+            <component
+              :is="productionExpanded ? ChevronDown : ChevronRight"
+              class="group-arrow"
+            />
+          </div>
+          <div v-if="productionExpanded" class="group-content">
+            <div
+              v-for="machine in currentPlant?.machines"
+              :key="machine.id"
+              class="nav-item sub-item"
+              :class="{ active: route.params.machineId === machine.id }"
+              @click="
+                navigateTo(
+                  `/plant/${currentPlantId}/production/machine/${machine.id}`
+                )
+              "
+            >
+              <span>{{ machine.name }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
+    </nav>
+  </aside>
+</template>
+
+<style scoped>
+.sidebar {
+  width: 280px;
+  height: 100vh;
+  background-color: #0f172a;
+  border-right: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-family: "Inter", sans-serif;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  color: #38bdf8;
+}
+
+.logo-icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: white;
+}
+
+.plant-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background-color: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+}
+
+.plant-badge.global {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #2563eb;
+}
+
+.sidebar-nav {
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nav-section {
+  margin-bottom: 1.5rem;
+}
+
+.nav-label {
+  padding: 0 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: #475569;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background-color: #1e293b;
+  color: white;
+}
+
+.nav-item.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.nav-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.nav-icon-small {
+  width: 1rem;
+  height: 1rem;
+}
+
+.back-link {
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+.nav-divider {
+  height: 1px;
+  background-color: #1e293b;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.group-header {
+  justify-content: space-between;
+}
+
+.group-arrow {
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.5;
+}
+
+.group-arrow-small {
+  width: 0.875rem;
+  height: 0.875rem;
+  opacity: 0.5;
+  margin-left: auto;
+}
+
+.group-content {
+  margin-left: 0.5rem;
+  border-left: 1px solid #1e293b;
+  padding-left: 0.5rem;
+}
+
+.sub-group-content {
+  margin-left: 0.5rem;
+  border-left: 1px solid #1e293b;
+  padding-left: 0.5rem;
+}
+
+.sub-item {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.leaf-item {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.sidebar-closed {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 999;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .sidebar-closed {
+    display: none !important;
+  }
+}
+</style>

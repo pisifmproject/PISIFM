@@ -34,6 +34,7 @@ const lvmdp_1_repository_1 = require("./lvmdp/LVMDP_1/lvmdp_1.repository");
 const lvmdp_2_repository_1 = require("./lvmdp/LVMDP_2/lvmdp_2.repository");
 const lvmdp_3_repository_1 = require("./lvmdp/LVMDP_3/lvmdp_3.repository");
 const lvmdp_4_repository_1 = require("./lvmdp/LVMDP_4/lvmdp_4.repository");
+const seedPlantsAndMachines_1 = require("./db/seedPlantsAndMachines");
 const server = http_1.default.createServer(index_1.default);
 (0, socket_1.initSocket)(server);
 // mesin 1–4, random-walk biar halus
@@ -57,9 +58,18 @@ const step = (v) => {
 //     });
 //   }
 // }, 1000);
-const PORT = Number(process.env.PORT) || 2000;
-server.listen(PORT, "0.0.0.0", () => {
+const PORT = Number(process.env.PORT) || 3000;
+server.listen(PORT, "0.0.0.0", async () => {
     console.log(`API & WS running on http://localhost:${PORT}`);
+    // Seed plants and machines (idempotent) - optional, don't block server startup
+    try {
+        await (0, seedPlantsAndMachines_1.seedPlantsAndMachines)();
+        console.log("✓ Plants and machines seeded/verified");
+    }
+    catch (err) {
+        console.warn("⚠ Warning: Could not seed plants and machines (optional):", err instanceof Error ? err.message : err);
+        // Continue server startup - plants/machines table may not exist yet or may not be needed for initial operation
+    }
     // Start hourly report scheduler (generate reports every hour at :05)
     try {
         (0, hourlyReportScheduler_1.initHourlyReportScheduler)();

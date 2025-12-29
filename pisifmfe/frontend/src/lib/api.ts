@@ -5,6 +5,7 @@ import type { LvmdpRow } from "@/types";
 export type LvmdpRaw = {
   waktu: string;
   totalKwh: number;
+  realPower?: number;
   cosPhi: number;
   freq: number;
   avgLineLine: number;
@@ -28,6 +29,50 @@ export const api = axios.create({
   },
 });
 
+// Add response interceptor to log and handle errors
+let lastLvmdpLog = 0;
+api.interceptors.response.use(
+  (response) => {
+    // Log successful LVMDP responses (throttled to every 5 seconds)
+    if (
+      response.config?.url?.includes("/lvmdp") &&
+      response.config.url.includes("latest")
+    ) {
+      const now = Date.now();
+      if (now - lastLvmdpLog > 5000) {
+        console.log(`✅ [API] ${response.config.url}:`, {
+          current: `${response.data.avgCurrent} A`,
+          power: `${(
+            ((Number(response.data.avgLineLine) *
+              Number(response.data.avgCurrent) *
+              Math.sqrt(3)) /
+              1000) *
+            Number(response.data.cosPhi)
+          ).toFixed(1)} kW`,
+          voltage: `${response.data.avgLineLine} V`,
+        });
+        lastLvmdpLog = now;
+      }
+    }
+    return response;
+  },
+  (error) => {
+    // Log error details for debugging
+    const status = error.response?.status;
+    const endpoint = error.config?.url;
+
+    // For 401 errors on LVMDP endpoints, just log and reject
+    // The service will catch and use dummy data instead
+    if (status === 401 && endpoint?.includes("/lvmdp")) {
+      console.warn(
+        `[API] 401 Unauthorized on ${endpoint} - will use dummy data`
+      );
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 // ---------- LIST ----------
 export async function getLvmdp(id: 1 | 2 | 3 | 4): Promise<LvmdpRow[]> {
   // backend kamu masih /lvmdp1, /lvmdp2, ...
@@ -42,7 +87,10 @@ export const getLvmdp4 = () => getLvmdp(4);
 
 export async function getLvmdpLatest(panelId: number) {
   // hasilnya request ke /api/lvmdp/:id/latest -> diproxy ke :2000
-  const { data } = await api.get(`/lvmdp/${panelId}/latest`);
+  // Add timestamp to prevent caching
+  const { data } = await api.get(`/lvmdp/${panelId}/latest`, {
+    params: { _t: Date.now() },
+  });
   return data;
 }
 export const getLvmdp1Latest = () => getLvmdpLatest(1);

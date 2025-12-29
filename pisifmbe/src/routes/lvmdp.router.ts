@@ -38,11 +38,18 @@ r.get("/:id/latest", async (req, res) => {
     return res.json({
       waktu: row.waktu,
       totalKwh: row.totalKwh,
+      realPower: row.realPower,
       cosPhi: row.cosPhi,
       freq: row.freq,
       avgLineLine: row.avgLineLine,
       avgLineNeut: row.avgLineNeut,
       avgCurrent: row.avgCurrent,
+      currentR: row.currentR,
+      currentS: row.currentS,
+      currentT: row.currentT,
+      voltageRS: row.voltageRS,
+      voltageST: row.voltageST,
+      voltageTR: row.voltageTR,
     });
   } catch (err) {
     console.error("GET /lvmdp/:id/latest error:", err);

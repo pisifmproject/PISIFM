@@ -28,15 +28,16 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: 30,
     proxy: {
       "/api": {
-        target: "http://localhost:2000", // sesuaikan dengan PORT backend
+        target: "http://localhost:2000",
         changeOrigin: true,
+        timeout: 5000, // 5 second timeout
       },
       "/socket.io": {
-        target: "http://localhost:2000", // sesuaikan dengan PORT backend
+        target: "http://localhost:2000",
         ws: true,
+        changeOrigin: true,
       },
     },
   },

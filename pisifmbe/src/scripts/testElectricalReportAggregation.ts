@@ -29,10 +29,10 @@ async function test() {
     console.log("\n[NEXT STEPS]");
     console.log("  1. Check database: SELECT * FROM daily_electrical_reports;");
     console.log(
-      "  2. Test API: GET http://localhost:2000/api/report/electrical/latest"
+      "  2. Test API: GET http://localhost:3000/api/report/electrical/latest"
     );
     console.log(
-      "  3. Test daily report: GET http://localhost:2000/api/report/electrical?period=day&date=" +
+      "  3. Test daily report: GET http://localhost:3000/api/report/electrical?period=day&date=" +
         dateStr
     );
 

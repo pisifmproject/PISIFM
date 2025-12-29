@@ -2,7 +2,7 @@ async function testAPI() {
   const today = "2025-12-22";
   const panelId = 1;
 
-  const baseURL = "http://localhost:2000";
+  const baseURL = "http://localhost:3000";
 
   console.log(`\nTesting API endpoints...`);
   console.log(`Base URL: ${baseURL}`);

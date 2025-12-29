@@ -35,6 +35,7 @@ import { findLatestLVMDP1 } from "./lvmdp/LVMDP_1/lvmdp_1.repository";
 import { findLatestLVMDP2 } from "./lvmdp/LVMDP_2/lvmdp_2.repository";
 import { findLatestLVMDP3 } from "./lvmdp/LVMDP_3/lvmdp_3.repository";
 import { findLatestLVMDP4 } from "./lvmdp/LVMDP_4/lvmdp_4.repository";
+import { seedPlantsAndMachines } from "./db/seedPlantsAndMachines";
 
 const server = http.createServer(app);
 initSocket(server);
@@ -63,9 +64,21 @@ const step = (v: number) => {
 //   }
 // }, 1000);
 
-const PORT = Number(process.env.PORT) || 2000;
-server.listen(PORT, "0.0.0.0", () => {
+const PORT = Number(process.env.PORT) || 3000;
+server.listen(PORT, "0.0.0.0", async () => {
   console.log(`API & WS running on http://localhost:${PORT}`);
+
+  // Seed plants and machines (idempotent) - optional, don't block server startup
+  try {
+    await seedPlantsAndMachines();
+    console.log("✓ Plants and machines seeded/verified");
+  } catch (err) {
+    console.warn(
+      "⚠ Warning: Could not seed plants and machines (optional):",
+      err instanceof Error ? err.message : err
+    );
+    // Continue server startup - plants/machines table may not exist yet or may not be needed for initial operation
+  }
 
   // Start hourly report scheduler (generate reports every hour at :05)
   try {

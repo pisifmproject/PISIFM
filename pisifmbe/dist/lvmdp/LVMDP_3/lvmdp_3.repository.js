@@ -29,6 +29,25 @@ const mapRow = (r) => ({
     voltageST: toNumber(r.voltage_st),
     voltageTR: toNumber(r.voltage_tr),
 });
+// Map dari lvmdp_hmi table untuk LVMDP3
+const mapHMIRow = (r) => ({
+    waktu: r.datetimefield instanceof Date
+        ? r.datetimefield
+        : new Date(r.datetimefield),
+    totalKwh: toNumber(r.lvmdp_energy_lvmdp3),
+    realPower: toNumber(r.lvmdp__total_lvmdp3),
+    cosPhi: toNumber(r.lvmdp_cos_phi_lvmdp3),
+    freq: toNumber(r.lvmdp_hz_lvmdp3),
+    avgLineLine: toNumber(r.lvmdp_l_l_avg_lvmdp3),
+    avgLineNeut: toNumber(r.lvmdp_l_n_avg_lvmdp3),
+    avgCurrent: toNumber(r.lvmdp_avg_ampere_lvmdp3),
+    currentR: toNumber(r.lvmdp_r_lvmdp3),
+    currentS: toNumber(r.lvmdp_s_lvmdp3),
+    currentT: toNumber(r.lvmdp_t_lvmdp3),
+    voltageRS: toNumber(r.lvmdp_r_s_lvmdp3),
+    voltageST: toNumber(r.lvmdp_s_t_lvmdp3),
+    voltageTR: toNumber(r.lvmdp_t_r_lvmdp3),
+});
 async function findLVMDPs(dateFrom, dateTo) {
     try {
         let query;
@@ -73,11 +92,43 @@ async function findLVMDPs(dateFrom, dateTo) {
         return [];
     }
 }
+/**
+ * Try to get data dari v_lvmdp_3 view atau lvmdp_hmi table (LVMDP3 columns)
+ */
 async function findLatestLVMDP3() {
-    const result = await db_1.db.execute((0, drizzle_orm_1.sql) `SELECT * FROM public.v_lvmdp_3 ORDER BY waktu DESC LIMIT 1`);
-    const rows = result.rows || result;
-    const row = Array.isArray(rows) ? rows[0] : null;
-    return row ? mapRow(row) : null;
+    // Try v_lvmdp_3 first with optimized query
+    try {
+        const result = await db_1.db.execute((0, drizzle_orm_1.sql) `SELECT * FROM public.v_lvmdp_3 
+          WHERE waktu >= CURRENT_DATE - interval '1 day'
+          ORDER BY waktu DESC 
+          LIMIT 1`);
+        const rows = result.rows || result;
+        const row = Array.isArray(rows) ? rows[0] : null;
+        if (row) {
+            const mapped = mapRow(row);
+            return mapped;
+        }
+    }
+    catch (error) {
+        // Silently try fallback
+    }
+    // Fallback ke lvmdp_hmi for LVMDP3 data with optimized query
+    try {
+        const result = await db_1.db.execute((0, drizzle_orm_1.sql) `SELECT * FROM public.lvmdp_hmi 
+          WHERE datetimefield >= CURRENT_DATE - interval '1 day'
+          ORDER BY datetimefield DESC 
+          LIMIT 1`);
+        const rows = result.rows || result;
+        const row = Array.isArray(rows) ? rows[0] : null;
+        if (row) {
+            const mapped = mapHMIRow(row);
+            return mapped;
+        }
+    }
+    catch (error) {
+        console.error("[LVMDP3] Error fetching data:", error);
+    }
+    return null;
 }
 // ambil data RST (current & voltage) dari lvmdp_hmi
 async function findLatestHMI3() {
