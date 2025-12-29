@@ -1,28 +1,8 @@
 "use strict";
-// import http from "http";
-// import app from "./index";
-// import { initSocket, io } from "./socket";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// const server = http.createServer(app);
-// // inisialisasi Socket.IO
-// initSocket(server);
-// // simulasi update data setiap 1 detik
-// setInterval(() => {
-//   // kirim hanya ke room LVMDP 1
-//   io().to("lvmdp:1").emit("gaugeUpdate", {
-//     id: "LVMDP_1",
-//     availability: Math.trunc(Math.random() * 100),
-//   });
-//   // kalau nanti mau simulasi untuk mesin lain tinggal tambahkan:
-//   // io().to("lvmdp:2").emit("gaugeUpdate", { id: "LVMDP_2", availability: Math.trunc(Math.random() * 100) });
-// }, 1000);
-// const PORT = Number(process.env.PORT) || 2000;
-// server.listen(PORT, () => {
-//   console.log(`API & WS running on http://localhost:${PORT}`);
-// });
 const http_1 = __importDefault(require("http"));
 const index_1 = __importDefault(require("./index"));
 const socket_1 = require("./socket");
@@ -49,18 +29,12 @@ const step = (v) => {
     const n = Math.max(0, Math.min(100, v + (Math.random() - 0.5) * 12));
     return Math.round(n);
 };
-// setInterval(() => {
-//   for (const id of ids) {
-//     state[id] = step(state[id]);
-//     io().to(roomFor(id)).emit("gaugeUpdate", {
-//       id: `LVMDP_${id}`,
-//       availability: state[id],
-//     });
-//   }
-// }, 1000);
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 3001;
 server.listen(PORT, "0.0.0.0", async () => {
-    console.log(`API & WS running on http://localhost:${PORT}`);
+    console.log(`✅ API & WS running on http://localhost:${PORT}`);
+    console.log(`✅ Database: ${process.env.DATABASE_URL?.split("@")[1] || "Not configured"}`);
+    console.log(`✅ Environment: ${process.env.NODE_ENV || "development"}`);
+    console.log("");
     // Seed plants and machines (idempotent) - optional, don't block server startup
     try {
         await (0, seedPlantsAndMachines_1.seedPlantsAndMachines)();

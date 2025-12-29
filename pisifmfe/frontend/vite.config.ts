@@ -30,12 +30,12 @@ export default defineConfig({
     host: "0.0.0.0",
     proxy: {
       "/api": {
-        target: "http://localhost:2000",
+        target: "http://localhost:3001",
         changeOrigin: true,
-        timeout: 5000, // 5 second timeout
+        timeout: 5000,
       },
       "/socket.io": {
-        target: "http://localhost:2000",
+        target: "http://localhost:3001",
         ws: true,
         changeOrigin: true,
       },

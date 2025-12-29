@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronRight,
   Activity,
+  ChevronsLeft
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -21,6 +22,8 @@ const props = defineProps({
     default: true,
   },
 });
+
+const emit = defineEmits(['toggle']);
 
 const route = useRoute();
 const router = useRouter();
@@ -61,10 +64,16 @@ function toggleProduction() {
 <template>
   <aside class="sidebar" :class="{ 'sidebar-closed': !isOpen }">
     <div class="sidebar-header">
-      <div class="logo">
-        <Activity class="logo-icon" />
-        <span class="logo-text">PT Indofood Fortuna Makmur</span>
+      <div class="header-top-row">
+          <div class="logo">
+            <Activity class="logo-icon" />
+            <span class="logo-text">PT Indofood Fortuna Makmur</span>
+          </div>
+          <button class="collapse-btn" @click="emit('toggle')" title="Collapse Sidebar">
+              <ChevronsLeft class="w-5 h-5" />
+          </button>
       </div>
+      
       <div v-if="isPlantView && currentPlant" class="plant-badge">
         {{ currentPlant.name }}
       </div>
@@ -251,24 +260,49 @@ function toggleProduction() {
   border-bottom: 1px solid #1e293b;
 }
 
+.header-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
 .logo {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
   color: #38bdf8;
+  flex: 1;
 }
 
 .logo-icon {
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
 }
 
 .logo-text {
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.2;
   letter-spacing: -0.025em;
   color: white;
+}
+
+.collapse-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    margin-top: -0.25rem;
+}
+
+.collapse-btn:hover {
+    color: #e2e8f0;
+    background: rgba(255,255,255,0.1);
 }
 
 .plant-badge {

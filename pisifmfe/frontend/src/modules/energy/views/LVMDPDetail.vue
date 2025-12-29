@@ -5,6 +5,7 @@ import { lvmdpService } from "../services/lvmdp.service";
 import type { LVMDPData } from "../models";
 import GaugeSimple from "@/shared/components/GaugeSimple.vue";
 import { Zap, Activity, Clock } from "lucide-vue-next";
+import { PLANTS } from "@/config/app.config";
 
 // Props/Route params
 const route = useRoute();
@@ -16,6 +17,11 @@ const data = ref<LVMDPData | null>(null);
 const loading = ref(true);
 const isTransitioning = ref(false);
 const showSkeleton = ref(true);
+const lastUpdate = ref<Date>(new Date());
+const isRealData = computed(() => {
+  const plantConfig = PLANTS[plantId.value as keyof typeof PLANTS];
+  return plantConfig?.useRealData ?? false;
+});
 let unsubscribe: (() => void) | null = null;
 let loadingTimeout: number | null = null;
 
@@ -24,7 +30,6 @@ watch(
   [plantId, lvmdpId],
   ([newPlant, newId]) => {
     if (newPlant && newId) {
-      console.log(`[LVMDPDetail] Switching to LVMDP ${newId}`);
       isTransitioning.value = true;
       startSubscription(newPlant, newId);
     }
@@ -38,13 +43,13 @@ function startSubscription(plant: string, id: number) {
     unsubscribe();
     unsubscribe = null;
   }
-  
+
   // Clear any existing timeout
   if (loadingTimeout) {
     clearTimeout(loadingTimeout);
     loadingTimeout = null;
   }
-  
+
   // Clear old data immediately and show loading
   data.value = null;
   loading.value = true;
@@ -55,7 +60,6 @@ function startSubscription(plant: string, id: number) {
   // Reduced timeout to 2 seconds for better UX
   loadingTimeout = window.setTimeout(() => {
     if (loading.value) {
-      console.warn(`[LVMDPDetail] Loading timeout for LVMDP ${id}, hiding loading but keeping data if available`);
       loading.value = false;
       isTransitioning.value = false;
       showSkeleton.value = false;
@@ -64,24 +68,20 @@ function startSubscription(plant: string, id: number) {
   }, 2000); // 2 second timeout (reduced from 5)
 
   unsubscribe = lvmdpService.subscribe(plant, id, (newData) => {
-    console.log(`[LVMDPDetail] Callback called for LVMDP ${id}, data:`, newData);
-    
     // Clear timeout since we got data
     if (loadingTimeout) {
       clearTimeout(loadingTimeout);
       loadingTimeout = null;
     }
-    
+
     // Accept data if it exists (verification is done in service)
     if (newData) {
-      console.log(`[LVMDPDetail] Setting data for LVMDP ${id}:`, newData);
       data.value = newData;
       loading.value = false;
       isTransitioning.value = false;
       showSkeleton.value = false;
-      console.log(`[LVMDPDetail] Data set, loading=${loading.value}, isTransitioning=${isTransitioning.value}`);
+      lastUpdate.value = new Date();
     } else {
-      console.warn(`[LVMDPDetail] Received null/undefined data for LVMDP ${id}`);
       // Still hide loading even if no data
       loading.value = false;
       isTransitioning.value = false;
@@ -145,7 +145,13 @@ const getPhaseColor = (phase: string) => {
             <Zap class="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 class="title">LVMDP {{ lvmdpId }}</h1>
+            <div class="title-row">
+              <h1 class="title">LVMDP {{ lvmdpId }}</h1>
+              <div v-if="isRealData" class="live-badge">
+                <div class="live-dot"></div>
+                <span>LIVE</span>
+              </div>
+            </div>
             <div class="status-pill" :class="{ online: data.isConnected }">
               <div class="dot"></div>
               {{ data.isConnected ? "ONLINE" : "OFFLINE" }}
@@ -155,7 +161,7 @@ const getPhaseColor = (phase: string) => {
 
         <div class="timestamp">
           <Clock class="w-4 h-4" />
-          {{ new Date(data.timestamp).toLocaleTimeString() }}
+          {{ lastUpdate.toLocaleTimeString() }}
         </div>
       </div>
     </div>
@@ -439,6 +445,47 @@ const getPhaseColor = (phase: string) => {
   display: flex;
   align-items: center;
   gap: 1.25rem;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #4ade80;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.live-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  background: #4ade80;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
 }
 
 .icon-box {

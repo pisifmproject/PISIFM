@@ -19,9 +19,15 @@ export type LvmdpRaw = {
   voltageTR: number;
 };
 
+// Use environment variable for API URL, fallback to relative path for proxy
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+
+console.log(`[API] Using baseURL: ${API_BASE_URL}`);
+
 export const api = axios.create({
-  baseURL: "/api", // akan diproxy ke :2000 saat dev
+  baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: 10000,
   headers: {
     "Cache-Control": "no-cache, no-store, must-revalidate",
     Pragma: "no-cache",
@@ -29,48 +35,10 @@ export const api = axios.create({
   },
 });
 
-// Add response interceptor to log and handle errors
-let lastLvmdpLog = 0;
+// Response interceptor
 api.interceptors.response.use(
-  (response) => {
-    // Log successful LVMDP responses (throttled to every 5 seconds)
-    if (
-      response.config?.url?.includes("/lvmdp") &&
-      response.config.url.includes("latest")
-    ) {
-      const now = Date.now();
-      if (now - lastLvmdpLog > 5000) {
-        console.log(`✅ [API] ${response.config.url}:`, {
-          current: `${response.data.avgCurrent} A`,
-          power: `${(
-            ((Number(response.data.avgLineLine) *
-              Number(response.data.avgCurrent) *
-              Math.sqrt(3)) /
-              1000) *
-            Number(response.data.cosPhi)
-          ).toFixed(1)} kW`,
-          voltage: `${response.data.avgLineLine} V`,
-        });
-        lastLvmdpLog = now;
-      }
-    }
-    return response;
-  },
-  (error) => {
-    // Log error details for debugging
-    const status = error.response?.status;
-    const endpoint = error.config?.url;
-
-    // For 401 errors on LVMDP endpoints, just log and reject
-    // The service will catch and use dummy data instead
-    if (status === 401 && endpoint?.includes("/lvmdp")) {
-      console.warn(
-        `[API] 401 Unauthorized on ${endpoint} - will use dummy data`
-      );
-    }
-
-    return Promise.reject(error);
-  }
+  (response) => response,
+  (error) => Promise.reject(error)
 );
 
 // ---------- LIST ----------
@@ -86,12 +54,14 @@ export const getLvmdp3 = () => getLvmdp(3);
 export const getLvmdp4 = () => getLvmdp(4);
 
 export async function getLvmdpLatest(panelId: number) {
-  // hasilnya request ke /api/lvmdp/:id/latest -> diproxy ke :2000
-  // Add timestamp to prevent caching
-  const { data } = await api.get(`/lvmdp/${panelId}/latest`, {
-    params: { _t: Date.now() },
-  });
-  return data;
+  try {
+    const { data } = await api.get(`/lvmdp/${panelId}/latest`, {
+      params: { _t: Date.now() },
+    });
+    return data;
+  } catch (error: any) {
+    throw error;
+  }
 }
 export const getLvmdp1Latest = () => getLvmdpLatest(1);
 export const getLvmdp2Latest = () => getLvmdpLatest(2);

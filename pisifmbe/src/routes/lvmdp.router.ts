@@ -15,8 +15,41 @@ const REPO_FUNCTIONS: Record<number, () => Promise<any>> = {
   4: findLatestLVMDP4,
 };
 
+// Test endpoint to check database connection
+r.get("/test", async (req, res) => {
+  try {
+    const result = await findLatestLVMDP1();
+
+    if (result) {
+      return res.json({
+        success: true,
+        message: "Database connection OK",
+        sampleData: {
+          power: result.realPower,
+          current: result.avgCurrent,
+          voltage: result.avgLineLine,
+          timestamp: result.waktu,
+        },
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No data found in database",
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Database error",
+      error: String(err),
+    });
+  }
+});
+
 // GET /api/lvmdp/:id/latest
 r.get("/:id/latest", async (req, res) => {
+  const startTime = Date.now();
+
   try {
     const id = Number(req.params.id);
 
@@ -52,7 +85,6 @@ r.get("/:id/latest", async (req, res) => {
       voltageTR: row.voltageTR,
     });
   } catch (err) {
-    console.error("GET /lvmdp/:id/latest error:", err);
     return res
       .status(500)
       .json({ message: "Internal server error", error: String(err) });

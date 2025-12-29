@@ -118,7 +118,7 @@ async function findLatestLVMDP1() {
         return null;
     }
     catch (error) {
-        console.error("[LVMDP1] Error fetching real data:", error);
+        console.error("[LVMDP1] Error fetching data:", error);
         return null;
     }
 }

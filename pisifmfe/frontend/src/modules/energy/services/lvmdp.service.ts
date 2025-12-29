@@ -8,7 +8,8 @@ export class LvmdpService {
   private activeCallbacks: Map<string, LVMDPCallback> = new Map();
   private subscriptionIds: Map<string, number> = new Map();
   private nextSubscriptionId = 0;
-  private cache: Map<string, { data: LVMDPData; timestamp: number }> = new Map();
+  private cache: Map<string, { data: LVMDPData; timestamp: number }> =
+    new Map();
   private readonly CACHE_TTL = 2000; // 2 seconds cache
 
   constructor() {}
@@ -44,7 +45,6 @@ export class LvmdpService {
     // Check cache first for instant loading
     const cached = this.cache.get(key);
     if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
-      console.log(`[LVMDP${lvmdpIndex}] Using cached data`);
       callback(cached.data);
     }
 
@@ -53,84 +53,59 @@ export class LvmdpService {
       // Check if this subscription is still active
       const currentSubscriptionId = this.subscriptionIds.get(key);
       if (currentSubscriptionId !== subscriptionId) {
-        console.log(`[LVMDP${lvmdpIndex}] Subscription replaced, ignoring fetch`);
         return; // This subscription was replaced, ignore this callback
       }
 
       try {
         if (useRealData && plantId === "cikupa") {
-          const raw = await getLvmdpLatest(lvmdpIndex);
+          try {
+            const raw = await getLvmdpLatest(lvmdpIndex);
 
-          // Double-check subscription is still active after async operation
-          const stillActive = this.subscriptionIds.get(key) === subscriptionId;
-          if (!stillActive) {
-            console.log(`[LVMDP${lvmdpIndex}] Subscription replaced during fetch`);
-            return; // Subscription was replaced during fetch
-          }
+            const stillActive = this.subscriptionIds.get(key) === subscriptionId;
+            if (!stillActive) return;
 
-          if (!raw) {
-            console.log(`[LVMDP${lvmdpIndex}] No raw data, using dummy`);
+            if (!raw) {
+              console.warn(`[LVMDP${lvmdpIndex}] No data from API`);
+              const dummy = this.generateDummyData(lvmdpIndex);
+              const currentCallback = this.activeCallbacks.get(key);
+              if (currentCallback) currentCallback(dummy);
+              return;
+            }
+
+            const model = this.mapToModel(lvmdpIndex, raw);
+            this.cache.set(key, { data: model, timestamp: Date.now() });
+
+            if (!this.firstLoadTracked.get(key)) {
+              console.log(`✅ LVMDP ${lvmdpIndex}: ${model.activePower.toFixed(0)} kW, ${model.avgCurrent.toFixed(0)} A (real data)`);
+              this.firstLoadTracked.set(key, true);
+            }
+
+            const currentCallback = this.activeCallbacks.get(key);
+            const stillActiveAfterModel = this.subscriptionIds.get(key) === subscriptionId;
+            if (currentCallback && stillActiveAfterModel) {
+              currentCallback(model);
+            }
+          } catch (apiError: any) {
+            if (!this.firstLoadTracked.get(key)) {
+              console.error(`❌ LVMDP ${lvmdpIndex}: ${apiError.message}`);
+            }
             const dummy = this.generateDummyData(lvmdpIndex);
             const currentCallback = this.activeCallbacks.get(key);
             if (currentCallback) {
               currentCallback(dummy);
             }
-            return;
-          }
-
-          // Successfully got real data
-          const model = this.mapToModel(lvmdpIndex, raw);
-
-          // Cache the data
-          this.cache.set(key, { data: model, timestamp: Date.now() });
-
-          // Log only on first successful load
-          if (!this.firstLoadTracked.get(key)) {
-            console.log(
-              `✅ [LVMDP${lvmdpIndex}] Successfully loaded real data from database`
-            );
-            this.firstLoadTracked.set(key, true);
-          }
-
-          // Call callback if subscription is still active
-          const currentCallback = this.activeCallbacks.get(key);
-          const stillActiveAfterModel = this.subscriptionIds.get(key) === subscriptionId;
-          if (currentCallback) {
-            if (stillActiveAfterModel) {
-              console.log(`[LVMDP${lvmdpIndex}] Calling callback with real data`);
-              currentCallback(model);
-            } else {
-              console.log(`[LVMDP${lvmdpIndex}] Subscription replaced after model creation, but calling callback anyway for debugging`);
-              currentCallback(model);
-            }
-          } else {
-            console.warn(`[LVMDP${lvmdpIndex}] No callback found`);
           }
         } else {
-          // Other plants use dummy data
-          console.log(`[LVMDP${lvmdpIndex}] Using dummy data (not cikupa or useRealData=false)`);
           const dummy = this.generateDummyData(lvmdpIndex);
           const currentCallback = this.activeCallbacks.get(key);
-          if (currentCallback) {
-            currentCallback(dummy);
-          }
+          if (currentCallback) currentCallback(dummy);
         }
-      } catch (err) {
-        // Double-check subscription is still active
-        const stillActive = this.subscriptionIds.get(key) === subscriptionId;
-        console.error(`[LVMDP${lvmdpIndex}] Error fetching data:`, err);
+      } catch (err: any) {
+        console.error(`❌ LVMDP ${lvmdpIndex} unexpected:`, err.message);
         const dummy = this.generateDummyData(lvmdpIndex);
         const currentCallback = this.activeCallbacks.get(key);
         if (currentCallback) {
-          if (stillActive) {
-            console.log(`[LVMDP${lvmdpIndex}] Calling callback with dummy data after error`);
-            currentCallback(dummy);
-          } else {
-            console.log(`[LVMDP${lvmdpIndex}] Subscription replaced during error, but calling callback anyway`);
-            currentCallback(dummy);
-          }
-        } else {
-          console.warn(`[LVMDP${lvmdpIndex}] No callback found after error`);
+          currentCallback(dummy);
         }
       }
     };

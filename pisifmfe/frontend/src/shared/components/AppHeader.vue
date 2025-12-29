@@ -2,7 +2,15 @@
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuth } from "@/stores/auth";
-import { LogOut, User, Bell } from "lucide-vue-next";
+import { LogOut, User, Bell, Menu } from "lucide-vue-next";
+
+const props = defineProps<{
+  isSidebarOpen: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: 'toggle-sidebar'): void;
+}>();
 
 const route = useRoute();
 const router = useRouter();
@@ -39,8 +47,19 @@ function handleLogout() {
 
 <template>
   <header class="app-header">
-    <div class="page-title">
-      <h1>{{ pageTitle }}</h1>
+    <div class="header-left">
+      <button 
+        v-if="!isSidebarOpen"
+        class="toggle-btn" 
+        @click="emit('toggle-sidebar')"
+        title="Open Sidebar"
+      >
+        <Menu class="icon" />
+      </button>
+
+      <div class="page-title">
+        <h1>{{ pageTitle }}</h1>
+      </div>
     </div>
 
     <div class="header-actions">
@@ -72,6 +91,31 @@ function handleLogout() {
   justify-content: space-between;
   padding: 0 2rem;
   color: #e2e8f0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-left: -0.5rem; /* Optical alignment */
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  background-color: #1e293b;
+  color: white;
 }
 
 .page-title h1 {
@@ -128,6 +172,7 @@ function handleLogout() {
 .icon {
   width: 1.25rem;
   height: 1.25rem;
+  color: white;
 }
 
 .icon-small {
