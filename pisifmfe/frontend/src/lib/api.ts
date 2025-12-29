@@ -96,6 +96,44 @@ export const getLvmdp2Latest = () => getLvmdpLatest(2);
 export const getLvmdp3Latest = () => getLvmdpLatest(3);
 export const getLvmdp4Latest = () => getLvmdpLatest(4);
 
+// Get shift data for today
+export async function getLvmdpShiftToday(panelId: 1 | 2 | 3 | 4) {
+  try {
+    const { data } = await api.get(`/lvmdp/${panelId}/shift-today`, {
+      params: { _t: Date.now() },
+    });
+    return data as {
+      date: string;
+      shift1: {
+        totalKwh: number;
+        avgKwh: number;
+        avgCurrent: number;
+        minCurrent: number;
+        maxCurrent: number;
+        cosPhi: number;
+      };
+      shift2: {
+        totalKwh: number;
+        avgKwh: number;
+        avgCurrent: number;
+        minCurrent: number;
+        maxCurrent: number;
+        cosPhi: number;
+      };
+      shift3: {
+        totalKwh: number;
+        avgKwh: number;
+        avgCurrent: number;
+        minCurrent: number;
+        maxCurrent: number;
+        cosPhi: number;
+      };
+    };
+  } catch (error: any) {
+    throw error;
+  }
+}
+
 // Get HMI data (R, S, T current and voltage)
 export async function getLvmdpHMI(panelId: 1 | 2 | 3 | 4) {
   const path = { 1: "/lvmdp1", 2: "/lvmdp2", 3: "/lvmdp3", 4: "/lvmdp4" }[

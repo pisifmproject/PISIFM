@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { lvmdpService } from "../services/lvmdp.service";
-import { getShiftAvg, getDailyHourly } from "@/lib/api";
+import { getShiftAvg, getDailyHourly, getLvmdpShiftToday } from "@/lib/api";
 import type { LVMDPData } from "../models";
 import { PLANTS } from "@/config/app.config";
 import { 
@@ -97,7 +97,7 @@ function getTrend(val: number) {
 }
 
 function createEmptyShift(id: number) {
-    return { id, kwh: '-', avgPower: '-', avgLoad: '-', avgCurrent: '-', avgPf: '-' };
+    return { id, kwh: '-', avgPower: '-', avgLoad: '-', avgCurrent: '-', maxCurrent: '-', avgPf: '-' };
 }
 
 function mockChartData() {
@@ -109,9 +109,9 @@ function mockChartData() {
 
 function mockShiftData() {
     shiftData.value = [
-        { id: 1, kwh: '1,273.95', avgPower: '533.7', avgLoad: '42.52', avgCurrent: '1,062.97', avgPf: '0.96' },
-        { id: 2, kwh: '990.85', avgPower: '444.75', avgLoad: '36.92', avgCurrent: '773.07', avgPf: '0.94' },
-        { id: 3, kwh: '566.2', avgPower: '237.2', avgLoad: '19.33', avgCurrent: '483.17', avgPf: '0.92' },
+        { id: 1, kwh: '1204.85', avgPower: '225.1', avgLoad: '14.69', avgCurrent: '552.53', maxCurrent: '552.53', avgPf: '0.92' },
+        { id: 2, kwh: '1555.01', avgPower: '245.8', avgLoad: '14.36', avgCurrent: '558.97', maxCurrent: '558.97', avgPf: '0.92' },
+        { id: 3, kwh: '-', avgPower: '-', avgLoad: '-', avgCurrent: '-', maxCurrent: '-', avgPf: '-' },
     ];
 }
 
@@ -139,31 +139,39 @@ const fetchHistoricalData = async () => {
 
     // 2. Shift Data
     try {
-        const now = new Date();
-        const dateStr = now.toISOString().split('T')[0];
-        
-        if (isRealData.value) {
-            const shifts = await getShiftAvg(lvmdpId.value as any, dateStr).catch(() => null);
+        if (isRealData.value && plantId.value === 'cikupa') {
+            // Use real data from database for Plant Cikupa
+            const shifts = await getLvmdpShiftToday(lvmdpId.value as any).catch(() => null);
             
             if (shifts) {
+                console.log(`[LVMDP${lvmdpId.value}] Shift data from DB:`, shifts);
+                
                 // Map API response to UI table
                 shiftData.value = [1, 2, 3].map(id => {
                    const s = (shifts as any)[`shift${id}`];
-                   if (!s || !s.count) return createEmptyShift(id);
+                   
+                   // If no data for this shift, show empty
+                   if (!s || s.totalKwh === 0) {
+                       return createEmptyShift(id);
+                   }
+                   
                    return {
                        id,
-                       kwh: (s.avgPower * 8).toFixed(2), // Rough estimate kwh from avg power * 8 hours
-                       avgPower: s.avgPower?.toFixed(1) || '0',
-                       avgLoad: ((s.avgCurrent / 2500) * 100).toFixed(2),
-                       avgCurrent: s.avgCurrent?.toFixed(2) || '0',
-                       avgPf: '0.92' // Mock as not returned by this specific endpoint
+                       kwh: s.totalKwh.toFixed(2),
+                       avgPower: s.avgKwh.toFixed(1),
+                       avgLoad: s.avgCurrent.toFixed(2),
+                       avgCurrent: s.minCurrent.toFixed(2),
+                       maxCurrent: s.maxCurrent.toFixed(2),
+                       avgPf: s.cosPhi.toFixed(2),
                    };
                 });
             } else {
                 // Fallback if endpoint fails
-                 mockShiftData(); 
+                console.warn(`[LVMDP${lvmdpId.value}] Failed to fetch shift data, using mock`);
+                mockShiftData(); 
             }
         } else {
+            // Use dummy data for other plants
             mockShiftData();
         }
     } catch (e) {
@@ -360,7 +368,7 @@ const fmt = (val: number | undefined, dec = 1) => val ? val.toLocaleString('id-I
     <!-- Bottom Section: Shift Performance -->
     <div class="card table-card">
         <div class="card-header">
-            <h3>Shift Energy & Electrical Performance</h3>
+            <h3>Shift Performance</h3>
         </div>
         <div class="table-responsive">
             <table>
@@ -369,9 +377,10 @@ const fmt = (val: number | undefined, dec = 1) => val ? val.toLocaleString('id-I
                         <th class="text-center">SHIFT</th>
                         <th class="text-right">TOTAL KWH</th>
                         <th class="text-right">AVG POWER (KW)</th>
-                        <th class="text-right">AVG LOAD (%)</th>
                         <th class="text-right">AVG CURRENT (A)</th>
-                        <th class="text-right">AVG PF</th>
+                        <th class="text-right">MIN CURRENT (A)</th>
+                        <th class="text-right">MAX CURRENT (A)</th>
+                        <th class="text-right">POWER FACTOR</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -381,7 +390,8 @@ const fmt = (val: number | undefined, dec = 1) => val ? val.toLocaleString('id-I
                         <td class="text-right">{{ row.avgPower }}</td>
                         <td class="text-right text-blue">{{ row.avgLoad }}</td>
                         <td class="text-right">{{ row.avgCurrent }}</td>
-                        <td class="text-right text-green">{{ row.avgPf }}</td>
+                        <td class="text-right text-green">{{ row.maxCurrent }}</td>
+                        <td class="text-right">{{ row.avgPf }}</td>
                     </tr>
                 </tbody>
             </table>

@@ -215,33 +215,23 @@ const formatNumber = (num: number, decimals = 1) => {
                 </div>
             </div>
 
+            <!-- Main Highlight: Apparent Power -->
             <div class="panel-power">
-                <label>TOTAL POWER</label>
-                <div class="power-val">{{ formatNumber(p.activePower, 0) }} <small>kW</small></div>
+                <label>APPARENT POWER</label>
+                <div class="power-val text-white">{{ formatNumber(p.apparentPower, 1) }} <small>kVA</small></div>
+                <div class="highlight-sub">({{ formatNumber((p.apparentPower / 5540) * 100, 1) }}% of 5540 kVA)</div>
             </div>
 
             <div class="panel-details-grid">
                 <div class="detail-col">
                     <div class="detail-item">
-                        <label>MAX CURRENT</label>
-                        <!-- Assuming avgCurrent for now as max current for this panel isn't stored separately in simple model, 
-                             but LVMDPData usually has phases. We can show max of phases if we want. 
-                             Let's stick to avgCurrent or a formatted version. 
-                             Wait, the mock shows "MAX CURRENT" per panel? 
-                             Or is it max recorded? 
-                             The service returns Current state.
-                             Let's simple show Current for now. Or if the mockup implies historical Max, we don't have that yet.
-                             I will map Average Current to "Current" label for clarity or use current value. 
-                             Actually, let's look at the mock: "MAX CURRENT 899 A". 
-                             If it's live data, we just show live current. 
-                             I'll label it "AVG CURRENT" to be accurate to data, or "CURRENT".
-                        -->
-                        <!-- Actually, the mock says "MAX CURRENT". I'll stick to displaying the current value. -->
-                        <span class="val-red">{{ formatNumber(p.avgCurrent, 1) }} A</span>
+                        <label>CURRENT NOW</label>
+                        <span class="val-norm">{{ formatNumber(p.avgCurrent, 1) }} A</span>
+                        <div class="sub-text">({{ formatNumber ((p.avgCurrent / 2500) * 100, 1) }}% of 2500 A)</div>
                     </div>
                     <div class="detail-item">
-                        <label>APPARENT</label>
-                        <span class="val-norm">{{ formatNumber(p.apparentPower, 1) }} kVA</span>
+                        <label>TOTAL POWER</label>
+                        <span class="val-norm">{{ formatNumber(p.activePower, 0) }} kW</span>
                     </div>
                 </div>
                 <div class="detail-col text-right">
@@ -250,7 +240,7 @@ const formatNumber = (num: number, decimals = 1) => {
                         <span class="val-blue">{{ formatNumber(p.avgVoltage, 1) }} V</span>
                     </div>
                     <div class="detail-item">
-                        <label>PF</label>
+                        <label>POWER FACTOR</label>
                         <span class="val-green">{{ formatNumber(p.powerFactor, 2) }}</span>
                     </div>
                 </div>
@@ -643,6 +633,12 @@ const formatNumber = (num: number, decimals = 1) => {
     font-weight: 500;
 }
 
+.highlight-sub {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+}
+
 .panel-details-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -663,7 +659,13 @@ const formatNumber = (num: number, decimals = 1) => {
     text-transform: uppercase;
 }
 
-.val-red { color: #ef4444; font-weight: 600; font-size: 0.95rem; }
+.sub-text {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.1rem;
+}
+
+.val-red { color: #e2e8f0; font-weight: 600; font-size: 0.95rem; } /* Override red to normal */
 .val-blue { color: #60a5fa; font-weight: 600; font-size: 0.95rem; }
 .val-green { color: #4ade80; font-weight: 600; font-size: 0.95rem; }
 .val-norm { color: #e2e8f0; font-weight: 600; font-size: 0.95rem; }

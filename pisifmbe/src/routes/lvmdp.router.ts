@@ -91,4 +91,80 @@ r.get("/:id/latest", async (req, res) => {
   }
 });
 
+// GET /api/lvmdp/:id/shift-today
+r.get("/:id/shift-today", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (![1, 2, 3, 4].includes(id)) {
+      return res.status(400).json({ message: "Bad id (must be 1..4)" });
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+
+    // Import the appropriate service based on panel ID
+    let getShiftAverages: any;
+    switch (id) {
+      case 1:
+        const { getShiftAveragesLVMDP1 } = await import(
+          "../lvmdp/LVMDP_1/lvmdp_1.services"
+        );
+        getShiftAverages = getShiftAveragesLVMDP1;
+        break;
+      case 2:
+        const { getShiftAveragesLVMDP2 } = await import(
+          "../lvmdp/LVMDP_2/lvmdp_2.services"
+        );
+        getShiftAverages = getShiftAveragesLVMDP2;
+        break;
+      case 3:
+        const { getShiftAveragesLVMDP3 } = await import(
+          "../lvmdp/LVMDP_3/lvmdp_3.services"
+        );
+        getShiftAverages = getShiftAveragesLVMDP3;
+        break;
+      case 4:
+        const { getShiftAveragesLVMDP4 } = await import(
+          "../lvmdp/LVMDP_4/lvmdp_4.services"
+        );
+        getShiftAverages = getShiftAveragesLVMDP4;
+        break;
+    }
+
+    const shifts = await getShiftAverages(today);
+
+    return res.json({
+      date: today,
+      shift1: {
+        totalKwh: shifts.shift1?.totalKwh || 0,
+        avgKwh: shifts.shift1?.avgKwh || 0,
+        avgCurrent: shifts.shift1?.avgCurrent || 0,
+        minCurrent: shifts.shift1?.minCurrent || 0,
+        maxCurrent: shifts.shift1?.maxCurrent || 0,
+        cosPhi: shifts.shift1?.avgCosPhi || 0,
+      },
+      shift2: {
+        totalKwh: shifts.shift2?.totalKwh || 0,
+        avgKwh: shifts.shift2?.avgKwh || 0,
+        avgCurrent: shifts.shift2?.avgCurrent || 0,
+        minCurrent: shifts.shift2?.minCurrent || 0,
+        maxCurrent: shifts.shift2?.maxCurrent || 0,
+        cosPhi: shifts.shift2?.avgCosPhi || 0,
+      },
+      shift3: {
+        totalKwh: shifts.shift3?.totalKwh || 0,
+        avgKwh: shifts.shift3?.avgKwh || 0,
+        avgCurrent: shifts.shift3?.avgCurrent || 0,
+        minCurrent: shifts.shift3?.minCurrent || 0,
+        maxCurrent: shifts.shift3?.maxCurrent || 0,
+        cosPhi: shifts.shift3?.avgCosPhi || 0,
+      },
+    });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: String(err) });
+  }
+});
+
 export default r;
