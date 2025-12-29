@@ -10,6 +10,7 @@ import {
   Activity, 
   ArrowLeft, 
   Battery, 
+  Clock
 } from "lucide-vue-next";
 
 // ECharts
@@ -90,14 +91,64 @@ let unsubscribe: (() => void) | null = null;
 
 const goBack = () => router.back();
 
-// Helper to calculate comparison (Mock for now as backend doesn't provide "yesterday" value in realtime stream)
-function getTrend(val: number) {
-    // Generate a consistent pseudo-random trend based on value for prolonged demo effect
-    return (val % 5) - 2.5; 
+// Helper to determine Shift Status with User's specific logic
+function getShiftStatus(id: number): 'ACTIVE' | 'COMPLETED' | 'UPCOMING' {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+
+    // Shift 1: 07:01 - 14:30
+    const shift1Start = 7 * 60 + 1; // 421
+    const shift1End = 14 * 60 + 30; // 870
+    
+    // Shift 2: 14:31 - 22:00
+    const shift2Start = 14 * 60 + 31; // 871
+    const shift2End = 22 * 60; // 1320
+    
+    // Shift 3: 22:01 - 07:00
+    const shift3Start = 22 * 60 + 1; // 1321
+    const shift3End = 7 * 60; // 420
+
+    if (id === 1) {
+        if (totalMinutes >= shift1Start && totalMinutes <= shift1End) {
+            return 'ACTIVE';
+        } else if (totalMinutes < shift1Start) {
+            return 'UPCOMING';
+        } else {
+            return 'COMPLETED';
+        }
+    } else if (id === 2) {
+        if (totalMinutes >= shift2Start && totalMinutes <= shift2End) {
+            return 'ACTIVE';
+        } else if (totalMinutes < shift2Start) {
+            return 'UPCOMING';
+        } else {
+            return 'COMPLETED';
+        }
+    } else {
+        // Shift 3 (crosses midnight)
+        if (totalMinutes >= shift3Start || totalMinutes <= shift3End) {
+            return 'ACTIVE';
+        } else if (totalMinutes > shift3End && totalMinutes < shift3Start) {
+            return 'UPCOMING';
+        } else {
+            return 'UPCOMING';
+        }
+    }
 }
 
 function createEmptyShift(id: number) {
-    return { id, kwh: '-', avgPower: '-', avgLoad: '-', avgCurrent: '-', maxCurrent: '-', avgPf: '-' };
+    return { 
+        id, 
+        kwh: '-', 
+        avgPower: '-', 
+        avgLoad: '-', 
+        avgCurrent: '-', 
+        maxCurrent: '-', 
+        avgPf: '-',
+        status: getShiftStatus(id)
+    };
 }
 
 function mockChartData() {
@@ -109,9 +160,9 @@ function mockChartData() {
 
 function mockShiftData() {
     shiftData.value = [
-        { id: 1, kwh: '1204.85', avgPower: '225.1', avgLoad: '14.69', avgCurrent: '552.53', maxCurrent: '552.53', avgPf: '0.92' },
-        { id: 2, kwh: '1555.01', avgPower: '245.8', avgLoad: '14.36', avgCurrent: '558.97', maxCurrent: '558.97', avgPf: '0.92' },
-        { id: 3, kwh: '-', avgPower: '-', avgLoad: '-', avgCurrent: '-', maxCurrent: '-', avgPf: '-' },
+        { id: 1, kwh: '1204.85', avgPower: '225.1', avgLoad: '14.69', avgCurrent: '552.53', maxCurrent: '552.53', avgPf: '0.92', status: getShiftStatus(1) },
+        { id: 2, kwh: '1555.01', avgPower: '245.8', avgLoad: '14.36', avgCurrent: '558.97', maxCurrent: '558.97', avgPf: '0.92', status: getShiftStatus(2) },
+        { id: 3, kwh: '-', avgPower: '-', avgLoad: '-', avgCurrent: '-', maxCurrent: '-', avgPf: '-', status: getShiftStatus(3) },
     ];
 }
 
@@ -163,6 +214,7 @@ const fetchHistoricalData = async () => {
                        avgCurrent: s.minCurrent.toFixed(2),
                        maxCurrent: s.maxCurrent.toFixed(2),
                        avgPf: s.cosPhi.toFixed(2),
+                       status: getShiftStatus(id)
                    };
                 });
             } else {
@@ -374,23 +426,34 @@ const fmt = (val: number | undefined, dec = 1) => val ? val.toLocaleString('id-I
             <table>
                 <thead>
                     <tr>
-                        <th class="text-center">SHIFT</th>
+                        <th class="text-left">SHIFT</th>
                         <th class="text-right">TOTAL KWH</th>
                         <th class="text-right">AVG POWER (KW)</th>
                         <th class="text-right">AVG CURRENT (A)</th>
                         <th class="text-right">MIN CURRENT (A)</th>
                         <th class="text-right">MAX CURRENT (A)</th>
+                        <th class="text-right">LOAD (%)</th>
                         <th class="text-right">POWER FACTOR</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="row in shiftData" :key="row.id">
-                        <td class="text-center highlight">{{ row.id }}</td>
+                        <td class="text-left pl-6">
+                            <div class="shift-cell">
+                                <span class="shift-id">{{ row.id }}</span>
+                                <span class="shift-badge" :class="row.status.toLowerCase()">{{ row.status }}</span>
+                            </div>
+                        </td>
                         <td class="text-right text-yellow">{{ row.kwh }}</td>
                         <td class="text-right">{{ row.avgPower }}</td>
                         <td class="text-right text-blue">{{ row.avgLoad }}</td>
                         <td class="text-right">{{ row.avgCurrent }}</td>
                         <td class="text-right text-green">{{ row.maxCurrent }}</td>
+                        <td class="text-right text-green">
+                          {{ 
+                            Number(row.avgCurrent) > 0 ? ((row.avgCurrent / 2500) * 100).toFixed(1) : '-'
+                          }}
+                        </td>
                         <td class="text-right">{{ row.avgPf }}</td>
                     </tr>
                 </tbody>
@@ -741,9 +804,58 @@ td {
     color: #cbd5e1;
 }
 
+.shift-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.shift-id {
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+}
+
+.shift-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 99px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.shift-badge.active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.1);
+    animation: pulse-badge 2s infinite;
+}
+
+.shift-badge.completed {
+    background: rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+}
+
+.shift-badge.upcoming {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    opacity: 0.7;
+    border: 1px dashed rgba(59, 130, 246, 0.3);
+}
+
+@keyframes pulse-badge {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.pl-6 { padding-left: 5rem; }
+
 .highlight { color: white; font-weight: 700; }
 .text-center { text-align: center; }
-.text-right { text-align: right; }
+.text-left { text-align: center; }
+.text-right { text-align: center; }
 .text-yellow { color: #facc15; }
 .text-blue { color: #60a5fa; }
 .text-green { color: #4ade80; }
