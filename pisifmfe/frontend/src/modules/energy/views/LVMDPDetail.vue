@@ -4,7 +4,7 @@ import { useRoute } from "vue-router";
 import { lvmdpService } from "../services/lvmdp.service";
 import type { LVMDPData } from "../models";
 import GaugeSimple from "@/shared/components/GaugeSimple.vue";
-import { Zap, Activity, Clock } from "lucide-vue-next";
+import { Zap, Activity } from "lucide-vue-next";
 import { PLANTS } from "@/config/app.config";
 
 // Props/Route params
@@ -17,7 +17,6 @@ const data = ref<LVMDPData | null>(null);
 const loading = ref(true);
 const isTransitioning = ref(false);
 const showSkeleton = ref(true);
-const lastUpdate = ref<Date>(new Date());
 const isRealData = computed(() => {
   const plantConfig = PLANTS[plantId.value as keyof typeof PLANTS];
   return plantConfig?.useRealData ?? false;
@@ -80,7 +79,6 @@ function startSubscription(plant: string, id: number) {
       loading.value = false;
       isTransitioning.value = false;
       showSkeleton.value = false;
-      lastUpdate.value = new Date();
     } else {
       // Still hide loading even if no data
       loading.value = false;
@@ -157,11 +155,6 @@ const getPhaseColor = (phase: string) => {
               {{ data.isConnected ? "ONLINE" : "OFFLINE" }}
             </div>
           </div>
-        </div>
-
-        <div class="timestamp">
-          <Clock class="w-4 h-4" />
-          {{ lastUpdate.toLocaleTimeString() }}
         </div>
       </div>
     </div>

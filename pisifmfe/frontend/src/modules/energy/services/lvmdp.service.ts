@@ -65,7 +65,6 @@ export class LvmdpService {
             if (!stillActive) return;
 
             if (!raw) {
-              console.warn(`[LVMDP${lvmdpIndex}] No data from API`);
               const dummy = this.generateDummyData(lvmdpIndex);
               const currentCallback = this.activeCallbacks.get(key);
               if (currentCallback) currentCallback(dummy);
@@ -75,24 +74,20 @@ export class LvmdpService {
             const model = this.mapToModel(lvmdpIndex, raw);
             this.cache.set(key, { data: model, timestamp: Date.now() });
 
-            if (!this.firstLoadTracked.get(key)) {
-              console.log(`✅ LVMDP ${lvmdpIndex}: ${model.activePower.toFixed(0)} kW, ${model.avgCurrent.toFixed(0)} A (real data)`);
-              this.firstLoadTracked.set(key, true);
-            }
-
             const currentCallback = this.activeCallbacks.get(key);
             const stillActiveAfterModel = this.subscriptionIds.get(key) === subscriptionId;
             if (currentCallback && stillActiveAfterModel) {
               currentCallback(model);
             }
           } catch (apiError: any) {
-            if (!this.firstLoadTracked.get(key)) {
-              console.error(`❌ LVMDP ${lvmdpIndex}: ${apiError.message}`);
-            }
-            const dummy = this.generateDummyData(lvmdpIndex);
-            const currentCallback = this.activeCallbacks.get(key);
-            if (currentCallback) {
-              currentCallback(dummy);
+            // Don't fallback to dummy on temporary network errors
+            // Only use cached data or keep showing last known good data
+            const cached = this.cache.get(key);
+            if (cached) {
+              const currentCallback = this.activeCallbacks.get(key);
+              if (currentCallback) {
+                currentCallback(cached.data);
+              }
             }
           }
         } else {
@@ -101,11 +96,13 @@ export class LvmdpService {
           if (currentCallback) currentCallback(dummy);
         }
       } catch (err: any) {
-        console.error(`❌ LVMDP ${lvmdpIndex} unexpected:`, err.message);
-        const dummy = this.generateDummyData(lvmdpIndex);
-        const currentCallback = this.activeCallbacks.get(key);
-        if (currentCallback) {
-          currentCallback(dummy);
+        // Keep showing cached data on errors
+        const cached = this.cache.get(key);
+        if (cached) {
+          const currentCallback = this.activeCallbacks.get(key);
+          if (currentCallback) {
+            currentCallback(cached.data);
+          }
         }
       }
     };

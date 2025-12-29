@@ -19,10 +19,7 @@ export type LvmdpRaw = {
   voltageTR: number;
 };
 
-// Use environment variable for API URL, fallback to relative path for proxy
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
-
-console.log(`[API] Using baseURL: ${API_BASE_URL}`);
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -35,11 +32,42 @@ export const api = axios.create({
   },
 });
 
+// Track backend connection status
+let isBackendConnected = true;
+let lastErrorTime = 0;
+
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response,
-  (error) => Promise.reject(error)
+  (response) => {
+    isBackendConnected = true;
+    return response;
+  },
+  (error) => {
+    const now = Date.now();
+    
+    // Only show warning once per 10 seconds
+    if (now - lastErrorTime > 10000) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
+        isBackendConnected = false;
+        lastErrorTime = now;
+        
+        // Show popup warning
+        if (typeof window !== 'undefined') {
+          const event = new CustomEvent('backend-disconnected', {
+            detail: { message: 'Backend connection lost. Retrying...' }
+          });
+          window.dispatchEvent(event);
+        }
+      }
+    }
+    
+    return Promise.reject(error);
+  }
 );
+
+export function isBackendOnline(): boolean {
+  return isBackendConnected;
+}
 
 // ---------- LIST ----------
 export async function getLvmdp(id: 1 | 2 | 3 | 4): Promise<LvmdpRow[]> {

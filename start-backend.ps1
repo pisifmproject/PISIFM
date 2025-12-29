@@ -9,5 +9,5 @@ Write-Host "Starting PISIFM Backend..." -ForegroundColor Green
 Set-Location $BackendPath
 
 # Jalankan backend (JavaScript dari hasil build)
-Write-Host "Running backend on port 2000..." -ForegroundColor Cyan
+Write-Host "Running backend on port 3001..." -ForegroundColor Cyan
 node dist/server.js

@@ -15,8 +15,8 @@ const plant = computed(() => PLANTS[plantId.value]);
 // State for panels data (1-4)
 const panels = ref<(LVMDPData | null)[]>([null, null, null, null]);
 const unwatchers: (() => void)[] = [];
-const lastUpdate = ref<Date>(new Date());
 const isRealData = computed(() => plant.value?.useRealData ?? false);
+const lastUpdate = ref(new Date());
 
 function navigateToLvmdp(id: number) {
   router.push(`/plant/${plantId.value}/energy/electricity/lvmdp/${id}`);
