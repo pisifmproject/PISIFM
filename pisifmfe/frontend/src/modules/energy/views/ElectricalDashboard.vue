@@ -534,7 +534,7 @@ const generateReport = async () => {
                  <div class="util-bar-container">
                     <div class="util-info">
                         <span class="label">CURRENT LOAD DISTRIBUTION</span>
-                        <span class="capacity-label">CAPACITY (5.540 KVA)</span>
+                        <span class="capacity-label">CAPACITY</span>
                     </div>
                     <div class="progress-track">
                         <div class="progress-fill" :style="{ width: `${Math.min(plantStats.utilization, 100)}%` }">
@@ -550,14 +550,14 @@ const generateReport = async () => {
                      </div>
                      <div class="stat-perc">
                          <span class="perc-value">{{ formatNumber(plantStats.utilization, 2) }}%</span>
-                         <span class="perc-label">UTILIZATION</span>
+                         <span class="perc-label">of 5540 kVA</span>
                      </div>
                  </div>
              </div>
 
              <div class="secondary-stats">
                  <div class="sec-stat">
-                     <span class="sec-label">TOTAL ACTIVE POWER</span>
+                     <span class="sec-label">TOTAL REAL POWER</span>
                      <span class="sec-value text-yellow">{{ formatNumber(plantStats.totalKw) }} <small>kW</small></span>
                  </div>
                  <div class="sec-stat">
@@ -621,7 +621,7 @@ const generateReport = async () => {
                             </div>
                         </div>
                         <div class="pm-row">
-                            <span>TOTAL POWER</span>
+                            <span>REAL POWER</span>
                             <span class="pm-val text-white">{{ formatNumber(panels[i-1]?.activePower || 0) }} kW</span>
                         </div>
                         <div class="pm-row">
