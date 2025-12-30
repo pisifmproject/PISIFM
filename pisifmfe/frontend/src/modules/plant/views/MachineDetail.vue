@@ -75,6 +75,10 @@ const processData = ref({
     potatoFeedStatus: 'ON',
     slicersIncline: getRandom(22.5, 23.5),
     headTemp: Math.floor(getRandom(38, 40)),
+    peelerRpm: Math.floor(getRandom(1400, 1500)),
+    peelerLoad: Math.floor(getRandom(70, 85)),
+    washerLevel: Math.floor(getRandom(80, 90)),
+    washerFlow: getRandom(11.5, 13.5),
     
     // Col 2: Oil & Fryer
     oilCirc: getRandom(4300, 4400),
@@ -331,9 +335,34 @@ function formatNumber(num: number, dec = 0) {
                      </div>
 
                      <!-- Head Temp -->
-                     <div>
+                     <div class="mb-5">
                          <div class="label-xs mb-1">HEAD TEMP</div>
                          <div class="text-2xl font-bold text-orange-400">{{ processData.headTemp }} <small class="text-xs text-gray-500 font-medium">DEG</small></div>
+                     </div>
+
+                     <!-- Filled Empty Space: New System Metrics -->
+                     <div class="mt-auto pt-4 border-t border-gray-700/50">
+                        <div class="label-xs mb-3 text-teal-500">SYSTEM PARAMETERS</div>
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                             <div class="control-panel">
+                                 <div class="label-xs mb-1">PEELER RPM</div>
+                                 <div class="val-lg text-white">{{ processData.peelerRpm }}</div>
+                             </div>
+                             <div class="control-panel">
+                                 <div class="label-xs mb-1">PEELER LOAD</div>
+                                 <div class="val-lg text-purple-400">{{ processData.peelerLoad }}<small class="unit">%</small></div>
+                             </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                             <div class="control-panel">
+                                 <div class="label-xs mb-1">WASHER LVL</div>
+                                 <div class="val-lg text-blue-400">{{ processData.washerLevel }}<small class="unit">%</small></div>
+                             </div>
+                             <div class="control-panel">
+                                 <div class="label-xs mb-1">WASHER FLOW</div>
+                                 <div class="val-lg text-blue-300">{{ formatNumber(processData.washerFlow, 1) }}<small class="unit">m³/h</small></div>
+                             </div>
+                        </div>
                      </div>
                  </div>
              </div>
