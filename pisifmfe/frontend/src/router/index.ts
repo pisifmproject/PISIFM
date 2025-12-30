@@ -13,6 +13,7 @@ import PlantDashboard from "../modules/plant/views/PlantDashboard.vue";
 
 // Energy Views
 import ElectricalDashboard from "../modules/energy/views/ElectricalDashboard.vue";
+import UtilitiesDashboard from "../modules/energy/views/UtilitiesDashboard.vue";
 import LVMDPDetail from "../modules/energy/views/LVMDPDetail.vue";
 import SteamDetail from "../modules/energy/views/SteamDetail.vue";
 import WaterDetail from "../modules/energy/views/WaterDetail.vue";
@@ -21,8 +22,8 @@ import NitrogenDetail from "../modules/energy/views/NitrogenDetail.vue";
 import GasDetail from "../modules/energy/views/GasDetail.vue";
 
 // Production Views
-import ProductionDashboard from "../modules/production/views/ProductionDashboard.vue";
-import MachineDetail from "../modules/production/views/MachineDetail.vue";
+import ProductionDashboard from "../modules/plant/views/ProductionDashboard.vue";
+import MachineDetail from "../modules/plant/views/MachineDetail.vue";
 import { PLANTS } from "@/config/app.config";
 
 const routes: RouteRecordRaw[] = [
@@ -59,7 +60,11 @@ const routes: RouteRecordRaw[] = [
           {
             path: "energy",
             children: [
-               { path: "", redirect: "electricity" },
+               { 
+                 path: "", 
+                 name: "UtilitiesDashboard",
+                 component: UtilitiesDashboard 
+               },
                {
                  path: "electricity",
                  name: "ElectricalDashboard",

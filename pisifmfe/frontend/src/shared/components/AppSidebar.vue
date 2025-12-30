@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, defineProps } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { PLANTS, type PlantId } from "@/config/app.config";
 import {
@@ -125,12 +125,17 @@ function toggleProduction() {
 
         <!-- Energy & Utilities Group -->
         <div class="nav-group">
-          <div class="nav-item group-header" @click="toggleEnergy">
+          <div 
+            class="nav-item group-header" 
+            :class="{ active: route.name === 'UtilitiesDashboard' }"
+            @click="navigateTo(`/plant/${currentPlantId}/energy`); energyExpanded = true"
+          >
             <Zap class="nav-icon" />
             <span>Energy & Utilities</span>
             <component
               :is="energyExpanded ? ChevronDown : ChevronRight"
               class="group-arrow"
+              @click.stop="toggleEnergy"
             />
           </div>
 
@@ -212,12 +217,17 @@ function toggleProduction() {
 
         <!-- Production Lines (expandable group with machines) -->
         <div class="nav-group">
-          <div class="nav-item group-header" @click="toggleProduction">
+          <div 
+            class="nav-item group-header" 
+            :class="{ active: route.name === 'ProductionDashboard' }"
+            @click="navigateTo(`/plant/${currentPlantId}/production`); productionExpanded = true"
+          >
             <Factory class="nav-icon" />
             <span>Production Lines</span>
             <component
               :is="productionExpanded ? ChevronDown : ChevronRight"
               class="group-arrow"
+              @click.stop="toggleProduction"
             />
           </div>
           <div v-if="productionExpanded" class="group-content">
