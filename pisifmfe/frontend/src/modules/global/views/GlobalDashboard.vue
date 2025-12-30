@@ -16,7 +16,7 @@ const PERIODS: Period[] = ['Day', 'Week', 'Month', 'Year'];
 const selectedPeriod = ref<Period>('Day');
 const cikupaEnergy = ref(0);
 const isLoading = ref(false);
-const selectedPlantId = ref<string | null>(null);
+
 
 const plantData = ref({
     cikupa: { output: 15600, oee: 84.95, alarms: 2, status: 'WARNING' },
@@ -34,12 +34,8 @@ const globalStats = computed(() => {
     return { output, energy, oee, alarms };
 });
 
-function handlePlantClick(plantId: string) {
-    if (selectedPlantId.value === plantId) {
-        router.push(`/plant/${plantId}`);
-    } else {
-        selectedPlantId.value = plantId;
-    }
+function navigateToPlant(plantId: string) {
+    router.push(`/plant/${plantId}`);
 }
 
 const formatNumber = (num: number, decimals = 0) => {
@@ -192,8 +188,7 @@ watch(selectedPeriod, () => {
             <!-- Plant Cikokol (Dummy) -->
             <div 
                 class="plant-card" 
-                :class="{ 'active-plant': selectedPlantId === 'cikokol' }"
-                @click="handlePlantClick('cikokol')"
+                @click="navigateToPlant('cikokol')"
             >
                 <div class="pc-header">
                     <div>
@@ -227,8 +222,7 @@ watch(selectedPeriod, () => {
             <!-- Plant Semarang (Dummy) -->
              <div 
                 class="plant-card"
-                :class="{ 'active-plant': selectedPlantId === 'semarang' }"
-                @click="handlePlantClick('semarang')"
+                @click="navigateToPlant('semarang')"
             >
                 <div class="pc-header">
                     <div>
@@ -262,10 +256,9 @@ watch(selectedPeriod, () => {
             <!-- Plant Cikupa (Real Energy) -->
             <div 
                 class="plant-card" 
-                :class="{ 'active-plant': selectedPlantId === 'cikupa' }"
-                @click="handlePlantClick('cikupa')"
+                @click="navigateToPlant('cikupa')"
             >
-                <div class="pc-glow" v-if="selectedPlantId === 'cikupa'"></div>
+                <div class="pc-glow"></div>
                 <div class="pc-header">
                     <div>
                         <h3 class="pc-name text-blue-400">Plant Cikupa</h3>
@@ -299,8 +292,7 @@ watch(selectedPeriod, () => {
             <!-- Plant Agro (Dummy) -->
             <div 
                 class="plant-card" 
-                :class="{ 'active-plant': selectedPlantId === 'agro' }"
-                @click="handlePlantClick('agro')"
+                @click="navigateToPlant('agro')"
             >
                 <div class="pc-header">
                     <div>
@@ -512,11 +504,6 @@ watch(selectedPeriod, () => {
 
 .plant-card:hover {
     transform: translateY(-2px);
-    border-color: #334155;
-    background: #1e293b;
-}
-
-.plant-card.active-plant {
     border-color: #3b82f6;
     background: rgba(59, 130, 246, 0.1);
 }
@@ -526,6 +513,12 @@ watch(selectedPeriod, () => {
     top: 0; left: 0; right: 0; bottom: 0;
     background: radial-gradient(circle at top right, rgba(59,130,246,0.1), transparent 70%);
     pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.plant-card:hover .pc-glow {
+    opacity: 1;
 }
 
 .pc-header {
