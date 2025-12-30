@@ -403,7 +403,7 @@ const fmt = (val: number | undefined, dec = 1) =>
           <div class="m-value">
             {{ fmt(realtimeData?.activePower, 0) }} <small>kW</small>
           </div>
-          <div class="m-trend positive">↑ 2,4% vs yesterday</div>
+          <!-- <div class="m-trend positive">↑ 2,4% vs yesterday</div> -->
         </div>
         <div v-else class="skeleton-metric">
           <div class="skeleton-header"></div>
@@ -422,7 +422,7 @@ const fmt = (val: number | undefined, dec = 1) =>
           <div class="m-value">
             {{ fmt(realtimeData?.apparentPower, 1) }} <small>kVA</small>
           </div>
-          <div class="m-trend negative">↓ 1,1% vs yesterday</div>
+          <!-- <div class="m-trend negative">↓ 1,1% vs yesterday</div> -->
         </div>
         <div v-else class="skeleton-metric">
           <div class="skeleton-header"></div>
@@ -441,7 +441,7 @@ const fmt = (val: number | undefined, dec = 1) =>
           <div class="m-value">
             {{ fmt(realtimeData?.reactivePower, 1) }} <small>kVAR</small>
           </div>
-          <div class="m-trend positive">↑ 0,7% vs yesterday</div>
+          <!-- <div class="m-trend positive">↑ 0,7% vs yesterday</div> -->
         </div>
         <div v-else class="skeleton-metric">
           <div class="skeleton-header"></div>
@@ -460,7 +460,7 @@ const fmt = (val: number | undefined, dec = 1) =>
           <div class="m-value">
             {{ fmt(realtimeData?.powerFactor, 2) }}
           </div>
-          <div class="m-trend negative">↓ 2% vs yesterday</div>
+          <!-- <div class="m-trend negative">↓ 2% vs yesterday</div> -->
         </div>
         <div v-else class="skeleton-metric">
           <div class="skeleton-header"></div>
@@ -485,21 +485,21 @@ const fmt = (val: number | undefined, dec = 1) =>
               <span>Voltage R-S</span>
               <div class="v-val">
                 {{ fmt(realtimeData?.phases.r.voltageRS, 0) }} V
-                <span class="v-trend up">▲ 0,1%</span>
+                <!-- <span class="v-trend up">▲ 0,1%</span> -->
               </div>
             </div>
             <div class="v-row">
               <span>Voltage S-T</span>
               <div class="v-val">
                 {{ fmt(realtimeData?.phases.s.voltageST, 0) }} V
-                <span class="v-trend stable">▲ 0%</span>
+                <!-- <span class="v-trend stable">▲ 0%</span> -->
               </div>
             </div>
             <div class="v-row">
               <span>Voltage T-R</span>
               <div class="v-val">
                 {{ fmt(realtimeData?.phases.t.voltageTR, 0) }} V
-                <span class="v-trend down">▼ 0,2%</span>
+                <!-- <span class="v-trend down">▼ 0,2%</span> -->
               </div>
             </div>
           </div>

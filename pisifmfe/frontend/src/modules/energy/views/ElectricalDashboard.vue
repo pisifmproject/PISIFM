@@ -276,22 +276,24 @@ const generateReport = async () => {
 
         // Render Header
         if (logoData) {
-            const maxW = 50; const maxH = 25;
-            let lw = maxW; let lh = lw / logoRatio;
+            const maxW = 140; 
+            const maxH = 60;
+            let lw = maxW; 
+            let lh = lw / logoRatio;
             if (lh > maxH) { lh = maxH; lw = lh * logoRatio; }
             doc.addImage(logoData, "PNG", (pageWidth - lw) / 2, yPos, lw, lh);
             yPos += lh + 8;
         } else { yPos += 10; }
 
-        centerText("PT INDOFOOD FORTUNA MAKMUR", yPos, 16, "helvetica", "bold", primaryColor);
-        yPos += 7;
-        centerText("ELECTRICAL DASHBOARD", yPos, 14, "helvetica", "bold", textColor);
-        yPos += 7;
+        // centerText("PT INDOFOOD FORTUNA MAKMUR", yPos, 16, "helvetica", "bold", primaryColor);
+        // yPos += 7;
+        centerText("ELECTRICAL DASHBOARD", yPos, 14, "helvetica", "bold", primaryColor);
+        yPos += 8;
         centerText("Executive Summary Report", yPos, 11, "helvetica", "normal", secondaryColor);
         yPos += 15;
 
         // Info Bar
-        const infoH = 35;
+        const infoH = 32;
         doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
         doc.setDrawColor(203, 213, 225);
         doc.roundedRect(margin, yPos, pageWidth - margin*2, infoH, 3, 3, "FD");
