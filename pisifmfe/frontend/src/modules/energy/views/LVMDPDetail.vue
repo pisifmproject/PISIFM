@@ -45,6 +45,8 @@ const isRealData = computed(() => plant.value?.useRealData ?? false);
 // State
 const realtimeData = ref<LVMDPData | null>(null);
 const loading = ref(true);
+const shiftDataLoading = ref(true);
+const chartDataLoading = ref(true);
 const shiftData = ref<any[]>([]); // Shift 1-3
 const timeFilter = ref<'Day' | 'Week' | 'Month' | 'Year'>('Day');
 
@@ -170,6 +172,10 @@ function mockShiftData() {
 const fetchHistoricalData = async () => {
     if (!lvmdpId.value) return;
     
+    // Reset loading states
+    chartDataLoading.value = true;
+    shiftDataLoading.value = true;
+    
     // 1. Chart Data (Hourly)
     try {
        // Only if user wants real data and likely restricted to panel 1 or mocked data logic
@@ -186,6 +192,8 @@ const fetchHistoricalData = async () => {
     } catch (e) {
         console.error("Chart fetch error", e);
         mockChartData();
+    } finally {
+        chartDataLoading.value = false;
     }
 
     // 2. Shift Data
@@ -229,6 +237,8 @@ const fetchHistoricalData = async () => {
     } catch (e) {
         console.error("Shift data error", e);
         mockShiftData();
+    } finally {
+        shiftDataLoading.value = false;
     }
 };
 
@@ -288,58 +298,86 @@ const fmt = (val: number | undefined, dec = 1) => val ? val.toLocaleString('id-I
     <!-- Top Metric Cards -->
     <div class="metrics-grid">
         <!-- Active Power -->
-        <div class="metric-card">
-            <div class="m-header">
-                <span>ACTIVE POWER</span>
-                <div class="icon-sq yellow"><Zap class="w-4 h-4" /></div>
+        <div class="metric-card" :class="{ 'skeleton-card': loading }">
+            <div v-if="!loading">
+                <div class="m-header">
+                    <span>ACTIVE POWER</span>
+                    <div class="icon-sq yellow"><Zap class="w-4 h-4" /></div>
+                </div>
+                <div class="m-value">
+                    {{ fmt(realtimeData?.activePower, 0) }} <small>kW</small>
+                </div>
+                <div class="m-trend positive">
+                    ↑ 2,4% vs yesterday
+                </div>
             </div>
-            <div class="m-value">
-                {{ fmt(realtimeData?.activePower, 0) }} <small>kW</small>
-            </div>
-            <div class="m-trend positive">
-                ↑ 2,4% vs yesterday
+            <div v-else class="skeleton-metric">
+                <div class="skeleton-header"></div>
+                <div class="skeleton-value"></div>
+                <div class="skeleton-trend"></div>
             </div>
         </div>
 
         <!-- Apparent Power -->
-        <div class="metric-card">
-             <div class="m-header">
-                <span>APPARENT POWER</span>
-                <div class="icon-sq blue"><Activity class="w-4 h-4" /></div>
+        <div class="metric-card" :class="{ 'skeleton-card': loading }">
+            <div v-if="!loading">
+                <div class="m-header">
+                    <span>APPARENT POWER</span>
+                    <div class="icon-sq blue"><Activity class="w-4 h-4" /></div>
+                </div>
+                <div class="m-value">
+                    {{ fmt(realtimeData?.apparentPower, 1) }} <small>kVA</small>
+                </div>
+                <div class="m-trend negative">
+                    ↓ 1,1% vs yesterday
+                </div>
             </div>
-            <div class="m-value">
-                {{ fmt(realtimeData?.apparentPower, 1) }} <small>kVA</small>
-            </div>
-            <div class="m-trend negative">
-                ↓ 1,1% vs yesterday
+            <div v-else class="skeleton-metric">
+                <div class="skeleton-header"></div>
+                <div class="skeleton-value"></div>
+                <div class="skeleton-trend"></div>
             </div>
         </div>
 
         <!-- Reactive Power -->
-        <div class="metric-card">
-             <div class="m-header">
-                <span>REACTIVE POWER</span>
-                <div class="icon-sq purple"><Battery class="w-4 h-4" /></div>
+        <div class="metric-card" :class="{ 'skeleton-card': loading }">
+            <div v-if="!loading">
+                <div class="m-header">
+                    <span>REACTIVE POWER</span>
+                    <div class="icon-sq purple"><Battery class="w-4 h-4" /></div>
+                </div>
+                <div class="m-value">
+                    {{ fmt(realtimeData?.reactivePower, 1) }} <small>kVAR</small>
+                </div>
+                <div class="m-trend positive">
+                    ↑ 0,7% vs yesterday
+                </div>
             </div>
-            <div class="m-value">
-                {{ fmt(realtimeData?.reactivePower, 1) }} <small>kVAR</small>
-            </div>
-            <div class="m-trend positive">
-                ↑ 0,7% vs yesterday
+            <div v-else class="skeleton-metric">
+                <div class="skeleton-header"></div>
+                <div class="skeleton-value"></div>
+                <div class="skeleton-trend"></div>
             </div>
         </div>
 
         <!-- Power Factor -->
-        <div class="metric-card">
-             <div class="m-header">
-                <span>POWER FACTOR</span>
-                <div class="icon-sq green"><Zap class="w-4 h-4" /></div>
+        <div class="metric-card" :class="{ 'skeleton-card': loading }">
+            <div v-if="!loading">
+                <div class="m-header">
+                    <span>POWER FACTOR</span>
+                    <div class="icon-sq green"><Zap class="w-4 h-4" /></div>
+                </div>
+                <div class="m-value">
+                    {{ fmt(realtimeData?.powerFactor, 2) }}
+                </div>
+                <div class="m-trend negative">
+                    ↓ 2% vs yesterday
+                </div>
             </div>
-            <div class="m-value">
-                {{ fmt(realtimeData?.powerFactor, 2) }}
-            </div>
-            <div class="m-trend negative">
-                ↓ 2% vs yesterday
+            <div v-else class="skeleton-metric">
+                <div class="skeleton-header"></div>
+                <div class="skeleton-value"></div>
+                <div class="skeleton-trend"></div>
             </div>
         </div>
     </div>
@@ -347,12 +385,12 @@ const fmt = (val: number | undefined, dec = 1) => val ? val.toLocaleString('id-I
     <!-- Middle Section: Electrical Status & Trend -->
     <div class="middle-section">
         <!-- Live Electrical Status -->
-        <div class="card status-card">
+        <div class="card status-card" :class="{ 'skeleton-card': loading }">
             <div class="card-header">
                 <h3>Live Electrical Status</h3>
             </div>
             
-            <div class="status-content">
+            <div v-if="!loading" class="status-content">
                 <div class="voltages-group">
                     <label>VOLTAGE (L-L)</label>
                     <div class="v-row">
@@ -404,6 +442,23 @@ const fmt = (val: number | undefined, dec = 1) => val ? val.toLocaleString('id-I
                     </div>
                 </div>
             </div>
+            
+            <!-- Skeleton for Status Card -->
+            <div v-else class="status-skeleton">
+                <div class="skeleton-status-group">
+                    <div class="skeleton-label"></div>
+                    <div class="skeleton-row" v-for="i in 3" :key="i"></div>
+                </div>
+                <div class="skeleton-status-group">
+                    <div class="skeleton-label"></div>
+                    <div class="skeleton-progress"></div>
+                    <div class="skeleton-row"></div>
+                </div>
+                <div class="skeleton-status-group">
+                    <div class="skeleton-label"></div>
+                    <div class="skeleton-freq"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Energy Usage Trend -->
@@ -412,7 +467,14 @@ const fmt = (val: number | undefined, dec = 1) => val ? val.toLocaleString('id-I
                 <h3>Energy Usage Trend (Day)</h3>
             </div>
             <div class="chart-container">
-                <v-chart class="chart" :option="chartOption" autoresize />
+                <!-- Skeleton Loading -->
+                <div v-if="chartDataLoading" class="chart-skeleton">
+                    <div class="skeleton-bars">
+                        <div v-for="i in 24" :key="i" class="skeleton-bar" :style="{ height: `${30 + Math.random() * 70}%` }"></div>
+                    </div>
+                </div>
+                <!-- Actual Chart -->
+                <v-chart v-else class="chart" :option="chartOption" autoresize />
             </div>
         </div>
     </div>
@@ -423,7 +485,17 @@ const fmt = (val: number | undefined, dec = 1) => val ? val.toLocaleString('id-I
             <h3>Shift Performance</h3>
         </div>
         <div class="table-responsive">
-            <table>
+            <!-- Skeleton Loading -->
+            <div v-if="shiftDataLoading" class="table-skeleton">
+                <div class="skeleton-table-header">
+                    <div class="skeleton-th" v-for="i in 7" :key="i"></div>
+                </div>
+                <div class="skeleton-table-row" v-for="i in 3" :key="i">
+                    <div class="skeleton-td" v-for="j in 7" :key="j"></div>
+                </div>
+            </div>
+            <!-- Actual Table -->
+            <table v-else>
                 <thead>
                     <tr>
                         <th class="text-left">SHIFT</th>
@@ -859,4 +931,171 @@ td {
 .text-yellow { color: #facc15; }
 .text-blue { color: #60a5fa; }
 .text-green { color: #4ade80; }
+
+/* Skeleton Loading Styles */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+/* Metric Card Skeleton */
+.skeleton-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.skeleton-header {
+    width: 60%;
+    height: 16px;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px;
+}
+
+.skeleton-value {
+    width: 80%;
+    height: 36px;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px;
+}
+
+.skeleton-trend {
+    width: 50%;
+    height: 14px;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px;
+}
+
+/* Status Card Skeleton */
+.status-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 1rem 0;
+}
+
+.skeleton-status-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.skeleton-label {
+    width: 30%;
+    height: 14px;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px;
+}
+
+.skeleton-row {
+    width: 100%;
+    height: 24px;
+    background: linear-gradient(90deg, #0f172a 25%, #1e293b 50%, #0f172a 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px;
+}
+
+.skeleton-progress {
+    width: 100%;
+    height: 32px;
+    background: linear-gradient(90deg, #0f172a 25%, #1e293b 50%, #0f172a 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 16px;
+}
+
+.skeleton-freq {
+    width: 40%;
+    height: 48px;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px;
+}
+
+/* Chart Skeleton */
+.chart-skeleton {
+    width: 100%;
+    height: 300px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 2rem 1rem 1rem;
+    gap: 4px;
+}
+
+.skeleton-bars {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.skeleton-bar {
+    flex: 1;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px 4px 0 0;
+    min-width: 8px;
+}
+
+/* Table Skeleton */
+.table-skeleton {
+    width: 100%;
+    padding: 1rem;
+}
+
+.skeleton-table-header {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr 1.5fr 1.5fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #334155;
+}
+
+.skeleton-th {
+    height: 20px;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px;
+}
+
+.skeleton-table-row {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr 1.5fr 1.5fr 1fr;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 0;
+}
+
+.skeleton-td {
+    height: 24px;
+    background: linear-gradient(90deg, #0f172a 25%, #1e293b 50%, #0f172a 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px;
+}
 </style>
