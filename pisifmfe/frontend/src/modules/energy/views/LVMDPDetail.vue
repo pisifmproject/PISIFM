@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { lvmdpService } from "../services/lvmdp.service";
-import { getShiftAvg, getDailyHourly, getLvmdpShiftToday } from "@/lib/api";
+import { getShiftAvg, getDailyHourly, getLvmdpShiftToday, getLvmdpTrend } from "@/lib/api";
 import type { LVMDPData } from "../models";
 import { PLANTS } from "@/config/app.config";
 import { 
@@ -176,17 +176,31 @@ const fetchHistoricalData = async () => {
     chartDataLoading.value = true;
     shiftDataLoading.value = true;
     
-    // 1. Chart Data (Hourly)
+    // 1. Chart Data - Use real data for Plant Cikupa
     try {
-       // Only if user wants real data and likely restricted to panel 1 or mocked data logic
-       if (isRealData.value && lvmdpId.value === 1) { 
-           // If backend is ready, uncomment:
-           // const now = new Date();
-           // const dateStr = now.toISOString().split('T')[0];
-           // const hourly = await getDailyHourly(lvmdpId.value as any, dateStr);
-           // ... process ...
-           mockChartData(); 
+       if (isRealData.value && plantId.value === 'cikupa') {
+           // Fetch real trend data from database
+           const periodMap: Record<typeof timeFilter.value, "day" | "week" | "month" | "year"> = {
+               'Day': 'day',
+               'Week': 'week',
+               'Month': 'month',
+               'Year': 'year'
+           };
+           
+           const trendData = await getLvmdpTrend(
+               lvmdpId.value as any,
+               periodMap[timeFilter.value],
+               new Date().toISOString().split('T')[0]
+           );
+           
+           console.log(`[LVMDP${lvmdpId.value}] Trend data (${timeFilter.value}):`, trendData);
+           
+           // Update chart with real data
+           chartOption.value.xAxis.data = trendData.labels;
+           chartOption.value.series[0].data = trendData.data;
+           chartOption.value.yAxis.name = `Energy (${trendData.unit})`;
        } else {
+           // Use mock data for other plants
            mockChartData();
        }
     } catch (e) {
@@ -257,6 +271,12 @@ watch([plantId, lvmdpId], () => {
     fetchHistoricalData();
     
 }, { immediate: true });
+
+// Watch timeFilter changes to refetch chart data
+watch(timeFilter, () => {
+    chartDataLoading.value = true;
+    fetchHistoricalData();
+});
 
 onUnmounted(() => {
     if (unsubscribe) unsubscribe();

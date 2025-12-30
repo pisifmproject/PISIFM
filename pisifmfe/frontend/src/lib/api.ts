@@ -134,6 +134,31 @@ export async function getLvmdpShiftToday(panelId: 1 | 2 | 3 | 4) {
   }
 }
 
+// Get trend data for LVMDP
+export async function getLvmdpTrend(
+  panelId: 1 | 2 | 3 | 4,
+  period: "day" | "week" | "month" | "year",
+  date?: string
+) {
+  try {
+    const { data } = await api.get(`/lvmdp/${panelId}/trend`, {
+      params: {
+        period,
+        date: date || new Date().toISOString().split("T")[0],
+        _t: Date.now(),
+      },
+    });
+    return data as {
+      period: string;
+      labels: string[];
+      data: number[];
+      unit: string;
+    };
+  } catch (error: any) {
+    throw error;
+  }
+}
+
 // Get HMI data (R, S, T current and voltage)
 export async function getLvmdpHMI(panelId: 1 | 2 | 3 | 4) {
   const path = { 1: "/lvmdp1", 2: "/lvmdp2", 3: "/lvmdp3", 4: "/lvmdp4" }[

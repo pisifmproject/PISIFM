@@ -167,4 +167,176 @@ r.get("/:id/shift-today", async (req, res) => {
   }
 });
 
+// GET /api/lvmdp/:id/trend?period=day|week|month|year&date=YYYY-MM-DD
+r.get("/:id/trend", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const period = (req.query.period as string) || "day";
+    const dateParam = (req.query.date as string) || new Date().toISOString().split("T")[0];
+
+    if (![1, 2, 3, 4].includes(id)) {
+      return res.status(400).json({ message: "Bad id (must be 1..4)" });
+    }
+
+    // Import Indofood calendar utilities
+    const {
+      getCurrentIndofoodWeek,
+      getCurrentIndofoodMonth,
+      getIndofoodYearRange,
+      getIndofoodMonthByNumber,
+    } = await import("../utils/indofoodCalendar");
+
+    // Import appropriate repository
+    let dailyReportRepo: any;
+    switch (id) {
+      case 1:
+        dailyReportRepo = await import("../lvmdp/LVMDP_1/lvmdp_1.dailyReport.repository");
+        break;
+      case 2:
+        dailyReportRepo = await import("../lvmdp/LVMDP_2/lvmdp_2.dailyReport.repository");
+        break;
+      case 3:
+        dailyReportRepo = await import("../lvmdp/LVMDP_3/lvmdp_3.dailyReport.repository");
+        break;
+      case 4:
+        dailyReportRepo = await import("../lvmdp/LVMDP_4/lvmdp_4.dailyReport.repository");
+        break;
+    }
+
+    let data: any[] = [];
+    let labels: string[] = [];
+
+    if (period === "day") {
+      // Hourly data for a specific day (00:00 - 23:59)
+      const { fetchHourlyReportByDate } = await import(
+        `../lvmdp/LVMDP_${id}/lvmdp_${id}.hourlyReport.services`
+      );
+      const hourlyData = await fetchHourlyReportByDate(dateParam);
+
+      // Fill 24 hours
+      for (let hour = 0; hour < 24; hour++) {
+        const hourData = hourlyData.find((h: any) => h.hour === hour);
+        labels.push(`${hour}:00`);
+        data.push(hourData?.totalKwh || 0);
+      }
+    } else if (period === "week") {
+      // Weekly data based on Indofood calendar
+      const week = getCurrentIndofoodWeek();
+      if (!week) {
+        return res.status(404).json({ message: "Current week not found in Indofood calendar" });
+      }
+
+      // Get daily reports for the week range
+      const reports = await dailyReportRepo.getAllDailyReports();
+      const weekReports = reports.filter(
+        (r: any) => r.reportDate >= week.startDate && r.reportDate <= week.endDate
+      );
+
+      // Generate labels for each day in the week
+      const startDate = new Date(week.startDate);
+      const endDate = new Date(week.endDate);
+      const currentDate = new Date(startDate);
+
+      while (currentDate <= endDate) {
+        const dateStr = currentDate.toISOString().split("T")[0];
+        const dayReport = weekReports.find((r: any) => r.reportDate === dateStr);
+
+        const dayName = currentDate.toLocaleDateString("en-US", { weekday: "short" });
+        const dayNum = currentDate.getDate();
+        labels.push(`${dayName} ${dayNum}`);
+
+        const totalKwh =
+          (dayReport?.shift1TotalKwh || 0) +
+          (dayReport?.shift2TotalKwh || 0) +
+          (dayReport?.shift3TotalKwh || 0);
+        data.push(totalKwh);
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    } else if (period === "month") {
+      // Monthly data based on Indofood calendar (weekly aggregation)
+      const currentMonth = getCurrentIndofoodMonth();
+      if (!currentMonth) {
+        return res.status(404).json({ message: "Current month not found in Indofood calendar" });
+      }
+
+      const reports = await dailyReportRepo.getAllDailyReports();
+
+      // Aggregate by week
+      for (const week of currentMonth.weeks) {
+        const weekReports = reports.filter(
+          (r: any) => r.reportDate >= week.startDate && r.reportDate <= week.endDate
+        );
+
+        let weekTotal = 0;
+        for (const report of weekReports) {
+          weekTotal +=
+            (report.shift1TotalKwh || 0) +
+            (report.shift2TotalKwh || 0) +
+            (report.shift3TotalKwh || 0);
+        }
+
+        labels.push(`Week ${week.week}`);
+        data.push(weekTotal);
+      }
+    } else if (period === "year") {
+      // Yearly data based on Indofood calendar (monthly aggregation)
+      const year = new Date(dateParam).getFullYear();
+      const yearRange = getIndofoodYearRange(year);
+
+      const reports = await dailyReportRepo.getAllDailyReports();
+      const yearReports = reports.filter(
+        (r: any) => r.reportDate >= yearRange.startDate && r.reportDate <= yearRange.endDate
+      );
+
+      // Aggregate by Indofood month
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+
+      for (let monthNum = 1; monthNum <= 12; monthNum++) {
+        const indofoodMonth = getIndofoodMonthByNumber(year, monthNum);
+        if (!indofoodMonth) continue;
+
+        const monthReports = yearReports.filter(
+          (r: any) =>
+            r.reportDate >= indofoodMonth.startDate && r.reportDate <= indofoodMonth.endDate
+        );
+
+        let monthTotal = 0;
+        for (const report of monthReports) {
+          monthTotal +=
+            (report.shift1TotalKwh || 0) +
+            (report.shift2TotalKwh || 0) +
+            (report.shift3TotalKwh || 0);
+        }
+
+        labels.push(monthNames[monthNum - 1]);
+        data.push(monthTotal);
+      }
+    }
+
+    return res.json({
+      period,
+      labels,
+      data,
+      unit: "kWh",
+    });
+  } catch (err: any) {
+    console.error("[LVMDP Trend Error]", err);
+    return res.status(500).json({ message: "Internal server error", error: String(err) });
+  }
+});
+
 export default r;
