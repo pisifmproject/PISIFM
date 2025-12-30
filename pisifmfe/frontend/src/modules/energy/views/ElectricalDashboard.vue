@@ -2,7 +2,7 @@
 import { computed, ref, onMounted, onUnmounted, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PLANTS, type PlantId } from '@/config/app.config';
-import { Zap, Activity, ArrowLeft, Download, Calendar } from 'lucide-vue-next';
+import { Zap, Activity, ArrowLeft, Download, Calendar, HelpCircle, X } from 'lucide-vue-next';
 import { lvmdpService } from '@/modules/energy/services/lvmdp.service';
 import type { LVMDPData } from '@/modules/energy/models';
 import { getLvmdpShiftToday, getLvmdpTrend } from '@/lib/api';
@@ -27,6 +27,7 @@ const dateType = ref<'nasional' | 'indofood'>('nasional');
 const selectedDate = ref(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
 const selectedMonth = ref(new Date().toISOString().slice(0, 7)); // YYYY-MM
 const isGenerating = ref(false);
+const showHelpModal = ref(false);
 
 const indofoodRanges2025: Record<string, { start: string, end: string }> = {
     '01': { start: '2025-01-01', end: '2025-02-02' },
@@ -69,7 +70,7 @@ function navigateToLvmdp(id: number) {
 }
 
 const goBack = () => {
-    router.back();
+    router.push(`/plant/${plantId.value}/dashboard`);
 };
 
 // Calculate Plant Totals
@@ -448,7 +449,12 @@ const generateReport = async () => {
       <div class="header-top">
           <button @click="goBack" class="back-btn">
               <ArrowLeft class="w-5 h-5" />
-              <span>Back to Global</span>
+              <span>Back to Dashboard</span>
+          </button>
+
+          <button class="help-btn" @click="showHelpModal = true">
+             <HelpCircle class="w-4 h-4" />
+             <span>Help</span>
           </button>
           
           <!-- Report Controls (New Design) -->
@@ -582,7 +588,7 @@ const generateReport = async () => {
                 <div class="p-header">
                     <div class="p-title">
                         <h3>LVMDP {{ i }}</h3>
-                        <span class="p-code">LVMDP-{{ i }}</span>
+                        <!-- <span class="p-code">LVMDP-{{ i }}</span> -->
                     </div>
                     <div class="p-action">
                         <Activity class="w-4 h-4" />
@@ -620,6 +626,43 @@ const generateReport = async () => {
                             <span class="pm-val text-green">{{ formatNumber(panels[i-1]?.powerFactor || 0, 2) }}</span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div v-if="showHelpModal" class="modal-overlay" @click.self="showHelpModal = false">
+        <div class="modal-content help-modal">
+            <div class="modal-header">
+                <h3>LVMDP System Overview</h3>
+                <button class="close-btn" @click="showHelpModal = false">
+                    <X class="w-5 h-5" />
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3>LVMDP 1 (Main Production Area)</h3>
+                    <p>Supplies electrical power to the main production activities as well as raw material and finished goods warehouses. 
+                        This panel supports daily production processes, packing operations, and internal distribution. 
+                        The performance of LVMDP 1 has a significant impact on overall plant operational continuity.
+                    </p>
+                </div>
+                 <div class="help-section">
+                    <h3>LVMDP 2 (Utilities & Supporting Facilities)</h3>
+                    <p>Provides electrical power to supporting facilities such as offices, workshops, air and gas systems, and various pumping and water treatment installations. 
+                        Although not directly connected to core production, this panel plays a critical role in ensuring smooth and reliable plant operations.
+                    </p>
+                </div>
+                 <div class="help-section">
+                    <h3>LVMDP 3 (Extended Production & Storage Areas)</h3>
+                    <p>Supplies power to additional production lines, extended storage areas, and supporting facilities related to quality control and cooling systems. 
+                        This panel helps ensure stable operations across supplementary production and storage functions.</p>
+                </div>
+                 <div class="help-section">
+                    <h3>LVMDP 4 (Boiler & Specialized Production Lines)</h3>
+                    <p>Supports electrical supply for boiler systems and specialized production lines. 
+                        This panel is essential for maintaining stable energy availability for processes that require high reliability and directly affect production efficiency.</p>
                 </div>
             </div>
         </div>
@@ -665,6 +708,26 @@ const generateReport = async () => {
 }
 
 .back-btn:hover { color: white; }
+
+.help-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 1rem;
+    margin-right: auto; /* Push controls to right */
+}
+.help-btn:hover {
+    border-color: #94a3b8;
+    color: white;
+}
 
 /* Report Controls Styling */
 .report-controls {
@@ -1081,6 +1144,47 @@ h1 {
 }
 
 .text-white { color: white; }
+
 .text-right { text-align: right; }
+
+/* Modal Styles Reuse */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 50; backdrop-filter: blur(4px);
+}
+.modal-content {
+    background: #1e293b; border-radius: 12px; border: 1px solid #334155;
+    width: 90%; max-width: 450px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    animation: modal-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.help-modal { max-width: 600px; }
+@keyframes modal-pop {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+    padding: 1rem 1.5rem; border-bottom: 1px solid #334155;
+    display: flex; justify-content: space-between; align-items: center;
+    background: #151e32;
+}
+.modal-header h3 { margin: 0; color: white; font-size: 1.1rem; }
+.close-btn { background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 0.5rem; border-radius: 4px; }
+.close-btn:hover { background: #334155; color: white; }
+.modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; max-height: 70vh; overflow-y: auto;}
+.help-section h3 {   color: #3b82f6;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;}
+.help-section p {  color: #cbd5e1;
+  line-height: 1.6;
+  margin: 0;
+}
 
 </style>
