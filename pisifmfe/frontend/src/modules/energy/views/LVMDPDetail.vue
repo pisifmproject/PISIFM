@@ -55,6 +55,16 @@ const chartDataLoading = ref(true);
 const shiftData = ref<any[]>([]); // Shift 1-3
 const timeFilter = ref<"Day" | "Week" | "Month" | "Year">("Day");
 
+const PANEL_SPECS: Record<number, { capacity: number, maxCurrent: number }> = {
+    1: { capacity: 1152.75, maxCurrent: 2500 },
+    2: { capacity: 1271.36, maxCurrent: 2500 },
+    3: { capacity: 1270.59, maxCurrent: 2500 },
+    4: { capacity: 1641.35, maxCurrent: 3200 }
+};
+
+const currentSpecs = computed(() => PANEL_SPECS[lvmdpId.value] || { capacity: 5540, maxCurrent: 2500 });
+
+
 // PDF Report State
 
 
@@ -511,7 +521,7 @@ const fmt = (val: number | undefined, dec = 1) =>
                 class="progress-bar"
                 :style="{
                   width: `${Math.min(
-                    ((realtimeData?.avgCurrent || 0) / 2500) * 100,
+                    ((realtimeData?.avgCurrent || 0) / currentSpecs.maxCurrent) * 100,
                     100
                   )}%`,
                 }"
@@ -520,10 +530,10 @@ const fmt = (val: number | undefined, dec = 1) =>
             <div class="load-stats">
               <div class="load-perc">
                 {{
-                  (((realtimeData?.avgCurrent || 0) / 2500) * 100).toFixed(2)
+                  (((realtimeData?.avgCurrent || 0) / currentSpecs.maxCurrent) * 100).toFixed(2)
                 }}%
               </div>
-              <div class="load-max">Max: 2.500 A</div>
+              <div class="load-max">Max: {{ fmt(currentSpecs.maxCurrent, 0) }} A</div>
             </div>
             <div class="load-avg">
               Average Current:

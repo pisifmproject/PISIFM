@@ -29,6 +29,13 @@ const selectedMonth = ref(new Date().toISOString().slice(0, 7)); // YYYY-MM
 const isGenerating = ref(false);
 const showHelpModal = ref(false);
 
+const PANEL_CONFIG = [
+    { capacity: 1152.75, maxCurrent: 2500 },
+    { capacity: 1271.36, maxCurrent: 2500 },
+    { capacity: 1270.59, maxCurrent: 2500 },
+    { capacity: 1641.35, maxCurrent: 3200 }
+];
+
 const indofoodRanges2025: Record<string, { start: string, end: string }> = {
     '01': { start: '2025-01-01', end: '2025-02-02' },
     '02': { start: '2025-02-03', end: '2025-03-02' },
@@ -70,7 +77,7 @@ function navigateToLvmdp(id: number) {
 }
 
 const goBack = () => {
-    router.push(`/plant/${plantId.value}/dashboard`);
+    router.push(`/plant/${plantId.value}`);
 };
 
 // Calculate Plant Totals
@@ -526,7 +533,7 @@ const generateReport = async () => {
              <div class="util-content">
                  <div class="util-bar-container">
                     <div class="util-info">
-                        <span class="label">CURRENT LOAD</span>
+                        <span class="label">CURRENT LOAD DISTRIBUTION</span>
                         <span class="capacity-label">CAPACITY (5.540 KVA)</span>
                     </div>
                     <div class="progress-track">
@@ -539,7 +546,7 @@ const generateReport = async () => {
                  <div class="util-stats">
                      <div class="stat-big">
                          <span class="value">{{ formatNumber(plantStats.totalKva) }}</span>
-                         <span class="unit">kVA (Total Apparent Power)</span>
+                         <span class="unit">kVA</span>
                      </div>
                      <div class="stat-perc">
                          <span class="perc-value">{{ formatNumber(plantStats.utilization, 2) }}%</span>
@@ -602,7 +609,7 @@ const generateReport = async () => {
                             <span class="val">{{ formatNumber(panels[i-1]?.apparentPower || 0) }}</span>
                             <span class="unit">kVA</span>
                         </div>
-                        <span class="sub-val">({{ formatNumber(((panels[i-1]?.apparentPower || 0) / 5540) * 100, 1) }}% of 5540 kVA)</span>
+                        <span class="sub-val">({{ formatNumber(((panels[i-1]?.apparentPower || 0) / PANEL_CONFIG[i-1].capacity) * 100, 1) }}% of {{ formatNumber(PANEL_CONFIG[i-1].capacity, 2) }} kVA)</span>
                     </div>
 
                     <div class="p-metrics">
@@ -610,7 +617,7 @@ const generateReport = async () => {
                             <span>CURRENT NOW</span>
                             <div class="text-right">
                                 <div class="pm-val">{{ formatNumber(panels[i-1]?.avgCurrent || 0) }} A</div>
-                                <div class="pm-sub">{{ formatNumber(((panels[i-1]?.avgCurrent || 0) / 2500) * 100, 1) }}% of 2500 A</div>
+                                <div class="pm-sub">{{ formatNumber(((panels[i-1]?.avgCurrent || 0) / PANEL_CONFIG[i-1].maxCurrent) * 100, 1) }}% of {{ formatNumber(PANEL_CONFIG[i-1].maxCurrent, 0) }} A</div>
                             </div>
                         </div>
                         <div class="pm-row">
