@@ -20,8 +20,8 @@ import { getLvmdpTrend, getLvmdpShiftToday } from '@/lib/api';
 const route = useRoute();
 const router = useRouter();
 
-const plantId = route.params.plantId as string;
-const plantConfig = PLANTS[plantId as keyof typeof PLANTS] || PLANTS['cikupa'];
+const plantId = computed(() => route.params.plantId as string);
+const plantConfig = computed(() => PLANTS[plantId.value as keyof typeof PLANTS] || PLANTS['cikupa']);
 
 // --- Types & Constants ---
 type Period = 'Day' | 'Week' | 'Month' | 'Year';
@@ -55,19 +55,29 @@ const shifts = ref([
     { name: 'Shift 3', time: '22:01 - 07:00', output: '0', oee: '0%', status: 'UPCOMING' }
 ]);
 
-// Machines (Production Lines) - Cikupa specific
-const machines = ref([
-    { name: 'PC39', output: '3.075', oee: '89,32%', status: 'RUNNING' },
-    { name: 'PC14', output: '2.640', oee: '83,49%', status: 'RUNNING' },
-    { name: 'Tortilla', output: '5.400', oee: '91,45%', status: 'RUNNING' },
-    { name: 'TWS 5.6', output: '6.690', oee: '91,27%', status: 'RUNNING' },
-    { name: 'FCP', output: '3.495', oee: '72,13%', status: 'RUNNING' },
-    { name: 'TWS 7.2', output: '4.665', oee: '74,07%', status: 'RUNNING' },
-    { name: 'Cassava Copack', output: '7.815', oee: '88,64%', status: 'RUNNING' },
-    { name: 'Cassava Inhouse', output: '615', oee: '84,79%', status: 'BREAKDOWN' },
-    { name: 'Packing Pouch', output: '4.110', oee: '78,2%', status: 'RUNNING', warning: 'Maintenance Required' },
-    { name: 'Vacuum Fryer 1', output: '12.090', oee: '90,96%', status: 'RUNNING' }
-]);
+// Helper to generate consistent dummy stats based on string hash or just random
+function getDummyStats(id: string) {
+    // Simple pseudo-random based on id length to keep it consistent-ish during re-renders if needed
+    const isRunning = id.length % 5 !== 0; 
+    return {
+        output: isRunning ? (Math.random() * 5000 + 2000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : '0',
+        oee: isRunning ? (Math.random() * 15 + 75).toFixed(2).replace('.', ',') + '%' : '0%',
+        status: isRunning ? 'RUNNING' : 'STOPPED',
+        warning: (!isRunning && id.length % 2 === 0) ? 'Maintenance Required' : undefined
+    };
+}
+
+const machines = computed(() => {
+    const configMachines = plantConfig.value.machines || [];
+    return configMachines.map(m => {
+        const stats = getDummyStats(m.id);
+        return {
+            id: m.id, // Keep ID for navigation
+            name: m.name,
+            ...stats
+        };
+    });
+});
 
 // Active Alarms Dummy
 const activeAlarms = ref([
@@ -82,13 +92,11 @@ function goBack() {
 }
 
 function navigateTo(path: string) {
-    router.push(`/plant/${plantId}/${path}`);
+    router.push(`/plant/${plantId.value}/${path}`);
 }
 
-function navigateToMachine(machineName: string) {
-    // Basic slugify
-    const slug = machineName.toLowerCase().replace(/\s+/g, '-').replace('.', '-');
-    router.push(`/plant/${plantId}/production/machine/${slug}`);
+function navigateToMachine(machineId: string) {
+    router.push(`/plant/${plantId.value}/production/machine/${machineId}`);
 }
 
 const formatNumber = (num: number, decimals = 0) => {
@@ -96,7 +104,7 @@ const formatNumber = (num: number, decimals = 0) => {
 };
 
 async function fetchEnergyData() {
-    if (plantId !== 'cikupa') return; // Only real for Cikupa for now
+    if (plantId.value !== 'cikupa') return; // Only real for Cikupa for now
     
     isLoading.value = true;
     totalEnergy.value = 0;
@@ -318,7 +326,7 @@ onMounted(() => {
                 v-for="m in machines" 
                 :key="m.name" 
                 class="line-card"
-                @click="navigateToMachine(m.name)"
+                @click="navigateToMachine(m.id)"
             >
                 <div class="lc-header">
                     <h3 class="lc-name">{{ m.name }}</h3>

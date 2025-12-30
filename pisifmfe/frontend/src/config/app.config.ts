@@ -8,6 +8,7 @@ export interface MachineConfig {
 export interface PlantConfig {
   id: PlantId;
   name: string;
+  location: string;
   useRealData: boolean;
   machines: MachineConfig[];
 }
@@ -16,6 +17,7 @@ export const PLANTS: Record<PlantId, PlantConfig> = {
   cikokol: {
     id: 'cikokol',
     name: 'Plant Cikokol',
+    location: 'TANGERANG',
     useRealData: false,
     machines: [
       { id: 'baked-corn-puff', name: 'Baked Corn Puff' },
@@ -30,6 +32,7 @@ export const PLANTS: Record<PlantId, PlantConfig> = {
   semarang: {
     id: 'semarang',
     name: 'Plant Semarang',
+    location: 'CENTRAL JAVA',
     useRealData: false,
     machines: [
       { id: 'pc14', name: 'PC 14' },
@@ -50,6 +53,7 @@ export const PLANTS: Record<PlantId, PlantConfig> = {
   cikupa: {
     id: 'cikupa',
     name: 'Plant Cikupa',
+    location: 'TANGERANG',
     useRealData: true,
     machines: [
       { id: 'pc14', name: 'PC 14' },
@@ -67,6 +71,7 @@ export const PLANTS: Record<PlantId, PlantConfig> = {
   agro: {
     id: 'agro',
     name: 'Plant Agro',
+    location: 'DEVELOPMENT',
     useRealData: false,
     machines: [
       { id: 'baked-corn-puff', name: 'Baked Corn Puff' },
