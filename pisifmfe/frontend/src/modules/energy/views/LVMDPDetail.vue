@@ -54,6 +54,8 @@ const shiftDataLoading = ref(true);
 const chartDataLoading = ref(true);
 const shiftData = ref<any[]>([]); // Shift 1-3
 const timeFilter = ref<"Day" | "Week" | "Month" | "Year">("Day");
+const totalEnergy = ref<number>(0); // Total energy for selected period
+const periodLabel = ref<string>(""); // Label for the period (e.g., "Today", "This Week")
 
 const PANEL_SPECS: Record<number, { capacity: number, maxCurrent: number }> = {
     1: { capacity: 1152.75, maxCurrent: 2500 },
@@ -260,6 +262,18 @@ const fetchHistoricalData = async () => {
         trendData
       );
 
+      // Calculate total energy from trend data
+      totalEnergy.value = trendData.data.reduce((sum, val) => sum + val, 0);
+
+      // Set period label
+      const periodLabels: Record<typeof timeFilter.value, string> = {
+        Day: "Today",
+        Week: "This Week",
+        Month: "This Month",
+        Year: "This Year",
+      };
+      periodLabel.value = periodLabels[timeFilter.value];
+
       // Update chart with real data
       chartOption.value.xAxis.data = trendData.labels;
       chartOption.value.series[0].data = trendData.data;
@@ -267,10 +281,22 @@ const fetchHistoricalData = async () => {
     } else {
       // Use mock data for other plants
       mockChartData();
+      // Mock total energy
+      totalEnergy.value = 1234.56;
+      periodLabel.value =
+        timeFilter.value === "Day"
+          ? "Today"
+          : timeFilter.value === "Week"
+          ? "This Week"
+          : timeFilter.value === "Month"
+          ? "This Month"
+          : "This Year";
     }
   } catch (e) {
     console.error("Chart fetch error", e);
     mockChartData();
+    totalEnergy.value = 0;
+    periodLabel.value = "Error";
   } finally {
     chartDataLoading.value = false;
   }
@@ -572,7 +598,13 @@ const fmt = (val: number | undefined, dec = 1) =>
       <!-- Energy Usage Trend -->
       <div class="card chart-card">
         <div class="card-header">
-          <h3>Energy Usage Trend (Day)</h3>
+          <div class="header-with-total">
+            <h3>Energy Usage Trend ({{ timeFilter }})</h3>
+            <div v-if="!chartDataLoading" class="total-energy-badge">
+              <span class="label">Total {{ periodLabel }}:</span>
+              <span class="value">{{ totalEnergy.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} kWh</span>
+            </div>
+          </div>
         </div>
         <div class="chart-container">
           <!-- Skeleton Loading -->
@@ -1442,5 +1474,37 @@ td {
 
 .btn-primary:hover {
   background: #1d4ed8;
+}
+
+/* Total Energy Badge */
+.header-with-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 1rem;
+}
+
+.total-energy-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.total-energy-badge .label {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.total-energy-badge .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #eab308;
+  font-family: monospace;
 }
 </style>

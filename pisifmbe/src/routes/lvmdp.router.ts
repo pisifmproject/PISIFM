@@ -226,8 +226,12 @@ r.get("/:id/trend", async (req, res) => {
         return res.status(404).json({ message: "Current week not found in Indofood calendar" });
       }
 
-      // Get daily reports for the week range
-      const reports = await dailyReportRepo.getAllDailyReports();
+      // Get daily reports for the week range and filter anomalies
+      const allReports = await dailyReportRepo.getAllDailyReports();
+      const reports = allReports.filter((r: any) => {
+        const total = (r.shift1TotalKwh || 0) + (r.shift2TotalKwh || 0) + (r.shift3TotalKwh || 0);
+        return total <= 50000; // Filter out anomalies (> 50,000 kWh per day)
+      });
       const weekReports = reports.filter(
         (r: any) => r.reportDate >= week.startDate && r.reportDate <= week.endDate
       );
@@ -260,7 +264,11 @@ r.get("/:id/trend", async (req, res) => {
         return res.status(404).json({ message: "Current month not found in Indofood calendar" });
       }
 
-      const reports = await dailyReportRepo.getAllDailyReports();
+      const allReports = await dailyReportRepo.getAllDailyReports();
+      const reports = allReports.filter((r: any) => {
+        const total = (r.shift1TotalKwh || 0) + (r.shift2TotalKwh || 0) + (r.shift3TotalKwh || 0);
+        return total <= 50000; // Filter out anomalies
+      });
 
       // Aggregate by week
       for (const week of currentMonth.weeks) {
@@ -284,10 +292,12 @@ r.get("/:id/trend", async (req, res) => {
       const year = new Date(dateParam).getFullYear();
       const yearRange = getIndofoodYearRange(year);
 
-      const reports = await dailyReportRepo.getAllDailyReports();
-      const yearReports = reports.filter(
-        (r: any) => r.reportDate >= yearRange.startDate && r.reportDate <= yearRange.endDate
-      );
+      // Fetch reports within the year range and filter anomalies
+      const allReports = await dailyReportRepo.getAllDailyReports();
+      const reports = allReports.filter((r: any) => {
+        const total = (r.shift1TotalKwh || 0) + (r.shift2TotalKwh || 0) + (r.shift3TotalKwh || 0);
+        return total <= 50000 && r.reportDate >= yearRange.startDate && r.reportDate <= yearRange.endDate;
+      });
 
       // Aggregate by Indofood month
       const monthNames = [
@@ -309,7 +319,7 @@ r.get("/:id/trend", async (req, res) => {
         const indofoodMonth = getIndofoodMonthByNumber(year, monthNum);
         if (!indofoodMonth) continue;
 
-        const monthReports = yearReports.filter(
+        const monthReports = reports.filter(
           (r: any) =>
             r.reportDate >= indofoodMonth.startDate && r.reportDate <= indofoodMonth.endDate
         );

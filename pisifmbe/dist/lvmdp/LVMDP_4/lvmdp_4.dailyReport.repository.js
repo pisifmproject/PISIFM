@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllDailyReports = exports.getDailyReportByMonth = exports.getDailyReportByDate = exports.saveDailyReport = void 0;
+exports.getDailyReportsByDateRange = exports.getAllDailyReports = exports.getDailyReportByMonth = exports.getDailyReportByDate = exports.saveDailyReport = void 0;
 const db_1 = require("../../db");
 const schema_1 = require("../../db/schema");
 const drizzle_orm_1 = require("drizzle-orm");
@@ -101,3 +101,14 @@ const getAllDailyReports = async () => {
         .limit(30);
 };
 exports.getAllDailyReports = getAllDailyReports;
+/**
+ * Get daily reports by date range
+ */
+const getDailyReportsByDateRange = async (startDate, endDate) => {
+    return await db_1.db
+        .select()
+        .from(schema_1.dailyReportLVMDP4)
+        .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.gte)(schema_1.dailyReportLVMDP4.reportDate, startDate), (0, drizzle_orm_1.lt)(schema_1.dailyReportLVMDP4.reportDate, endDate)))
+        .orderBy(schema_1.dailyReportLVMDP4.reportDate);
+};
+exports.getDailyReportsByDateRange = getDailyReportsByDateRange;

@@ -119,3 +119,19 @@ export const getAllDailyReports = async () => {
     .orderBy(desc(dailyReportLVMDP2.reportDate))
     .limit(30);
 };
+
+/**
+ * Get daily reports by date range
+ */
+export const getDailyReportsByDateRange = async (startDate: string, endDate: string) => {
+  return await db
+    .select()
+    .from(dailyReportLVMDP2)
+    .where(
+      and(
+        gte(dailyReportLVMDP2.reportDate, startDate),
+        lt(dailyReportLVMDP2.reportDate, endDate)
+      )
+    )
+    .orderBy(dailyReportLVMDP2.reportDate);
+};
