@@ -37,7 +37,7 @@ src/**/*.js
 *.sw?
 
 # Environment variables
-.env
+# .env - INCLUDED in repo for easy deployment
 .env.local
 .env.*.local
 
