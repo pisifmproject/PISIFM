@@ -349,3 +349,20 @@ export async function getMachineUtilityData(plantId: string, machineId: string) 
     timestamp: string;
   };
 }
+
+
+// ---------- PLANT DASHBOARD DATA ----------
+export async function getPlantDashboard(plantId: string) {
+  const { data } = await api.get(`/plants/${plantId}/dashboard`, {
+    params: { _t: Date.now() },
+  });
+  return data;
+}
+
+// ---------- PLANT MACHINES ----------
+export async function getPlantMachines(plantId: string) {
+  const { data } = await api.get(`/plants/${plantId}/machines`, {
+    params: { _t: Date.now() },
+  });
+  return data;
+}

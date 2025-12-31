@@ -144,11 +144,11 @@ function formatLabel(key: string): string {
         </div>
         <div class="data-cards">
           <template v-for="(value, key) in performanceData" :key="key">
-            <div class="data-card" :class="{ 'highlight': key.includes('oee') || key.includes('Efficiency') }" v-if="!key.includes('Unit') && !key.includes('timestamp') && key !== 'targetProduction'">
-              <span class="label">{{ formatLabel(key) }}</span>
-              <span class="value">{{ value }} {{ performanceData[key + 'Unit'] || '' }}</span>
-              <span class="target" v-if="key === 'actualProduction' && performanceData.targetProduction">
-                Target: {{ performanceData.targetProduction }} {{ performanceData.targetProductionUnit }}
+            <div class="data-card" :class="{ 'highlight': String(key).includes('oee') || String(key).includes('Efficiency') }" v-if="!String(key).includes('Unit') && !String(key).includes('timestamp') && String(key) !== 'targetProduction'">
+              <span class="label">{{ formatLabel(String(key)) }}</span>
+              <span class="value">{{ value }} {{ (performanceData as any)[String(key) + 'Unit'] || '' }}</span>
+              <span class="target" v-if="String(key) === 'actualProduction' && performanceData.targetProduction">
+                Target: {{ performanceData.targetProduction }} {{ (performanceData as any).targetProductionUnit }}
               </span>
             </div>
           </template>
@@ -165,9 +165,9 @@ function formatLabel(key: string): string {
         </div>
         <div class="data-cards">
           <template v-for="(value, key) in processData" :key="key">
-            <div class="data-card" v-if="!key.includes('Unit') && !key.includes('timestamp') && !key.includes('Status') && !key.includes('Mode')">
-              <span class="label">{{ formatLabel(key) }}</span>
-              <span class="value">{{ value }} {{ processData[key + 'Unit'] || '' }}</span>
+            <div class="data-card" v-if="!String(key).includes('Unit') && !String(key).includes('timestamp') && !String(key).includes('Status') && !String(key).includes('Mode')">
+              <span class="label">{{ formatLabel(String(key)) }}</span>
+              <span class="value">{{ value }} {{ (processData as any)[String(key) + 'Unit'] || '' }}</span>
             </div>
           </template>
           <div class="data-card status-card" v-if="processData.operatingMode">
@@ -199,11 +199,11 @@ function formatLabel(key: string): string {
         </div>
         <div class="data-cards">
           <template v-for="(value, key) in utilityData" :key="key">
-            <div class="data-card highlight" v-if="!key.includes('Unit') && !key.includes('timestamp') && !key.includes('Cost')">
-              <span class="label">{{ formatLabel(key) }}</span>
-              <span class="value">{{ value }} {{ utilityData[key + 'Unit'] || '' }}</span>
-              <span class="cost" v-if="utilityData[key + 'Cost']">
-                Cost: {{ utilityData[key + 'Cost'] }} {{ utilityData[key + 'CostUnit'] }}
+            <div class="data-card highlight" v-if="!String(key).includes('Unit') && !String(key).includes('timestamp') && !String(key).includes('Cost')">
+              <span class="label">{{ formatLabel(String(key)) }}</span>
+              <span class="value">{{ value }} {{ (utilityData as any)[String(key) + 'Unit'] || '' }}</span>
+              <span class="cost" v-if="(utilityData as any)[String(key) + 'Cost']">
+                Cost: {{ (utilityData as any)[String(key) + 'Cost'] }} {{ (utilityData as any)[String(key) + 'CostUnit'] }}
               </span>
             </div>
           </template>
