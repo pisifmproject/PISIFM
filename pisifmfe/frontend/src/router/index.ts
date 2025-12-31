@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 import { useAuth } from "../stores/auth";
 import Login from "../modules/auth/views/Login.vue";
+import Landing from "../views/Landing.vue";
 
 // Layouts
 import MainLayout from "../shared/layouts/MainLayout.vue";
@@ -29,7 +30,9 @@ import { PLANTS } from "@/config/app.config";
 const routes: RouteRecordRaw[] = [
   {
     path: "/",
-    redirect: "/login"
+    name: "Landing",
+    component: Landing,
+    meta: { layout: 'blank' }
   },
   {
     path: "/login",
@@ -203,8 +206,8 @@ router.beforeEach((to, from, next) => {
       next();
     }
   } else {
-    // If going to login while authenticated, go to global
-    if (to.name === 'Login' && isAuthenticated.value) {
+    // If going to login or landing while authenticated, go to global
+    if ((to.name === 'Login' || to.name === 'Landing') && isAuthenticated.value) {
       next('/global');
       return;
     }

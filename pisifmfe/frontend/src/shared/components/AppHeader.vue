@@ -41,7 +41,7 @@ const pageTitle = computed(() => {
 
 function handleLogout() {
   logout();
-  router.push("/login");
+  router.push("/");
 }
 </script>
 
