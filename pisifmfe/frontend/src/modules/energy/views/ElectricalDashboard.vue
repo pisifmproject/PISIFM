@@ -900,32 +900,82 @@ h1 {
 }
 
 .progress-track {
-    height: 16px;
-    background: #0f172a;
-    border-radius: 99px;
+    height: 40px;
+    background: #020617;
+    border-radius: 6px;
     overflow: hidden;
     position: relative;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
+    border: 1px solid #1e293b;
 }
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
-    border-radius: 99px;
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+    border-radius: 6px;
     position: relative;
-    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); /* Enhanced glow */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 1rem;
+    overflow: hidden; /* important for shimmer */
 }
 
-.progress-glow {
+/* Texture Flow Animation */
+.progress-fill::after {
+    content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
-    animation: shimmer 2s infinite;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.1) 0px,
+        rgba(255, 255, 255, 0.1) 1px,
+        transparent 1px,
+        transparent 10px
+    );
+    background-size: 28px 28px; /* Must match the repeating pattern size geometry roughly for smooth loop */
+    z-index: 1;
+    animation: texture-flow 20s linear infinite;
 }
 
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+/* Professional Shimmer Sweep */
+.progress-fill::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(
+        90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.0) 35%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0.0) 65%,
+        transparent 100%
+    );
+    transform: translateX(-120%);
+    z-index: 2;
+    animation: shimmer-sweep 5s ease-in-out infinite;
+}
+
+/* Top Edge Highlight */
+.progress-glow {
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: rgba(255,255,255,0.5);
+    z-index: 3;
+    box-shadow: 0 1px 4px rgba(255,255,255,0.3);
+}
+
+@keyframes texture-flow {
+    0% { background-position: 0 0; }
+    100% { background-position: 28px 0; }
+}
+
+@keyframes shimmer-sweep {
+    0% { transform: translateX(-120%); }
+    60% { transform: translateX(120%); } /* Fast sweep */
+    100% { transform: translateX(120%); } /* Wait */
 }
 
 .util-stats {
