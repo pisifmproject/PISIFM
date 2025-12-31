@@ -9,12 +9,29 @@ interface User {
 }
 
 const currentUser = ref<User | null>(null);
+const sessionInitialized = ref(false);
 
 // Hardcoded users
 const users = [
   { username: "tamuifm", password: "hello01", role: "tamu" as UserRole },
   { username: "userifm", password: "pisifm00", role: "user" as UserRole },
 ];
+
+// Clear auth on fresh page load (not from cache/history)
+// This runs once when the module is first loaded
+function clearAuthOnFreshLoad() {
+  // Use sessionStorage to track if this is a fresh page load
+  const isSessionActive = sessionStorage.getItem("session_active");
+  
+  if (!isSessionActive) {
+    // Fresh page load - clear any stored auth
+    localStorage.removeItem("auth_user");
+    sessionStorage.setItem("session_active", "true");
+  }
+}
+
+// Execute immediately when module loads
+clearAuthOnFreshLoad();
 
 export function useAuth() {
   const isAuthenticated = computed(() => currentUser.value !== null);
@@ -31,7 +48,7 @@ export function useAuth() {
         username: user.username,
         role: user.role,
       };
-      // Save to localStorage
+      // Save to localStorage for current session navigation
       localStorage.setItem("auth_user", JSON.stringify(currentUser.value));
       return true;
     }
@@ -41,9 +58,12 @@ export function useAuth() {
   function logout() {
     currentUser.value = null;
     localStorage.removeItem("auth_user");
+    sessionStorage.removeItem("session_active");
   }
 
   function initAuth() {
+    if (sessionInitialized.value) return;
+    
     const stored = localStorage.getItem("auth_user");
     if (stored) {
       try {
@@ -52,6 +72,7 @@ export function useAuth() {
         localStorage.removeItem("auth_user");
       }
     }
+    sessionInitialized.value = true;
   }
 
   function canAccessDailyReport(): boolean {
