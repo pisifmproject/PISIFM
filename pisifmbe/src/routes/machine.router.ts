@@ -251,7 +251,6 @@ function getMachineConfig(plantId: string, machineId: string) {
 r.get("/:plantId/:machineId/process", async (req, res) => {
   try {
     const { plantId, machineId } = req.params;
-    console.log(`[${new Date().toISOString()}] GET /api/machine/${plantId}/${machineId}/process`);
     const config = getMachineProcessConfig(plantId, machineId);
     
     // Calculate dynamic values with variance
@@ -317,7 +316,6 @@ r.get("/:plantId/:machineId/process", async (req, res) => {
       timestamp: new Date().toISOString(),
     };
 
-    console.log(`  → Process data generated for ${plantId}/${machineId}`);
     return res.json(processData);
   } catch (err) {
     return res.status(500).json({ message: "Internal server error", error: String(err) });
