@@ -94,10 +94,12 @@ app.use("/api/report", electricalReportRouter);
 import metadataRouter from "./routes/metadata.router";
 import globalRouter from "./routes/global.router";
 import plantRouter from "./routes/plant.router";
+import machineRouter from "./routes/machine.router";
 
 app.use("/api/metadata", metadataRouter);
 app.use("/api/global", globalRouter);
 app.use("/api/plants", plantRouter);
+app.use("/api/machine", machineRouter);
 
 // app.listen(PORT, () => {
 //   console.log(`Server is running on port ${PORT}`);

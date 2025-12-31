@@ -108,7 +108,13 @@ function goBack() {
 }
 
 function navigateToMachine(machineId: string) {
-    router.push(`/plant/${plantId.value}/production/machine/${machineId}`);
+    router.push({
+        name: 'MachineDetailPerformance',
+        params: {
+            plantId: plantId.value,
+            machineId: machineId
+        }
+    });
 }
 
 const formatNumber = (num: number) => {

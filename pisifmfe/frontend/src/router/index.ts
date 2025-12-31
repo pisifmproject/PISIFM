@@ -113,8 +113,52 @@ const routes: RouteRecordRaw[] = [
               },
               {
                 path: "machine/:machineId",
-                name: "MachineDetail",
-                component: MachineDetail
+                redirect: to => ({
+                  name: "MachineDetailPerformance",
+                  params: to.params
+                })
+              },
+              {
+                path: "machine/:machineId/performance",
+                name: "MachineDetailPerformance",
+                component: MachineDetail,
+                meta: { tab: 'performance' }
+              },
+              {
+                path: "machine/:machineId/process",
+                name: "MachineDetailProcess",
+                component: MachineDetail,
+                meta: { tab: 'process' }
+              },
+              {
+                path: "machine/:machineId/utility",
+                name: "MachineDetailUtility",
+                component: MachineDetail,
+                meta: { tab: 'utility' }
+              },
+              {
+                path: "machine/:machineId/packing",
+                name: "MachineDetailPacking",
+                component: MachineDetail,
+                meta: { tab: 'packing' }
+              },
+              {
+                path: "machine/:machineId/alarms",
+                name: "MachineDetailAlarms",
+                component: MachineDetail,
+                meta: { tab: 'alarms' }
+              },
+              {
+                path: "machine/:machineId/downtime",
+                name: "MachineDetailDowntime",
+                component: MachineDetail,
+                meta: { tab: 'downtime' }
+              },
+              {
+                path: "machine/:machineId/maintenance",
+                name: "MachineDetailMaintenance",
+                component: MachineDetail,
+                meta: { tab: 'maintenance' }
               }
             ]
           }

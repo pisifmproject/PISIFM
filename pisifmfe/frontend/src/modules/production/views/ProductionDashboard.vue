@@ -11,7 +11,13 @@ const plantId = computed(() => route.params.plantId as PlantId);
 const plant = computed(() => PLANTS[plantId.value]);
 
 function navigateToMachine(machineId: string) {
-  router.push(`/plant/${plantId.value}/production/machine/${machineId}`);
+  router.push({
+    name: 'MachineDetailPerformance',
+    params: {
+      plantId: plantId.value,
+      machineId: machineId
+    }
+  });
 }
 </script>
 

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PLANTS } from '@/config/app.config';
 import { ArrowLeft, Zap, Cloud, Droplet, Wind, Activity, Timer, Wrench, Package } from 'lucide-vue-next';
+import { getMachineProcessData, getMachinePerformanceData, getMachineUtilityData } from '@/lib/api';
 
 // Charts
 import { use } from "echarts/core";
@@ -37,35 +38,40 @@ const machineName = computed(() => {
     return plantConfig.value.machines.find(m => m.id === machineId.value)?.name || machineId.value;
 });
 
-// Menus
+// Menus - sync with route meta
 const TABS = ['PERFORMANCE', 'PROCESS', 'PACKING', 'UTILITY', 'ALARMS', 'DOWNTIME', 'MAINTENANCE'];
-const activeTab = ref('PERFORMANCE');
-
-// Dummy Data Generators based on Machine ID hash/random
-const getRandom = (min: number, max: number) => Math.random() * (max - min) + min;
-
-// --- Performance Tab Data ---
-const oee = ref(Math.floor(getRandom(70, 90)));
-const availability = ref(Math.floor(getRandom(80, 95)));
-const performance = ref(Math.floor(getRandom(85, 98)));
-const quality = ref(Math.floor(getRandom(95, 99.9)));
-const volume = ref(Math.floor(getRandom(2000, 5000)));
-const targetVolume = 8000;
-const runRate = ref(Math.floor(getRandom(400, 600)));
-const rejectRate = ref(getRandom(0.5, 3.5));
-
-// --- Utility Tab Data ---
-const utilityData = ref({
-    electricity: getRandom(4000, 6000),
-    steam: getRandom(0, 100), // Some machines might not use steam
-    water: getRandom(10, 50),
-    air: getRandom(5000, 7000)
+const activeTab = computed(() => {
+    const tabFromRoute = (route.meta.tab as string)?.toUpperCase();
+    return tabFromRoute && TABS.includes(tabFromRoute) ? tabFromRoute : 'PERFORMANCE';
 });
 
-// --- Process Tab Data (Mimicking Image 2) ---
+// Track last logged tab to prevent duplicate console logs
+let lastLoggedTab = '';
+
+// --- Performance Tab Data - Fetched from backend ---
+const oee = ref(75);
+const availability = ref(85);
+const performance = ref(90);
+const quality = ref(97);
+const volume = ref(3500);
+const targetVolume = ref(8000);
+const runRate = ref(500);
+const rejectRate = ref(2.0);
+
+// --- Utility Tab Data - Fetched from backend ---
+const utilityData = ref({
+    electricity: 5000,
+    steam: 50,
+    water: 30,
+    air: 6000
+});
+
+// --- Process Tab Data - Fetched from backend ---
+const productName = ref('WAVY');
 const processData = ref({
     mode: 'NORMAL MODE',
     status: '1.94',
+    plcCommsStatus: 'OK',
     // Col 1: Prep / Slicing
     feedFromCrates: 'ON',
     peelerStatus: 'ACTIVE',
@@ -73,26 +79,26 @@ const processData = ref({
     slicersStatus: 'AUTO',
     washerDrivesStatus: 'AUTO',
     potatoFeedStatus: 'ON',
-    slicersIncline: getRandom(22.5, 23.5),
-    headTemp: Math.floor(getRandom(38, 40)),
-    peelerRpm: Math.floor(getRandom(1400, 1500)),
-    peelerLoad: Math.floor(getRandom(70, 85)),
-    washerLevel: Math.floor(getRandom(80, 90)),
-    washerFlow: getRandom(11.5, 13.5),
+    slicersIncline: 22.6,
+    headTemp: 38,
+    peelerRpm: 1446,
+    peelerLoad: 72,
+    washerLevel: 81,
+    washerFlow: 12.7,
     
     // Col 2: Oil & Fryer
-    oilCirc: getRandom(4300, 4400),
-    fryerInlet: getRandom(177.5, 178.5),
-    fryerOutlet: getRandom(153.5, 154.5),
-    burnerOutput: getRandom(43, 44),
-    oilLevel: Math.floor(getRandom(145, 150)),
+    oilCirc: 4.383,
+    fryerInlet: 178.2,
+    fryerOutlet: 153.6,
+    burnerOutput: 43.8,
+    oilLevel: 149,
     usedOil: 0,
     newOil: 100,
 
     // Col 3: Moisture / Drives / Quality
-    moisture: getRandom(1.90, 1.98),
-    actualOil: getRandom(26.5, 27.5),
-    masterSpeed: getRandom(69.5, 70.5),
+    moisture: 1.91,
+    actualOil: 26.7,
+    masterSpeed: 70.1,
     paddleSpeed: 41,
     submergerSpeed: 51,
     takeoutSpeed: 45,
@@ -101,6 +107,161 @@ const processData = ref({
     postFryer: 'AUTO',
     sliceThick: 1.750,
     potatoSolids: 20.0
+});
+
+// Data fetching intervals
+let dataFetchInterval: ReturnType<typeof setInterval> | null = null;
+const isLoadingData = ref(true);
+const isInitialLoad = ref(true);
+
+// Fetch process data from backend
+async function fetchProcessData() {
+    try {
+        const data = await getMachineProcessData(plantId.value, machineId.value);
+        
+        // Update product name
+        productName.value = data.productName;
+        
+        // Map backend data to frontend structure
+        processData.value = {
+            mode: data.operatingMode,
+            status: data.systemStatus.toString(),
+            plcCommsStatus: data.plcCommsStatus,
+            feedFromCrates: data.feedFromCratesStatus,
+            peelerStatus: data.peelerOperationalStatus,
+            potatoPrepStatus: data.potatoPrepControlMode,
+            slicersStatus: data.slicersControlMode,
+            washerDrivesStatus: data.washerDrivesControlMode,
+            potatoFeedStatus: data.potatoFeedOperationalStatus,
+            slicersIncline: data.slicersInclinePercentage,
+            headTemp: data.headTemperature,
+            peelerRpm: data.peelerRotationalSpeed,
+            peelerLoad: data.peelerLoadPercentage,
+            washerLevel: data.washerLevelPercentage,
+            washerFlow: data.washerFlowRate,
+            oilCirc: data.mainOilCirculationRate,
+            fryerInlet: data.fryerInletTemperature,
+            fryerOutlet: data.fryerOutletTemperature,
+            burnerOutput: data.burnerOutputPercentage,
+            oilLevel: data.oilLevelMillimeters,
+            usedOil: data.usedOilPercentage,
+            newOil: data.newOilPercentage,
+            moisture: data.actualMoistureContent,
+            actualOil: data.actualOilContent,
+            masterSpeed: data.masterSpeedPercentage,
+            paddleSpeed: data.paddleSpeedPercentage,
+            submergerSpeed: data.submergerSpeedPercentage,
+            takeoutSpeed: data.takeoutSpeedPercentage,
+            fryerOutfeed: data.fryerOutfeedControlMode,
+            takeoutConv: data.takeoutConveyorStatus,
+            postFryer: data.postFryerControlMode,
+            sliceThick: data.sliceThickness,
+            potatoSolids: data.potatoSolidsPercentage
+        };
+    } catch (error) {
+        console.error('Error fetching process data:', error);
+        // Keep existing data on error
+    }
+}
+
+// Fetch performance data from backend
+async function fetchPerformanceData() {
+    try {
+        const data = await getMachinePerformanceData(plantId.value, machineId.value);
+        
+        oee.value = Math.floor(data.oeePercentage);
+        availability.value = Math.floor(data.availabilityPercentage);
+        performance.value = Math.floor(data.performancePercentage);
+        quality.value = parseFloat(data.qualityPercentage.toFixed(1));
+        volume.value = Math.floor(data.actualProduction);
+        targetVolume.value = Math.floor(data.targetProduction);
+        runRate.value = Math.floor(data.runRate);
+        rejectRate.value = parseFloat(data.rejectRate.toFixed(2));
+    } catch (error) {
+        console.error('Error fetching performance data:', error);
+        // Keep existing data on error
+    }
+}
+
+// Fetch utility data from backend
+async function fetchUtilityData() {
+    try {
+        const data = await getMachineUtilityData(plantId.value, machineId.value);
+        
+        utilityData.value = {
+            electricity: Math.floor(data.electricalPower),
+            steam: Math.floor(data.steamConsumption),
+            water: parseFloat(data.waterConsumption.toFixed(1)),
+            air: Math.floor(data.compressedAirConsumption)
+        };
+    } catch (error) {
+        console.error('Error fetching utility data:', error);
+        // Keep existing data on error
+    }
+}
+
+// Fetch all data
+async function fetchAllData(showLoading = false) {
+    if (showLoading) {
+        isLoadingData.value = true;
+    }
+    try {
+        await Promise.all([
+            fetchProcessData(),
+            fetchPerformanceData(),
+            fetchUtilityData()
+        ]);
+    } finally {
+        isLoadingData.value = false;
+        isInitialLoad.value = false;
+    }
+}
+
+// Log tab change only once per navigation
+function logTabChange() {
+    if (lastLoggedTab !== activeTab.value) {
+        console.log(`%c📍 ${machineName.value} - ${activeTab.value}`, 'color: #3b82f6; font-weight: bold; font-size: 14px');
+        lastLoggedTab = activeTab.value;
+    }
+}
+
+// Navigate to tab using router
+function navigateToTab(tab: string) {
+    const tabLower = tab.toLowerCase();
+    const routeName = `MachineDetail${tabLower.charAt(0).toUpperCase() + tabLower.slice(1)}`;
+    router.push({
+        name: routeName,
+        params: { plantId: plantId.value, machineId: machineId.value }
+    });
+}
+
+// Watch for route changes to show loading skeleton
+watch(() => route.meta.tab, (newTab, oldTab) => {
+    if (newTab !== oldTab) {
+        isLoadingData.value = true;
+        logTabChange();
+        // Simulate brief loading for smooth transition
+        setTimeout(() => {
+            isLoadingData.value = false;
+        }, 300);
+    }
+});
+
+// Setup interval to fetch all data every 3 seconds
+onMounted(() => {
+    logTabChange();
+    fetchAllData(true); // Initial fetch with loading
+    dataFetchInterval = setInterval(() => {
+        fetchAllData(false); // Silent refresh
+    }, 3000);
+});
+
+// Cleanup interval on unmount
+onUnmounted(() => {
+    if (dataFetchInterval) {
+        clearInterval(dataFetchInterval);
+        dataFetchInterval = null;
+    }
 });
 
 // --- Chart Options ---
@@ -159,7 +320,7 @@ function formatNumber(num: number, dec = 0) {
             :key="tab"
             class="tab-btn"
             :class="{ active: activeTab === tab }"
-            @click="activeTab = tab"
+            @click="navigateToTab(tab)"
         >
             {{ tab }}
         </button>
@@ -168,8 +329,32 @@ function formatNumber(num: number, dec = 0) {
     <!-- Tab Content -->
     <div class="content-area">
         
+        <!-- Loading Skeleton -->
+        <div v-if="isLoadingData && isInitialLoad" class="skeleton-container fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="skeleton-card">
+                    <div class="skeleton-header"></div>
+                    <div class="skeleton-value"></div>
+                    <div class="skeleton-row mt-8">
+                        <div class="skeleton-item"></div>
+                        <div class="skeleton-item"></div>
+                        <div class="skeleton-item"></div>
+                    </div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header"></div>
+                    <div class="skeleton-value"></div>
+                    <div class="skeleton-progress mt-4"></div>
+                    <div class="skeleton-row mt-6">
+                        <div class="skeleton-box"></div>
+                        <div class="skeleton-box"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- PERFORMANCE TAB -->
-        <div v-if="activeTab === 'PERFORMANCE'" class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
+        <div v-else-if="activeTab === 'PERFORMANCE'" class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
             <!-- OEE Card -->
             <div class="card p-6 relative overflow-hidden">
                 <div class="flex justify-between items-start z-10 relative">
@@ -246,11 +431,11 @@ function formatNumber(num: number, dec = 0) {
              <div class="lg:col-span-3 card p-4 flex justify-between items-center bg-gray-900 border border-teal-900/50 shadow-lg">
                  <div>
                      <span class="text-xs text-gray-400 uppercase tracking-widest block mb-1">PRODUCT</span>
-                     <span class="text-2xl font-black text-white tracking-wide">WAVY</span>
+                     <span class="text-2xl font-black text-white tracking-wide">{{ productName }}</span>
                  </div>
                  <div class="flex flex-col items-center">
                      <span class="px-6 py-1.5 bg-teal-900/20 text-teal-400 border border-teal-500/30 rounded-full text-xs font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(45,212,191,0.1)]">{{ processData.mode }}</span>
-                     <span class="text-[0.65rem] text-teal-500 mt-1.5 font-semibold tracking-wider">● PLC COMMS OK</span>
+                     <span class="text-[0.65rem] text-teal-500 mt-1.5 font-semibold tracking-wider">● PLC COMMS {{ processData.plcCommsStatus || 'OK' }}</span>
                  </div>
                  <div class="text-right">
                      <span class="text-xs text-gray-400 uppercase tracking-widest block mb-1">STATUS</span>
@@ -678,4 +863,72 @@ function formatNumber(num: number, dec = 0) {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
 .chart { width: 100%; height: 100%; }
+
+/* Skeleton Loading Styles */
+.skeleton-container {
+    width: 100%;
+}
+
+.skeleton-card {
+    background: #1e293b;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    padding: 1.5rem;
+    min-height: 200px;
+}
+
+.skeleton-header {
+    height: 12px;
+    width: 60%;
+    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.skeleton-value {
+    height: 48px;
+    width: 40%;
+    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+}
+
+.skeleton-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.skeleton-item {
+    height: 60px;
+    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+}
+
+.skeleton-progress {
+    height: 12px;
+    width: 100%;
+    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 9999px;
+}
+
+.skeleton-box {
+    height: 80px;
+    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
 </style>

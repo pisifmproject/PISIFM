@@ -81,9 +81,11 @@ app.use("/api/report", electricalReport_router_1.default);
 const metadata_router_1 = __importDefault(require("./routes/metadata.router"));
 const global_router_1 = __importDefault(require("./routes/global.router"));
 const plant_router_1 = __importDefault(require("./routes/plant.router"));
+const machine_router_1 = __importDefault(require("./routes/machine.router"));
 app.use("/api/metadata", metadata_router_1.default);
 app.use("/api/global", global_router_1.default);
 app.use("/api/plants", plant_router_1.default);
+app.use("/api/machine", machine_router_1.default);
 // app.listen(PORT, () => {
 //   console.log(`Server is running on port ${PORT}`);
 // });

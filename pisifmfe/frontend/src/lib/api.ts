@@ -264,3 +264,88 @@ export async function getUtilitySummary(machineId: string, date?: string) {
   });
   return data;
 }
+
+// ---------- MACHINE PROCESS DATA ----------
+export async function getMachineProcessData(plantId: string, machineId: string) {
+  const { data } = await api.get(`/machine/${plantId}/${machineId}/process`, {
+    params: { _t: Date.now() },
+  });
+  return data as {
+    productName: string;
+    operatingMode: string;
+    systemStatus: number;
+    plcCommsStatus: string;
+    feedFromCratesStatus: string;
+    peelerOperationalStatus: string;
+    potatoPrepControlMode: string;
+    slicersControlMode: string;
+    washerDrivesControlMode: string;
+    potatoFeedOperationalStatus: string;
+    slicersInclinePercentage: number;
+    headTemperature: number;
+    peelerRotationalSpeed: number;
+    peelerLoadPercentage: number;
+    washerLevelPercentage: number;
+    washerFlowRate: number;
+    mainOilCirculationRate: number;
+    oilCirculationControlValue: number;
+    fryerInletTemperature: number;
+    fryerInletSetpoint: number;
+    fryerOutletTemperature: number;
+    temperatureDelta: number;
+    burnerOutputPercentage: number;
+    usedOilPercentage: number;
+    newOilPercentage: number;
+    oilLevelMillimeters: number;
+    oilQualityStatus: string;
+    valveOutputPercentage: number;
+    actualMoistureContent: number;
+    moistureSetpoint: number;
+    actualOilContent: number;
+    oilContentSetpoint: number;
+    masterSpeedPercentage: number;
+    masterSpeedLinearValue: number;
+    paddleSpeedPercentage: number;
+    submergerSpeedPercentage: number;
+    takeoutSpeedPercentage: number;
+    fryerOutfeedControlMode: string;
+    takeoutConveyorStatus: string;
+    postFryerControlMode: string;
+    sliceThickness: number;
+    potatoSolidsPercentage: number;
+    timestamp: string;
+  };
+}
+
+// ---------- MACHINE PERFORMANCE DATA ----------
+export async function getMachinePerformanceData(plantId: string, machineId: string) {
+  const { data } = await api.get(`/machine/${plantId}/${machineId}/performance`, {
+    params: { _t: Date.now() },
+  });
+  return data as {
+    oeePercentage: number;
+    availabilityPercentage: number;
+    performancePercentage: number;
+    qualityPercentage: number;
+    rejectRate: number;
+    actualProduction: number;
+    targetProduction: number;
+    runRate: number;
+    runRateUnit: string;
+    timestamp: string;
+  };
+}
+
+// ---------- MACHINE UTILITY DATA ----------
+export async function getMachineUtilityData(plantId: string, machineId: string) {
+  const { data } = await api.get(`/machine/${plantId}/${machineId}/utility`, {
+    params: { _t: Date.now() },
+  });
+  return data as {
+    electricalPower: number;
+    steamConsumption: number;
+    waterConsumption: number;
+    compressedAirConsumption: number;
+    timestamp: string;
+  };
+}
