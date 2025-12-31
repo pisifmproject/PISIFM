@@ -56,6 +56,7 @@ const shiftData = ref<any[]>([]); // Shift 1-3
 const timeFilter = ref<"Day" | "Week" | "Month" | "Year">("Day");
 const totalEnergy = ref<number>(0); // Total energy for selected period
 const periodLabel = ref<string>(""); // Label for the period (e.g., "Today", "This Week")
+const shiftDate = ref(new Date().toISOString().split("T")[0]); // Date for Shift Performance table
 
 const PANEL_SPECS: Record<number, { capacity: number, maxCurrent: number }> = {
     1: { capacity: 1152.75, maxCurrent: 2500 },
@@ -129,6 +130,15 @@ const goBack = () => router.back();
 
 // Helper to determine Shift Status with User's specific logic
 function getShiftStatus(id: number): "ACTIVE" | "COMPLETED" | "UPCOMING" {
+  const todayStr = new Date().toISOString().split("T")[0];
+  const selected = shiftDate.value;
+
+  // Logic requested: If selected date is before today -> All COMPLETE
+  if (selected < todayStr) return "COMPLETED";
+  // If selected date is future -> All UPCOMING (logic assumption)
+  if (selected > todayStr) return "UPCOMING";
+
+  // If Today, use time logic
   const now = new Date();
   const hours = now.getHours();
   const minutes = now.getMinutes();
@@ -230,14 +240,10 @@ function mockShiftData() {
 }
 
 // Data Fetching
-const fetchHistoricalData = async () => {
+const fetchChartData = async () => {
   if (!lvmdpId.value) return;
-
-  // Reset loading states
   chartDataLoading.value = true;
-  shiftDataLoading.value = true;
 
-  // 1. Chart Data - Use real data for Plant Cikupa
   try {
     if (isRealData.value && plantId.value === "cikupa") {
       // Fetch real trend data from database
@@ -255,11 +261,6 @@ const fetchHistoricalData = async () => {
         lvmdpId.value as any,
         periodMap[timeFilter.value],
         new Date().toISOString().split("T")[0]
-      );
-
-      console.log(
-        `[LVMDP${lvmdpId.value}] Trend data (${timeFilter.value}):`,
-        trendData
       );
 
       // Calculate total energy from trend data
@@ -281,37 +282,31 @@ const fetchHistoricalData = async () => {
     } else {
       // Use mock data for other plants
       mockChartData();
-      // Mock total energy
       totalEnergy.value = 1234.56;
-      periodLabel.value =
-        timeFilter.value === "Day"
-          ? "Today"
-          : timeFilter.value === "Week"
-          ? "This Week"
-          : timeFilter.value === "Month"
-          ? "This Month"
-          : "This Year";
+      periodLabel.value = "Today";
     }
   } catch (e) {
     console.error("Chart fetch error", e);
     mockChartData();
     totalEnergy.value = 0;
-    periodLabel.value = "Error";
   } finally {
     chartDataLoading.value = false;
   }
+};
 
-  // 2. Shift Data
+const fetchShiftData = async () => {
+  if (!lvmdpId.value) return;
+  shiftDataLoading.value = true;
+
   try {
     if (isRealData.value && plantId.value === "cikupa") {
       // Use real data from database for Plant Cikupa
-      const shifts = await getLvmdpShiftToday(lvmdpId.value as any).catch(
-        () => null
-      );
+      const shifts = await getLvmdpShiftToday(
+        lvmdpId.value as any,
+        shiftDate.value
+      ).catch(() => null);
 
       if (shifts) {
-        console.log(`[LVMDP${lvmdpId.value}] Shift data from DB:`, shifts);
-
         // Map API response to UI table
         shiftData.value = [1, 2, 3].map((id) => {
           const s = (shifts as any)[`shift${id}`];
@@ -326,21 +321,16 @@ const fetchHistoricalData = async () => {
             kwh: s.totalKwh.toFixed(2),
             avgPower: s.avgKwh.toFixed(1),
             avgLoad: s.avgCurrent.toFixed(2),
-            avgCurrent: s.minCurrent.toFixed(2),
+            avgCurrent: s.minCurrent.toFixed(2), // Note: API keys mapping might be mixed in original code?
             maxCurrent: s.maxCurrent.toFixed(2),
             avgPf: s.cosPhi.toFixed(2),
             status: getShiftStatus(id),
           };
         });
       } else {
-        // Fallback if endpoint fails
-        console.warn(
-          `[LVMDP${lvmdpId.value}] Failed to fetch shift data, using mock`
-        );
-        mockShiftData();
+         mockShiftData();
       }
     } else {
-      // Use dummy data for other plants
       mockShiftData();
     }
   } catch (e) {
@@ -349,6 +339,11 @@ const fetchHistoricalData = async () => {
   } finally {
     shiftDataLoading.value = false;
   }
+};
+
+const fetchHistoricalData = async () => {
+    fetchChartData();
+    fetchShiftData();
 };
 
 watch(
@@ -375,8 +370,12 @@ watch(
 
 // Watch timeFilter changes to refetch chart data
 watch(timeFilter, () => {
-  chartDataLoading.value = true;
-  fetchHistoricalData();
+  fetchChartData();
+});
+
+// Watch shiftDate changes to refetch shift data
+watch(shiftDate, () => {
+  fetchShiftData();
 });
 
 onUnmounted(() => {
@@ -628,7 +627,10 @@ const fmt = (val: number | undefined, dec = 1) =>
     <div class="card table-card">
       <div class="card-header flex-between">
         <h3>Shift Performance</h3>
-
+        <div class="date-picker-wrapper">
+          <Clock class="w-4 h-4 text-gray-400" />
+          <input type="date" v-model="shiftDate" class="bg-transparent text-sm text-gray-300 border-none outline-none focus:ring-0 calendar-input" />
+        </div>
       </div>
       <div class="table-responsive">
         <!-- Skeleton Loading -->
@@ -801,6 +803,29 @@ const fmt = (val: number | undefined, dec = 1) =>
     grid-template-columns: repeat(2, 1fr);
   }
 }
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.date-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #1e293b;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    transition: all 0.2s;
+}
+.date-picker-wrapper:hover {
+    border-color: #475569;
+}
+.calendar-input {
+    color-scheme: dark;
+    cursor: pointer;
+}
+
 
 .metric-card {
   background: #151e32;

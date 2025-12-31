@@ -97,10 +97,13 @@ export const getLvmdp3Latest = () => getLvmdpLatest(3);
 export const getLvmdp4Latest = () => getLvmdpLatest(4);
 
 // Get shift data for today
-export async function getLvmdpShiftToday(panelId: 1 | 2 | 3 | 4) {
+export async function getLvmdpShiftToday(panelId: 1 | 2 | 3 | 4, date?: string) {
   try {
     const { data } = await api.get(`/lvmdp/${panelId}/shift-today`, {
-      params: { _t: Date.now() },
+      params: { 
+        _t: Date.now(),
+        date 
+      },
     });
     return data as {
       date: string;

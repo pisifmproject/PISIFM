@@ -100,7 +100,8 @@ r.get("/:id/shift-today", async (req, res) => {
       return res.status(400).json({ message: "Bad id (must be 1..4)" });
     }
 
-    const today = new Date().toISOString().split("T")[0];
+    const dateQuery = req.query.date as string;
+    const targetDate = dateQuery || new Date().toISOString().split("T")[0];
 
     // Import the appropriate service based on panel ID
     let getShiftAverages: any;
@@ -131,10 +132,10 @@ r.get("/:id/shift-today", async (req, res) => {
         break;
     }
 
-    const shifts = await getShiftAverages(today);
+    const shifts = await getShiftAverages(targetDate);
 
     return res.json({
-      date: today,
+      date: targetDate,
       shift1: {
         totalKwh: shifts.shift1?.totalKwh || 0,
         avgKwh: shifts.shift1?.avgKwh || 0,
