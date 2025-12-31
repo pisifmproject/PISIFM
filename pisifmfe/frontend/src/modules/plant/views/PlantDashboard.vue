@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PLANTS } from '@/config/app.config';
 import { 
@@ -48,12 +48,91 @@ const utilities = ref([
     { id: 'gas', label: 'Natural Gas', val: '1.504,94', unit: 'Nm³', icon: Flame, route: 'energy/gas' }
 ]);
 
-// Shift Dummy
 const shifts = ref([
-    { name: 'Shift 1', time: '07:01 - 14:30', output: '9.360', oee: '86,7%', status: 'COMPLETED' },
-    { name: 'Shift 2', time: '14:31 - 22:00', output: '6.240', oee: '85%', status: 'ACTIVE' },
+    { name: 'Shift 1', time: '07:01 - 14:30', output: '9.360', oee: '86,7%', status: 'UPCOMING' },
+    { name: 'Shift 2', time: '14:31 - 22:00', output: '6.240', oee: '85%', status: 'UPCOMING' },
     { name: 'Shift 3', time: '22:01 - 07:00', output: '0', oee: '0%', status: 'UPCOMING' }
 ]);
+
+function updateShiftStatus() {
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    
+    // Time ranges in minutes
+    // Shift 1: 07:01 (421) - 14:30 (870)
+    // Shift 2: 14:31 (871) - 22:00 (1320)
+    // Shift 3: 22:01 (1321) - 07:00 (420 next day)
+
+    const s1Start = 421;
+    const s1End = 870;
+    const s2Start = 871;
+    const s2End = 1320;
+    
+    // Determine active shift and update statuses
+    // Default all to UPCOMING first, then override
+    let s1Status = 'UPCOMING';
+    let s2Status = 'UPCOMING';
+    let s3Status = 'UPCOMING';
+
+    // Logic for Production Day (Starts 07:00)
+    // If time is between 00:00 and 07:00, we are in Shift 3 of the "previous" day, 
+    // implying Shift 1 and 2 of that "day" are completed.
+    
+    if (minutes >= s1Start && minutes <= s1End) {
+        // Shift 1 Active
+        s1Status = 'ACTIVE';
+        s2Status = 'UPCOMING';
+        s3Status = 'UPCOMING';
+    } else if (minutes >= s2Start && minutes <= s2End) {
+        // Shift 2 Active
+        s1Status = 'COMPLETED';
+        s2Status = 'ACTIVE';
+        s3Status = 'UPCOMING';
+    } else {
+        // Shift 3 Active (active from 22:01 to 23:59 AND 00:00 to 07:00)
+        s1Status = 'COMPLETED';
+        s2Status = 'COMPLETED';
+        s3Status = 'ACTIVE';
+    }
+
+    // Update Shift 1
+    shifts.value[0].status = s1Status;
+    if (s1Status === 'UPCOMING') {
+        shifts.value[0].output = '0';
+        shifts.value[0].oee = '0%';
+    } else {
+        // If not upcoming (Active/Completed), ensure it has dummy data if it was 0
+        if (shifts.value[0].output === '0') {
+             shifts.value[0].output = '9.360';
+             shifts.value[0].oee = '86,7%';
+        }
+    }
+
+    // Update Shift 2
+    shifts.value[1].status = s2Status;
+    if (s2Status === 'UPCOMING') {
+        shifts.value[1].output = '0';
+        shifts.value[1].oee = '0%';
+    } else {
+         if (shifts.value[1].output === '0') {
+             shifts.value[1].output = '6.240';
+             shifts.value[1].oee = '85%';
+        }
+    }
+
+    // Update Shift 3
+    shifts.value[2].status = s3Status;
+    if (s3Status === 'UPCOMING') {
+        shifts.value[2].output = '0';
+        shifts.value[2].oee = '0%';
+    } else {
+         if (shifts.value[2].output === '0') {
+             // Give it some dummy data if active/completed
+             shifts.value[2].output = '5.120'; 
+             shifts.value[2].oee = '82%';
+        }
+    }
+}
 
 // Helper to generate consistent dummy stats based on string hash or just random
 function getDummyStats(id: string) {
@@ -157,8 +236,15 @@ watch(selectedPeriod, () => {
     fetchEnergyData();
 }, { immediate: true });
 
+let timer: ReturnType<typeof setInterval>;
+
 onMounted(() => {
-    // If not Cikupa, maybe load dummy/other logic
+    updateShiftStatus();
+    timer = setInterval(updateShiftStatus, 60000); // Update every minute
+});
+
+onUnmounted(() => {
+    if (timer) clearInterval(timer);
 });
 
 </script>
