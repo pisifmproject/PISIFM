@@ -16,11 +16,7 @@ import PlantDashboard from "../modules/plant/views/PlantDashboard.vue";
 import ElectricalDashboard from "../modules/energy/views/ElectricalDashboard.vue";
 import UtilitiesDashboard from "../modules/energy/views/UtilitiesDashboard.vue";
 import LVMDPDetail from "../modules/energy/views/LVMDPDetail.vue";
-import SteamDetail from "../modules/energy/views/SteamDetail.vue";
-import WaterDetail from "../modules/energy/views/WaterDetail.vue";
-import CompressedAirDetail from "../modules/energy/views/CompressedAirDetail.vue";
-import NitrogenDetail from "../modules/energy/views/NitrogenDetail.vue";
-import GasDetail from "../modules/energy/views/GasDetail.vue";
+
 
 // Production Views
 import ProductionDashboard from "../modules/plant/views/ProductionDashboard.vue";
@@ -78,30 +74,37 @@ const routes: RouteRecordRaw[] = [
                  name: "LVMDPDetail",
                  component: LVMDPDetail
                },
+
+               // Shared Utility Detail View for all utility types
                {
                  path: "steam",
                  name: "SteamDetail",
-                 component: SteamDetail
+                 component: () => import("../modules/energy/views/UtilityDetail.vue"),
+                 props: { type: 'steam' }
                },
                {
                   path: "water",
                   name: "WaterDetail",
-                  component: WaterDetail
+                  component: () => import("../modules/energy/views/UtilityDetail.vue"),
+                  props: { type: 'water' }
                },
                {
                   path: "compressed-air",
                   name: "CompressedAirDetail",
-                  component: CompressedAirDetail
+                  component: () => import("../modules/energy/views/UtilityDetail.vue"),
+                  props: { type: 'compressed-air' }
                },
                {
                   path: "nitrogen",
                   name: "NitrogenDetail",
-                  component: NitrogenDetail
+                  component: () => import("../modules/energy/views/UtilityDetail.vue"),
+                  props: { type: 'nitrogen' }
                },
                {
                   path: "gas",
                   name: "GasDetail",
-                  component: GasDetail
+                  component: () => import("../modules/energy/views/UtilityDetail.vue"),
+                  props: { type: 'gas' }
                }
             ]
           },
