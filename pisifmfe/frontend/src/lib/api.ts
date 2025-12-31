@@ -39,7 +39,12 @@ let lastErrorTime = 0;
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
-    isBackendConnected = true;
+    if (!isBackendConnected) {
+      isBackendConnected = true;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('backend-reconnected'));
+      }
+    }
     return response;
   },
   (error) => {
