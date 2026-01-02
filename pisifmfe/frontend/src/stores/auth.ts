@@ -1,6 +1,7 @@
 // src/stores/auth.ts
 import { ref, computed } from "vue";
 import { loginApi, type LoginResponse } from "@/lib/api";
+import { reloadVisibilityState } from "@/modules/admin/services/visibilityService";
 
 export type UserRole = 
   | "ADMINISTRATOR" 
@@ -63,6 +64,13 @@ export function useAuth() {
         
         localStorage.setItem("auth_user", JSON.stringify(currentUser.value));
         localStorage.setItem("auth_token", response.token);
+        
+        // Reload visibility settings from database after login
+        try {
+          await reloadVisibilityState();
+        } catch (err) {
+          console.warn('Failed to reload visibility state after login:', err);
+        }
         
         return { success: true };
       }

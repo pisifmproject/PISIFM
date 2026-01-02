@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 import { useAuth } from "../stores/auth";
+import { isDataItemVisible } from "../modules/admin/services/visibilityService";
+import { UserRole } from "../modules/admin/types";
 import Login from "../modules/auth/views/Login.vue";
 import Landing from "../views/Landing.vue";
 
@@ -216,7 +218,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const { isAuthenticated, initAuth, hasRole, canAccessPlant } = useAuth();
+  const { isAuthenticated, initAuth, hasRole, canAccessPlant, userRole } = useAuth();
   
   // Ensure auth state is initialized
   initAuth();
@@ -246,6 +248,18 @@ router.beforeEach((to, from, next) => {
         console.warn(`Access denied to plant ${plantId}, redirecting to global`);
         next('/global');
         return;
+      }
+      
+      // Check machine visibility permission
+      const machineId = to.params.machineId as string;
+      if (machineId && plantId) {
+        const machineKey = `SHOW_MACHINE_${machineId}`;
+        const role = userRole.value as UserRole;
+        if (role && !isDataItemVisible(role, machineKey, { plantId })) {
+          console.warn(`Machine ${machineId} is hidden for role ${role}, redirecting to plant dashboard`);
+          next(`/plant/${plantId}`);
+          return;
+        }
       }
       
       next();
