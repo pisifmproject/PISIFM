@@ -1,202 +1,687 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { 
   Eye, 
-  Search, 
-  Filter, 
-  Globe, 
-  List, 
+  EyeOff, 
+  ChevronDown, 
+  ChevronRight,
   LayoutDashboard,
-  Check
+  Factory,
+  Zap,
+  Settings,
+  Search,
+  RotateCcw
 } from 'lucide-vue-next';
+import { 
+  DATA_ITEM_REGISTRY,
+  updateVisibilityRule,
+  getVisibilityRulesForRoleAndScope,
+  getScopeKeyForSettings,
+  isDataItemVisible
+} from '../services/visibilityService';
+import { UserRole, VisibilityCategory, VisibilityGroup, type DataItem } from '../types';
+import { plantService } from '../services/plantService';
 
-// Mock Data for Filters
-const roles = ['Supervisor', 'Operator', 'Maintenance', 'Management', 'Viewer'];
-const plants = ['All Plants (Default)', 'Cikokol', 'Semarang', 'Cikupa', 'Agro'];
-const dashboards = ['Global Dashboard', 'Plant Dashboard', 'Electrical Dashboard'];
-
-// Mock State for Settings
-const selectedRole = ref('Supervisor');
-const selectedPlant = ref('All Plants (Default)');
-const selectedDashboard = ref('Global Dashboard');
+// State
+const selectedRole = ref<UserRole>(UserRole.SUPERVISOR);
+const selectedPlant = ref<string>('ALL_PLANTS');
 const searchQuery = ref('');
+const expandedCategories = ref<Set<string>>(new Set(['GLOBAL_DASHBOARD', 'PLANT_DASHBOARD']));
+const expandedGroups = ref<Set<string>>(new Set());
 
-// Mock Settings Data (KPIs and Lists)
-const kpiSettings = ref([
-  { id: 'total_output', label: 'Total Output', enabled: true },
-  { id: 'global_oee', label: 'Global Avg OEE', enabled: true },
-  { id: 'total_energy', label: 'Total Energy', enabled: true },
-  { id: 'active_alarms', label: 'Active Alarms', enabled: true, subtext: 'GLOBAL_TOTAL_ALARMS' },
-]);
+// Data
+const roles = Object.values(UserRole).filter(r => r !== UserRole.ADMINISTRATOR);
+const plants = [
+  { id: 'ALL_PLANTS', name: 'All Plants (Default)' },
+  ...plantService.getAllPlants()
+];
 
-const listSettings = ref([
-  { id: 'overview_cikokol', label: 'Overview Plant Cikokol', enabled: true },
-  { id: 'overview_semarang', label: 'Overview Plant Semarang', enabled: true },
-  { id: 'overview_cikupa', label: 'Overview Plant Cikupa', enabled: true },
-  { id: 'overview_agro', label: 'Overview Plant Agro', enabled: true },
-]);
-
-const toggleKpi = (id: string) => {
-  const item = kpiSettings.value.find(i => i.id === id);
-  if (item) item.enabled = !item.enabled;
+// Category labels
+const categoryLabels: Record<VisibilityCategory, string> = {
+  [VisibilityCategory.GLOBAL_DASHBOARD]: 'Global Dashboard',
+  [VisibilityCategory.PLANT_DASHBOARD]: 'Plant Dashboard',
+  [VisibilityCategory.UTILITY]: 'Utility Dashboard',
+  [VisibilityCategory.MAIN_PANEL_1]: 'LVMDP Panel 1',
+  [VisibilityCategory.MAIN_PANEL_2]: 'LVMDP Panel 2',
+  [VisibilityCategory.MAIN_PANEL_3]: 'LVMDP Panel 3',
+  [VisibilityCategory.MAIN_PANEL_4]: 'LVMDP Panel 4',
+  [VisibilityCategory.MACHINE_DETAIL]: 'Machine Detail',
 };
 
-const toggleList = (id: string) => {
-  const item = listSettings.value.find(i => i.id === id);
-  if (item) item.enabled = !item.enabled;
+// Group labels
+const groupLabels: Record<VisibilityGroup, string> = {
+  [VisibilityGroup.KPI]: 'KPI Cards',
+  [VisibilityGroup.CHART]: 'Charts',
+  [VisibilityGroup.TABLE]: 'Tables',
+  [VisibilityGroup.LIST]: 'Lists',
+  [VisibilityGroup.STATUS]: 'Status Indicators',
+  [VisibilityGroup.TAB]: 'Tabs',
+  [VisibilityGroup.FORM]: 'Forms',
+  [VisibilityGroup.OUTPUT]: 'Output Metrics',
+  [VisibilityGroup.OEE]: 'OEE Metrics',
+  [VisibilityGroup.MACHINES]: 'Machine Cards',
+  [VisibilityGroup.UTILITY_CONSUMPTION]: 'Utility Consumption',
+  [VisibilityGroup.PROCESS_PARAM]: 'Process Parameters',
+  [VisibilityGroup.ALARM_DATA]: 'Alarm Data',
+  [VisibilityGroup.PACKING_LINE_KPI]: 'Packing Line KPIs',
+  [VisibilityGroup.PACKING_WEIGHER]: 'Weigher Metrics',
+  [VisibilityGroup.PACKING_BAGMAKER]: 'Bagmaker Metrics',
 };
 
+// Category icons
+const categoryIcons: Record<VisibilityCategory, any> = {
+  [VisibilityCategory.GLOBAL_DASHBOARD]: LayoutDashboard,
+  [VisibilityCategory.PLANT_DASHBOARD]: Factory,
+  [VisibilityCategory.UTILITY]: Zap,
+  [VisibilityCategory.MAIN_PANEL_1]: Zap,
+  [VisibilityCategory.MAIN_PANEL_2]: Zap,
+  [VisibilityCategory.MAIN_PANEL_3]: Zap,
+  [VisibilityCategory.MAIN_PANEL_4]: Zap,
+  [VisibilityCategory.MACHINE_DETAIL]: Settings,
+};
+
+// Computed: Group items by category and group
+const groupedItems = computed(() => {
+  const result: Record<string, Record<string, DataItem[]>> = {};
+  
+  let items = DATA_ITEM_REGISTRY;
+  
+  // Filter by plant scope
+  if (selectedPlant.value !== 'ALL_PLANTS') {
+    items = items.filter(item => 
+      !item.plantScopeId || item.plantScopeId === selectedPlant.value
+    );
+  }
+
+  // Filter by search
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    items = items.filter(item => 
+      item.label.toLowerCase().includes(query) ||
+      item.key.toLowerCase().includes(query) ||
+      item.location.toLowerCase().includes(query)
+    );
+  }
+  
+  items.forEach(item => {
+    if (!result[item.category]) {
+      result[item.category] = {};
+    }
+    if (!result[item.category][item.group]) {
+      result[item.category][item.group] = [];
+    }
+    result[item.category][item.group].push(item);
+  });
+  
+  return result;
+});
+
+// Get current visibility state for an item
+function getItemVisibility(item: DataItem): boolean {
+  const context = {
+    category: item.category,
+    plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
+  };
+  const scopeKey = getScopeKeyForSettings(context);
+  const rules = getVisibilityRulesForRoleAndScope(selectedRole.value, scopeKey);
+  
+  if (rules[item.key] !== undefined) {
+    return rules[item.key];
+  }
+  return item.defaultVisible;
+}
+
+// Toggle visibility
+function toggleVisibility(item: DataItem) {
+  const currentValue = getItemVisibility(item);
+  const context = {
+    category: item.category,
+    plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
+  };
+  updateVisibilityRule(selectedRole.value, context, item.key, !currentValue);
+}
+
+// Toggle category expansion
+function toggleCategory(category: string) {
+  if (expandedCategories.value.has(category)) {
+    expandedCategories.value.delete(category);
+  } else {
+    expandedCategories.value.add(category);
+  }
+}
+
+// Toggle group expansion
+function toggleGroup(categoryGroup: string) {
+  if (expandedGroups.value.has(categoryGroup)) {
+    expandedGroups.value.delete(categoryGroup);
+  } else {
+    expandedGroups.value.add(categoryGroup);
+  }
+}
+
+// Reset all visibility for current role/scope
+function resetToDefaults() {
+  if (!confirm('Reset all visibility settings to defaults for this role and scope?')) return;
+  
+  DATA_ITEM_REGISTRY.forEach(item => {
+    const context = {
+      category: item.category,
+      plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
+    };
+    updateVisibilityRule(selectedRole.value, context, item.key, item.defaultVisible);
+  });
+}
+
+// Count visible/total items in category
+function getCategoryStats(category: string): { visible: number; total: number } {
+  const groups = groupedItems.value[category];
+  if (!groups) return { visible: 0, total: 0 };
+  
+  let visible = 0;
+  let total = 0;
+  
+  Object.values(groups).forEach(items => {
+    items.forEach(item => {
+      total++;
+      if (getItemVisibility(item)) visible++;
+    });
+  });
+  
+  return { visible, total };
+}
+
+// Count visible/total items in group
+function getGroupStats(category: string, group: string): { visible: number; total: number } {
+  const items = groupedItems.value[category]?.[group] || [];
+  let visible = 0;
+  
+  items.forEach(item => {
+    if (getItemVisibility(item)) visible++;
+  });
+  
+  return { visible, total: items.length };
+}
+
+// Toggle all items in a group
+function toggleAllInGroup(category: string, group: string, visible: boolean) {
+  const items = groupedItems.value[category]?.[group] || [];
+  items.forEach(item => {
+    const context = {
+      category: item.category,
+      plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
+    };
+    updateVisibilityRule(selectedRole.value, context, item.key, visible);
+  });
+}
 </script>
 
 <template>
-  <div class="space-y-6 p-6">
+  <div class="visibility-control">
     <!-- Header -->
-    <div class="flex flex-col gap-2">
-      <div class="flex items-center gap-3">
-        <Eye class="w-8 h-8 text-blue-500" />
-        <h1 class="text-2xl font-bold text-white tracking-tight">Master Visibility Settings</h1>
-      </div>
-      <p class="text-slate-400 max-w-3xl">
-        Configure system-wide visibility rules and dashboard layout preferences across all plant scopes.
-      </p>
-    </div>
-
-    <!-- Filter Bar -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
-      <!-- Role Filter -->
-      <div class="relative group">
-         <select 
-            v-model="selectedRole"
-            class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3 pr-8 py-2.5 text-slate-200 focus:border-blue-500 focus:outline-none appearance-none cursor-pointer hover:border-slate-600 transition-colors"
-          >
-            <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
-          </select>
-          <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+    <div class="header">
+      <div class="header-content">
+        <div class="flex items-center gap-3">
+          <Eye class="w-8 h-8 text-blue-500" />
+          <div>
+            <h1 class="text-2xl font-bold text-white">Visibility Control</h1>
+            <p class="text-slate-400 text-sm">Configure which data items are visible for each role</p>
           </div>
-      </div>
-
-      <!-- Plant Scope Filter -->
-      <div class="relative group">
-         <select 
-            v-model="selectedPlant"
-            class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3 pr-8 py-2.5 text-slate-200 focus:border-blue-500 focus:outline-none appearance-none cursor-pointer hover:border-slate-600 transition-colors"
-          >
-            <option v-for="plant in plants" :key="plant" :value="plant">{{ plant }}</option>
-          </select>
-          <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </div>
-      </div>
-
-      <!-- Dashboard Type Filter -->
-      <div class="relative group">
-         <select 
-            v-model="selectedDashboard"
-            class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3 pr-8 py-2.5 text-slate-200 focus:border-blue-500 focus:outline-none appearance-none cursor-pointer hover:border-slate-600 transition-colors"
-          >
-            <option v-for="dash in dashboards" :key="dash" :value="dash">{{ dash }}</option>
-          </select>
-          <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </div>
-      </div>
-
-      <!-- Search -->
-      <div class="relative">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-        <input 
-          v-model="searchQuery"
-          type="text" 
-          placeholder="Search settings..."
-          class="w-full bg-slate-950 border border-slate-700 text-slate-200 pl-10 pr-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-slate-600 hover:border-slate-600 transition-colors"
-        >
-      </div>
-    </div>
-
-    <!-- Content Sections -->
-    <div class="space-y-6">
-      
-      <!-- Section Header -->
-      <div class="flex items-center gap-2 pb-2 border-b border-slate-700/50">
-        <Globe class="w-5 h-5 text-slate-400" />
-        <h2 class="text-lg font-semibold text-slate-200">{{ selectedDashboard }}</h2>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        </div>
         
-        <!-- KPI Group -->
-        <div class="bg-slate-800/30 rounded-xl border border-slate-700/50 p-5">
-           <div class="flex items-center justify-between mb-4">
-             <div class="flex items-center gap-2">
-               <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-               <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">KPI</span>
-             </div>
-             <span class="bg-slate-700/50 text-slate-400 text-xs px-2 py-0.5 rounded-full">{{ kpiSettings.length }}</span>
-           </div>
+        <button @click="resetToDefaults" class="reset-btn">
+          <RotateCcw class="w-4 h-4" />
+          <span>Reset to Defaults</span>
+        </button>
+      </div>
+    </div>
 
-           <div class="divide-y divide-slate-700/30">
-             <div 
-                v-for="item in kpiSettings" 
-                :key="item.id"
-                class="py-4 first:pt-0 last:pb-0 flex items-center justify-between"
-              >
-                <div>
-                  <p class="text-sm font-medium text-slate-200">{{ item.label }}</p>
-                  <p v-if="item.subtext" class="text-xs text-slate-500 mt-0.5 font-mono">{{ item.subtext }}</p>
-                </div>
-                
-                <!-- Toggle Switch -->
-                <button 
-                  @click="toggleKpi(item.id)"
-                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                  :class="item.enabled ? 'bg-blue-600' : 'bg-slate-700'"
-                >
-                  <span
-                    class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                    :class="item.enabled ? 'translate-x-6' : 'translate-x-1'"
-                  />
-                </button>
-             </div>
-           </div>
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <label class="filter-label">Role</label>
+        <select v-model="selectedRole" class="filter-select">
+          <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label class="filter-label">Scope</label>
+        <select v-model="selectedPlant" class="filter-select">
+          <option v-for="plant in plants" :key="plant.id" :value="plant.id">{{ plant.name }}</option>
+        </select>
+      </div>
+      
+      <div class="filter-group flex-1">
+        <label class="filter-label">Search</label>
+        <div class="search-input">
+          <Search class="w-4 h-4 text-slate-500" />
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="Search items..."
+            class="search-field"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Notice -->
+    <div v-if="selectedRole === UserRole.ADMINISTRATOR" class="admin-notice">
+      <Eye class="w-5 h-5" />
+      <span>Administrator role always sees all items. Select a different role to configure visibility.</span>
+    </div>
+
+    <!-- Categories -->
+    <div class="categories">
+      <div 
+        v-for="(groups, category) in groupedItems" 
+        :key="category"
+        class="category-section"
+      >
+        <!-- Category Header -->
+        <div 
+          class="category-header"
+          @click="toggleCategory(category)"
+        >
+          <div class="category-left">
+            <component 
+              :is="expandedCategories.has(category) ? ChevronDown : ChevronRight" 
+              class="w-5 h-5 text-slate-500"
+            />
+            <component 
+              :is="categoryIcons[category as VisibilityCategory]" 
+              class="w-5 h-5 text-blue-400"
+            />
+            <span class="category-name">{{ categoryLabels[category as VisibilityCategory] }}</span>
+          </div>
+          <div class="category-stats">
+            <span class="stats-text">
+              {{ getCategoryStats(category).visible }} / {{ getCategoryStats(category).total }} visible
+            </span>
+          </div>
         </div>
 
-        <!-- Lists Group -->
-         <div class="bg-slate-800/30 rounded-xl border border-slate-700/50 p-5">
-           <div class="flex items-center justify-between mb-4">
-             <div class="flex items-center gap-2">
-               <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-               <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">LIST</span>
-             </div>
-             <span class="bg-slate-700/50 text-slate-400 text-xs px-2 py-0.5 rounded-full">{{ listSettings.length }}</span>
-           </div>
-
-           <div class="divide-y divide-slate-700/30">
-             <div 
-                v-for="item in listSettings" 
-                :key="item.id"
-                class="py-4 first:pt-0 last:pb-0 flex items-center justify-between"
-              >
-                <div>
-                  <p class="text-sm font-medium text-slate-200">{{ item.label }}</p>
-                </div>
-                
-                <!-- Toggle Switch -->
+        <!-- Category Content -->
+        <div v-if="expandedCategories.has(category)" class="category-content">
+          <div 
+            v-for="(items, group) in groups" 
+            :key="`${category}-${group}`"
+            class="group-section"
+          >
+            <!-- Group Header -->
+            <div 
+              class="group-header"
+              @click="toggleGroup(`${category}-${group}`)"
+            >
+              <div class="group-left">
+                <component 
+                  :is="expandedGroups.has(`${category}-${group}`) ? ChevronDown : ChevronRight" 
+                  class="w-4 h-4 text-slate-600"
+                />
+                <span class="group-name">{{ groupLabels[group as VisibilityGroup] || group }}</span>
+                <span class="group-count">({{ items.length }})</span>
+              </div>
+              <div class="group-actions">
                 <button 
-                  @click="toggleList(item.id)"
-                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                  :class="item.enabled ? 'bg-blue-600' : 'bg-slate-700'"
+                  @click.stop="toggleAllInGroup(category, group, true)"
+                  class="group-action-btn show"
+                  title="Show All"
                 >
-                  <span
-                    class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                    :class="item.enabled ? 'translate-x-6' : 'translate-x-1'"
-                  />
+                  <Eye class="w-3.5 h-3.5" />
                 </button>
-             </div>
-           </div>
-        </div>
+                <button 
+                  @click.stop="toggleAllInGroup(category, group, false)"
+                  class="group-action-btn hide"
+                  title="Hide All"
+                >
+                  <EyeOff class="w-3.5 h-3.5" />
+                </button>
+                <span class="group-stats">
+                  {{ getGroupStats(category, group).visible }}/{{ getGroupStats(category, group).total }}
+                </span>
+              </div>
+            </div>
 
+            <!-- Group Items -->
+            <div v-if="expandedGroups.has(`${category}-${group}`)" class="group-items">
+              <div 
+                v-for="item in items" 
+                :key="item.id"
+                class="item-row"
+                :class="{ 'item-hidden': !getItemVisibility(item) }"
+              >
+                <div class="item-info">
+                  <span class="item-label">{{ item.label }}</span>
+                  <span class="item-location">{{ item.location }}</span>
+                </div>
+                <button 
+                  @click="toggleVisibility(item)"
+                  class="toggle-btn"
+                  :class="{ 'toggle-on': getItemVisibility(item), 'toggle-off': !getItemVisibility(item) }"
+                >
+                  <component :is="getItemVisibility(item) ? Eye : EyeOff" class="w-4 h-4" />
+                  <span>{{ getItemVisibility(item) ? 'Visible' : 'Hidden' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.visibility-control {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reset-btn:hover {
+  background: #334155;
+  color: white;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #1e293b;
+  border-radius: 0.75rem;
+  border: 1px solid #334155;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.filter-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filter-select {
+  padding: 0.5rem 0.75rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  min-width: 180px;
+}
+
+.search-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+}
+
+.search-field {
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  outline: none;
+  width: 100%;
+}
+
+.admin-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 0.5rem;
+  color: #60a5fa;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.categories {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.category-section {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.category-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.category-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.category-name {
+  font-weight: 600;
+  color: white;
+  font-size: 0.95rem;
+}
+
+.category-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stats-text {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.category-content {
+  border-top: 1px solid #334155;
+  padding: 0.5rem;
+}
+
+.group-section {
+  margin-bottom: 0.25rem;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.group-header:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.group-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.group-name {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.group-count {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.group-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.group-action-btn {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.group-action-btn.show {
+  background: rgba(34, 197, 94, 0.1);
+  color: #4ade80;
+}
+
+.group-action-btn.show:hover {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+.group-action-btn.hide {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
+.group-action-btn.hide:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.group-stats {
+  font-size: 0.75rem;
+  color: #64748b;
+  min-width: 40px;
+  text-align: right;
+}
+
+.group-items {
+  padding: 0.5rem 0.5rem 0.5rem 2rem;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem 1rem;
+  border-radius: 0.375rem;
+  transition: background 0.2s;
+}
+
+.item-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.item-row.item-hidden {
+  opacity: 0.5;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.item-label {
+  font-size: 0.875rem;
+  color: #e2e8f0;
+}
+
+.item-location {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn.toggle-on {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.toggle-btn.toggle-on:hover {
+  background: rgba(34, 197, 94, 0.25);
+}
+
+.toggle-btn.toggle-off {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.toggle-btn.toggle-off:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+@media (max-width: 768px) {
+  .filters {
+    flex-direction: column;
+  }
+  
+  .filter-select {
+    min-width: 100%;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+</style>

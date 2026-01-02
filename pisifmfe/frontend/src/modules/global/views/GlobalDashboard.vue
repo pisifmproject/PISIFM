@@ -3,11 +3,13 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { PLANTS } from '@/config/app.config';
 import { useAuth } from '@/stores/auth';
+import { useVisibility } from '@/composables/useVisibility';
 import { Factory, Activity, Zap, AlertTriangle, TrendingUp } from 'lucide-vue-next';
 import { getLvmdpTrend, getLvmdpShiftToday } from '@/lib/api';
 
 const router = useRouter();
 const { canAccessPlant } = useAuth();
+const { isVisible } = useVisibility();
 
 // --- Types & Constants ---
 type Period = 'Day' | 'Week' | 'Month' | 'Year';
@@ -149,7 +151,7 @@ watch(selectedPeriod, () => {
         <h2 class="section-title">Global Performance At a Glance</h2>
         <div class="metrics-grid">
             <!-- Output -->
-            <div class="metric-card">
+            <div v-if="isVisible('GLOBAL_OUTPUT_TODAY')" class="metric-card">
                 <div class="mc-content">
                     <span class="mc-label">TOTAL OUTPUT ({{ selectedPeriod.toUpperCase() }})</span>
                     <div class="mc-val-row">
@@ -163,7 +165,7 @@ watch(selectedPeriod, () => {
             </div>
 
             <!-- OEE -->
-             <div class="metric-card">
+             <div v-if="isVisible('GLOBAL_OEE')" class="metric-card">
                 <div class="mc-content">
                     <span class="mc-label">GLOBAL AVG OEE</span>
                     <div class="mc-val-row">
@@ -177,7 +179,7 @@ watch(selectedPeriod, () => {
             </div>
 
             <!-- Energy -->
-             <div class="metric-card">
+             <div v-if="isVisible('GLOBAL_TOTAL_ENERGY')" class="metric-card">
                 <div class="mc-content">
                     <span class="mc-label">TOTAL ENERGY ({{ selectedPeriod.toUpperCase() }})</span>
                     <div class="mc-val-row">
@@ -191,7 +193,7 @@ watch(selectedPeriod, () => {
             </div>
 
             <!-- Alarms -->
-             <div class="metric-card">
+             <div v-if="isVisible('GLOBAL_TOTAL_ALARMS')" class="metric-card">
                 <div class="mc-content">
                     <span class="mc-label">ACTIVE ALARMS</span>
                     <div class="mc-val-row">
