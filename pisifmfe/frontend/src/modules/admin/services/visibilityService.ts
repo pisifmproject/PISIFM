@@ -3,6 +3,13 @@ import { UserRole, DataItem, VisibilityCategory, VisibilityGroup } from '../type
 import { plantService } from './plantService';
 
 /* ============================================================
+   API CONFIGURATION
+============================================================ */
+
+// API_BASE_URL should NOT include /api suffix since VITE_API_URL already has it
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+/* ============================================================
    DATA ITEM REGISTRY
 ============================================================ */
 
@@ -76,7 +83,6 @@ const STATIC_REGISTRY: DataItem[] = [
   { id: 'gas_det_4', key: 'GAS_DETAIL_CONSUMPTION_BAR', label: 'Consumption by Area (Bar)', category: VisibilityCategory.UTILITY, group: VisibilityGroup.CHART, location: 'Natural Gas Detail', defaultVisible: true },
   { id: 'gas_det_5', key: 'GAS_DETAIL_CONSUMPTION_PIE', label: 'Consumption by Area (Pie)', category: VisibilityCategory.UTILITY, group: VisibilityGroup.CHART, location: 'Natural Gas Detail', defaultVisible: true },
 
-
   // --- MAIN PANEL 1 ---
   { id: 'lv1', key: 'LV_KW', label: 'Active Power (kW) - Panel 1', category: VisibilityCategory.MAIN_PANEL_1, group: VisibilityGroup.KPI, location: 'Main Panel 1 Detail', defaultVisible: true },
   { id: 'lv2', key: 'LV_KVA', label: 'Apparent Power (kVA) - Panel 1', category: VisibilityCategory.MAIN_PANEL_1, group: VisibilityGroup.KPI, location: 'Main Panel 1 Detail', defaultVisible: true },
@@ -140,7 +146,6 @@ const STATIC_REGISTRY: DataItem[] = [
   { id: 'md_perf_7', key: 'MACHINE_REJECT_KG', label: 'Reject Mass (Period)', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.KPI, location: 'Machine Detail / Performance', defaultVisible: true },
   { id: 'md_perf_8', key: 'MACHINE_REJECT_PERCENT', label: 'Reject %', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.KPI, location: 'Machine Detail / Performance', defaultVisible: true },
   { id: 'md_perf_9', key: 'MACHINE_OUTPUT_TREND_CHART', label: 'Output vs Target Trend', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.CHART, location: 'Machine Detail / Performance', defaultVisible: true },
-
 
   // --- MACHINE DETAIL: PACKING ---
   { id: 'md_pack_9', key: 'PACKING_TOTAL_EFFICIENCY', label: 'KPI: Total Efficiency', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_LINE_KPI, location: 'Machine Detail / Packing', defaultVisible: true },
@@ -242,35 +247,117 @@ export const DATA_ITEM_REGISTRY: DataItem[] = [
   ...generateLVMDPRegistry()
 ];
 
+
 /* ============================================================
-   VISIBILITY STATE MODEL
+   VISIBILITY STATE MODEL - NOW WITH DATABASE PERSISTENCE
 ============================================================ */
+
+import { reactive, ref } from 'vue';
 
 type VisibilityRules = Record<string, boolean>;
 type ScopeRules = Record<string, VisibilityRules>;
 type VisibilityState = Record<string, ScopeRules>;
 
-const STORAGE_KEY = 'SMART_MONITORING_DATA_VISIBILITY_V8';
+// Reactive in-memory cache of visibility state
+const state: VisibilityState = reactive({});
+let isInitialized = false;
+let initPromise: Promise<void> | null = null;
 
-const loadState = (): VisibilityState => {
+// Reactive version counter to trigger re-renders
+export const visibilityVersion = ref(0);
+
+// Get auth token from localStorage
+const getAuthToken = (): string | null => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return {};
-    return JSON.parse(stored);
+    return localStorage.getItem('auth_token');
   } catch {
+    // Ignore errors
+  }
+  return null;
+};
+
+// API helper with auth
+const apiRequest = async (url: string, options: RequestInit = {}) => {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> || {}),
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  
+  return response.json();
+};
+
+// Load all visibility settings from database
+const loadStateFromDB = async (): Promise<VisibilityState> => {
+  try {
+    const data = await apiRequest(`${API_BASE_URL}/visibility`);
+    return data || {};
+  } catch (error) {
+    console.error('Failed to load visibility settings from DB:', error);
     return {};
   }
 };
 
-const saveState = (s: VisibilityState) => {
+// Save single setting to database
+const saveSettingToDB = async (
+  role: string,
+  scopeKey: string,
+  itemKey: string,
+  visible: boolean
+): Promise<void> => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  } catch (e) {
-    console.error("Failed to save visibility state:", e);
+    await apiRequest(`${API_BASE_URL}/visibility/${role}`, {
+      method: 'PUT',
+      body: JSON.stringify({ scopeKey, itemKey, visible }),
+    });
+  } catch (error) {
+    console.error('Failed to save visibility setting to DB:', error);
+    throw error;
   }
 };
 
-let state: VisibilityState = loadState();
+// Initialize state from database
+export const initializeVisibilityState = async (): Promise<void> => {
+  if (isInitialized) return;
+  
+  if (initPromise) {
+    return initPromise;
+  }
+  
+  initPromise = (async () => {
+    const loadedState = await loadStateFromDB();
+    // Clear and populate reactive state
+    Object.keys(state).forEach(key => delete state[key]);
+    Object.assign(state, loadedState);
+    isInitialized = true;
+    visibilityVersion.value++; // Trigger reactive updates
+  })();
+  
+  return initPromise;
+};
+
+// Force reload from database
+export const reloadVisibilityState = async (): Promise<void> => {
+  isInitialized = false;
+  initPromise = null;
+  // Clear reactive state
+  Object.keys(state).forEach(key => delete state[key]);
+  await initializeVisibilityState();
+};
 
 const getScopeKey = (context: { category: VisibilityCategory, plantId?: string, machineId?: string }): string => {
   switch (context.category) {
@@ -305,30 +392,58 @@ export const getVisibilityRulesForRoleAndScope = (role: UserRole, scopeKey: stri
   return state[role]?.[scopeKey] || {};
 };
 
-export const updateVisibilityRule = (
+export const updateVisibilityRule = async (
   role: UserRole,
   context: { category: VisibilityCategory, plantId?: string, machineId?: string },
   dataItemKey: string,
   visible: boolean
-) => {
+): Promise<void> => {
   const scopeKey = getScopeKey(context);
+  
+  // Store previous value for rollback
   ensureScope(role, scopeKey);
+  const previousValue = state[role][scopeKey][dataItemKey];
+  
+  // Update local state immediately for responsive UI
   state[role][scopeKey][dataItemKey] = visible;
-  saveState(state);
+  visibilityVersion.value++; // Trigger reactive updates
+  
+  // Persist to database and wait for confirmation
+  try {
+    await saveSettingToDB(role, scopeKey, dataItemKey, visible);
+    console.log(`Visibility updated: ${role}/${scopeKey}/${dataItemKey} = ${visible}`);
+  } catch (error) {
+    console.error('Failed to persist visibility setting:', error);
+    // Revert local state on error
+    state[role][scopeKey][dataItemKey] = previousValue;
+    visibilityVersion.value++; // Trigger reactive updates for rollback
+    throw error; // Re-throw to notify caller
+  }
 };
 
-export const bulkUpdateVisibilityRules = (
+export const bulkUpdateVisibilityRules = async (
   role: UserRole,
   context: { category: VisibilityCategory, plantId?: string },
   updates: Record<string, boolean>
-) => {
+): Promise<void> => {
   const scopeKey = getScopeKey(context);
+  
+  // Update local state immediately
   ensureScope(role, scopeKey);
   state[role][scopeKey] = {
     ...state[role][scopeKey],
     ...updates,
   };
-  saveState(state);
+  
+  // Persist to database
+  try {
+    await apiRequest(`${API_BASE_URL}/visibility/${role}/bulk`, {
+      method: 'POST',
+      body: JSON.stringify({ scopeKey, updates }),
+    });
+  } catch (error) {
+    console.error('Failed to bulk persist visibility settings:', error);
+  }
 };
 
 export const isDataItemVisible = (
@@ -372,7 +487,22 @@ export const isDataItemVisible = (
     }
   }
 
-  return item.defaultVisible;
+  return true;
+};
+
+// Reset all visibility settings to defaults
+export const resetVisibilitySettings = async (): Promise<void> => {
+  try {
+    await apiRequest(`${API_BASE_URL}/visibility/reset`, {
+      method: 'DELETE',
+    });
+    // Clear reactive state
+    Object.keys(state).forEach(key => delete state[key]);
+    visibilityVersion.value++; // Trigger reactive updates
+  } catch (error) {
+    console.error('Failed to reset visibility settings:', error);
+    throw error;
+  }
 };
 
 export { getScopeKey as getScopeKeyForSettings };

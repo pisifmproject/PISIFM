@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { 
   Eye, 
   EyeOff, 
@@ -10,14 +10,17 @@ import {
   Zap,
   Settings,
   Search,
-  RotateCcw
+  RotateCcw,
+  Loader2
 } from 'lucide-vue-next';
 import { 
   DATA_ITEM_REGISTRY,
   updateVisibilityRule,
   getVisibilityRulesForRoleAndScope,
   getScopeKeyForSettings,
-  isDataItemVisible
+  isDataItemVisible,
+  initializeVisibilityState,
+  resetVisibilitySettings
 } from '../services/visibilityService';
 import { UserRole, VisibilityCategory, VisibilityGroup, type DataItem } from '../types';
 import { plantService } from '../services/plantService';
@@ -28,6 +31,8 @@ const selectedPlant = ref<string>('ALL_PLANTS');
 const searchQuery = ref('');
 const expandedCategories = ref<Set<string>>(new Set(['GLOBAL_DASHBOARD', 'PLANT_DASHBOARD']));
 const expandedGroups = ref<Set<string>>(new Set());
+const isLoading = ref(true);
+const isSaving = ref(false);
 
 // Data
 const roles = Object.values(UserRole).filter(r => r !== UserRole.ADMINISTRATOR);
@@ -116,8 +121,36 @@ const groupedItems = computed(() => {
   return result;
 });
 
+// Reactive Rules State
+const currentRules = ref<Record<string, boolean>>({});
+
+// Load rules when context changes
+const loadRules = () => {
+  // Logic to refresh rules if needed
+};
+
+// Auto-reset to defaults on mount if things look empty or weird (User Request)
+onMounted(async () => {
+  isLoading.value = true;
+  try {
+    // Initialize visibility state from database
+    await initializeVisibilityState();
+  } catch (error) {
+    console.error('Failed to initialize visibility state:', error);
+  } finally {
+    isLoading.value = false;
+    updateTrigger.value++;
+  }
+});
+
+// Alternative: Use a counter to force update
+const updateTrigger = ref(0);
+
 // Get current visibility state for an item
 function getItemVisibility(item: DataItem): boolean {
+  // Dependency on trigger
+  updateTrigger.value;
+  
   const context = {
     category: item.category,
     plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
@@ -128,17 +161,30 @@ function getItemVisibility(item: DataItem): boolean {
   if (rules[item.key] !== undefined) {
     return rules[item.key];
   }
-  return item.defaultVisible;
+  // User requested default is show all components
+  return true;
 }
 
 // Toggle visibility
-function toggleVisibility(item: DataItem) {
+async function toggleVisibility(item: DataItem) {
   const currentValue = getItemVisibility(item);
   const context = {
     category: item.category,
     plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
   };
-  updateVisibilityRule(selectedRole.value, context, item.key, !currentValue);
+  
+  isSaving.value = true;
+  try {
+    await updateVisibilityRule(selectedRole.value, context, item.key, !currentValue);
+    updateTrigger.value++; // Force re-render after successful save
+    console.log(`Toggle successful: ${item.key} = ${!currentValue}`);
+  } catch (error) {
+    console.error('Failed to toggle visibility:', error);
+    alert(`Failed to update visibility for ${item.label}. Please try again.`);
+    updateTrigger.value++; // Force re-render to show reverted state
+  } finally {
+    isSaving.value = false;
+  }
 }
 
 // Toggle category expansion
@@ -160,20 +206,24 @@ function toggleGroup(categoryGroup: string) {
 }
 
 // Reset all visibility for current role/scope
-function resetToDefaults() {
+async function resetToDefaults() {
   if (!confirm('Reset all visibility settings to defaults for this role and scope?')) return;
   
-  DATA_ITEM_REGISTRY.forEach(item => {
-    const context = {
-      category: item.category,
-      plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
-    };
-    updateVisibilityRule(selectedRole.value, context, item.key, item.defaultVisible);
-  });
+  isLoading.value = true;
+  try {
+    await resetVisibilitySettings();
+    updateTrigger.value++;
+  } catch (error) {
+    console.error('Failed to reset visibility settings:', error);
+    alert('Failed to reset visibility settings. Please try again.');
+  } finally {
+    isLoading.value = false;
+  }
 }
 
 // Count visible/total items in category
 function getCategoryStats(category: string): { visible: number; total: number } {
+  updateTrigger.value; // Reactivity
   const groups = groupedItems.value[category];
   if (!groups) return { visible: 0, total: 0 };
   
@@ -192,6 +242,7 @@ function getCategoryStats(category: string): { visible: number; total: number } 
 
 // Count visible/total items in group
 function getGroupStats(category: string, group: string): { visible: number; total: number } {
+  updateTrigger.value; // Reactivity
   const items = groupedItems.value[category]?.[group] || [];
   let visible = 0;
   
@@ -203,20 +254,54 @@ function getGroupStats(category: string, group: string): { visible: number; tota
 }
 
 // Toggle all items in a group
-function toggleAllInGroup(category: string, group: string, visible: boolean) {
+async function toggleAllInGroup(category: string, group: string, visible: boolean) {
   const items = groupedItems.value[category]?.[group] || [];
-  items.forEach(item => {
-    const context = {
-      category: item.category,
-      plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
-    };
-    updateVisibilityRule(selectedRole.value, context, item.key, visible);
-  });
+  isSaving.value = true;
+  
+  let successCount = 0;
+  let failCount = 0;
+  
+  try {
+    for (const item of items) {
+      const context = {
+        category: item.category,
+        plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
+      };
+      try {
+        await updateVisibilityRule(selectedRole.value, context, item.key, visible);
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to update ${item.key}:`, error);
+        failCount++;
+      }
+    }
+    updateTrigger.value++;
+    
+    if (failCount > 0) {
+      alert(`Updated ${successCount} items, ${failCount} failed. Please try again for failed items.`);
+    }
+  } catch (error) {
+    console.error('Failed to toggle group visibility:', error);
+  } finally {
+    isSaving.value = false;
+  }
 }
 </script>
 
 <template>
   <div class="visibility-control">
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <Loader2 class="w-8 h-8 text-blue-500 animate-spin" />
+      <span class="text-slate-400">Loading visibility settings...</span>
+    </div>
+
+    <!-- Saving Indicator -->
+    <div v-if="isSaving" class="saving-indicator">
+      <Loader2 class="w-4 h-4 text-blue-500 animate-spin" />
+      <span>Saving...</span>
+    </div>
+
     <!-- Header -->
     <div class="header">
       <div class="header-content">
@@ -356,11 +441,13 @@ function toggleAllInGroup(category: string, group: string, visible: boolean) {
                 </div>
                 <button 
                   @click="toggleVisibility(item)"
-                  class="toggle-btn"
-                  :class="{ 'toggle-on': getItemVisibility(item), 'toggle-off': !getItemVisibility(item) }"
+                  class="toggle-switch"
+                  :class="{ 'toggled-on': getItemVisibility(item) }"
+                  role="switch"
+                  :aria-checked="getItemVisibility(item) ? 'true' : 'false'"
                 >
-                  <component :is="getItemVisibility(item) ? Eye : EyeOff" class="w-4 h-4" />
-                  <span>{{ getItemVisibility(item) ? 'Visible' : 'Hidden' }}</span>
+                  <span class="toggle-track"></span>
+                  <span class="toggle-thumb"></span>
                 </button>
               </div>
             </div>
@@ -620,7 +707,7 @@ function toggleAllInGroup(category: string, group: string, visible: boolean) {
 }
 
 .item-row.item-hidden {
-  opacity: 0.5;
+  opacity: 0.7;
 }
 
 .item-info {
@@ -639,35 +726,42 @@ function toggleAllInGroup(category: string, group: string, visible: boolean) {
   color: #64748b;
 }
 
-.toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.375rem;
+/* Toggle Switch Styles */
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background-color: #334155;
+  border-radius: 9999px;
   border: none;
-  font-size: 0.75rem;
-  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s ease-in-out;
+  flex-shrink: 0;
 }
 
-.toggle-btn.toggle-on {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+.toggle-switch:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 
-.toggle-btn.toggle-on:hover {
-  background: rgba(34, 197, 94, 0.25);
+.toggle-switch.toggled-on {
+  background-color: #3b82f6;
 }
 
-.toggle-btn.toggle-off {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease-in-out;
 }
 
-.toggle-btn.toggle-off:hover {
-  background: rgba(239, 68, 68, 0.25);
+.toggle-switch.toggled-on .toggle-thumb {
+  transform: translateX(20px);
 }
 
 @media (max-width: 768px) {
@@ -682,6 +776,50 @@ function toggleAllInGroup(category: string, group: string, visible: boolean) {
   .header-content {
     flex-direction: column;
     gap: 1rem;
+  }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  z-index: 100;
+}
+
+.saving-indicator {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  z-index: 50;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>

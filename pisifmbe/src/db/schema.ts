@@ -8,6 +8,8 @@ import {
   integer,
   boolean,
   jsonb,
+  serial,
+  unique,
 } from "drizzle-orm/pg-core";
 
 /* ===========================
@@ -543,6 +545,23 @@ export const packingLineTWS56BagMaker = createPackingBagMakerTable("TWS56");
 export const packingLineTWS72BagMaker = createPackingBagMakerTable("TWS72");
 export const packingLinePackingPouchBagMaker =
   createPackingBagMakerTable("PACKING_POUCH");
+/* ===========================
+   VISIBILITY SETTINGS TABLE
+   (Persistent role-based UI visibility settings)
+=========================== */
+
+export const visibilitySettings = pgTable("visibility_settings", {
+  id: serial("id").primaryKey(),
+  role: text("role").notNull(),
+  scopeKey: text("scope_key").notNull(),
+  itemKey: text("item_key").notNull(),
+  visible: boolean("visible").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueVisibilitySetting: unique().on(table.role, table.scopeKey, table.itemKey),
+}));
+
 /* ===========================
    ELECTRICAL REPORTING TABLES
    (Professional energy monitoring - ISO 50001 compliant)

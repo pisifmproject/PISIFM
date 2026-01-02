@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PLANTS } from '@/config/app.config';
+import { useVisibility } from '@/composables/useVisibility';
 import { 
     Factory, 
     Activity, 
@@ -22,6 +23,9 @@ const router = useRouter();
 
 const plantId = computed(() => route.params.plantId as string);
 const plantConfig = computed(() => PLANTS[plantId.value as keyof typeof PLANTS] || PLANTS['cikupa']);
+
+// Visibility composable
+const { isVisible, visibilityVersion } = useVisibility();
 
 // --- Types & Constants ---
 type Period = 'Day' | 'Week' | 'Month' | 'Year';
@@ -147,15 +151,23 @@ function getDummyStats(id: string) {
 }
 
 const machines = computed(() => {
+    // Access visibilityVersion to create reactive dependency
+    const _ = visibilityVersion.value;
     const configMachines = plantConfig.value.machines || [];
-    return configMachines.map(m => {
-        const stats = getDummyStats(m.id);
-        return {
-            id: m.id, // Keep ID for navigation
-            name: m.name,
-            ...stats
-        };
-    });
+    return configMachines
+        .filter(m => {
+            // Check visibility for this machine
+            const key = `SHOW_MACHINE_${m.id}`;
+            return isVisible(key, { plantId: plantId.value });
+        })
+        .map(m => {
+            const stats = getDummyStats(m.id);
+            return {
+                id: m.id, // Keep ID for navigation
+                name: m.name,
+                ...stats
+            };
+        });
 });
 
 // Active Alarms Dummy

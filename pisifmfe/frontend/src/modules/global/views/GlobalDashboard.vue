@@ -9,7 +9,7 @@ import { getLvmdpTrend, getLvmdpShiftToday } from '@/lib/api';
 
 const router = useRouter();
 const { canAccessPlant } = useAuth();
-const { isVisible } = useVisibility();
+const { isVisible, visibilityVersion } = useVisibility();
 
 // --- Types & Constants ---
 type Period = 'Day' | 'Week' | 'Month' | 'Year';

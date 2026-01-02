@@ -100,6 +100,10 @@ app.use("/api/summary", authMiddleware, summaryRouter);
 import electricalReportRouter from "./routes/electricalReport.router";
 app.use("/api/report", authMiddleware, electricalReportRouter);
 
+// Visibility settings routes (Role-based UI visibility)
+import visibilityController from "./visibility/visibility.controller";
+app.use("/api/visibility", authMiddleware, visibilityController);
+
 // Multi-plant routes
 import metadataRouter from "./routes/metadata.router";
 import globalRouter from "./routes/global.router";

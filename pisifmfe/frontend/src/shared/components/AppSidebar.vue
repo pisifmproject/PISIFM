@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { PLANTS, type PlantId } from "@/config/app.config";
 import { useAuth } from "@/stores/auth";
+import { useVisibility } from "@/composables/useVisibility";
 import {
   LayoutDashboard,
   Factory,
@@ -42,6 +43,9 @@ const currentPlant = computed(() =>
   currentPlantId.value ? PLANTS[currentPlantId.value] : null
 );
 
+// Visibility composable
+const { isVisible, isReady, visibilityVersion } = useVisibility();
+
 // Sidebar grouping state
 const energyExpanded = ref(true);
 const electricityExpanded = ref(false);
@@ -50,6 +54,17 @@ const productionExpanded = ref(true);
 // Filter plants based on user access
 const accessiblePlants = computed(() => {
   return Object.values(PLANTS).filter(plant => canAccessPlant(plant.id));
+});
+
+// Filter machines based on visibility settings
+const visibleMachines = computed(() => {
+  // Access visibilityVersion to create reactive dependency
+  const _ = visibilityVersion.value;
+  if (!currentPlant.value?.machines) return [];
+  return currentPlant.value.machines.filter(machine => {
+    const key = `SHOW_MACHINE_${machine.id}`;
+    return isVisible(key, { plantId: currentPlantId.value });
+  });
 });
 
 const isAdminRoute = computed(() => route.path.startsWith('/admin'));
@@ -293,7 +308,7 @@ function toggleProduction() {
           </div>
           <div v-if="productionExpanded" class="group-content">
             <div
-              v-for="machine in currentPlant?.machines"
+              v-for="machine in visibleMachines"
               :key="machine.id"
               class="nav-item sub-item"
               :class="{ active: route.params.machineId === machine.id }"
@@ -304,6 +319,9 @@ function toggleProduction() {
               "
             >
               <span>{{ machine.name }}</span>
+            </div>
+            <div v-if="visibleMachines.length === 0" class="nav-item sub-item disabled">
+              <span class="text-slate-500 italic text-sm">No machines visible</span>
             </div>
           </div>
         </div>
