@@ -13,8 +13,15 @@ Real-time factory monitoring system untuk production lines, electrical panels (L
 
 ## 👤 User Accounts
 
-- **Guest**: `tamuifm` / `hello01` - Dashboard only (LVMDP, Production)
-- **User**: `userifm` / `pisifm00` - Full access (Dashboard, Weigher, BagMaker, Daily Reports)
+| Username | Password | Role | Access |
+|----------|----------|------|--------|
+| admin | admifm | ADMINISTRATOR | Full access, user management |
+| supervisor | spvifm | SUPERVISOR | All dashboards, reports |
+| operator | oprifm | OPERATOR | Plant A only |
+| maintenance | mtcifm | MAINTENANCE | All plants |
+| qc | qcifm | QC | Plant A & B |
+| management | mngifm | MANAGEMENT | All plants, reports |
+| guest | gsifm | VIEWER | Plant A (view only) |
 
 ## 🚀 Quick Start
 
@@ -175,10 +182,11 @@ npx ts-node src/scripts/backfillDailyReports.ts 2025-12-01 2025-12-31
 
 ## 🔐 Security & Access Control
 
-- **Guest Role**: Dashboard LVMDP & Production (monitoring only)
-- **User Role**: Full access (Dashboard, Weigher, BagMaker, Daily Reports)
-- **Route Protection**: Navigation guard dengan role-based redirection
-- **Session**: LocalStorage-based authentication
+- **Database Authentication**: User credentials stored with bcrypt hashed passwords
+- **JWT Token**: Secure token-based authentication (24h expiry)
+- **Role-based Access**: ADMINISTRATOR, SUPERVISOR, OPERATOR, MAINTENANCE, QC, MANAGEMENT, VIEWER
+- **Route Protection**: Frontend navigation guard + Backend middleware
+- **API Protection**: All API endpoints require valid JWT token (except /api/auth/login)
 
 ## Project Info
 

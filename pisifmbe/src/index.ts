@@ -15,6 +15,8 @@ import packingController from "./packing/packing.controller";
 import dailyReportRouter from "./routes/dailyReport.router";
 import lvmdpRouter from "./routes/lvmdp.router";
 import debugRouter from "./routes/debug.router";
+import authController from "./auth/auth.controller";
+import { authMiddleware } from "./auth/auth.middleware";
 import "./utils/pgTimezoneFix";
 
 const app = express();
@@ -54,41 +56,45 @@ app.get("/api", (_req, res) => {
   res.send("Sukses landing ke endpoint api");
 });
 
-app.use("/api/lvmdp", lvmdpRouter);
+// Auth routes (public)
+app.use("/api/auth", authController);
+
+// Protected routes - apply auth middleware
+app.use("/api/lvmdp", authMiddleware, lvmdpRouter);
 app.use("/debug", debugRouter);
 
-app.use("/api/user", userController);
-app.use("/api/lvmdp1", lvmdp1Controller);
-app.use("/api/lvmdp1/daily-report", lvmdp1DailyReportController);
-app.use("/api/lvmdp2", lvmdp2Controller);
-app.use("/api/lvmdp2/daily-report", lvmdp2DailyReportController);
-app.use("/api/lvmdp3", lvmdp3Controller);
-app.use("/api/lvmdp3/daily-report", lvmdp3DailyReportController);
-app.use("/api/lvmdp4", lvmdp4Controller);
-app.use("/api/lvmdp4/daily-report", lvmdp4DailyReportController);
+app.use("/api/user", authMiddleware, userController);
+app.use("/api/lvmdp1", authMiddleware, lvmdp1Controller);
+app.use("/api/lvmdp1/daily-report", authMiddleware, lvmdp1DailyReportController);
+app.use("/api/lvmdp2", authMiddleware, lvmdp2Controller);
+app.use("/api/lvmdp2/daily-report", authMiddleware, lvmdp2DailyReportController);
+app.use("/api/lvmdp3", authMiddleware, lvmdp3Controller);
+app.use("/api/lvmdp3/daily-report", authMiddleware, lvmdp3DailyReportController);
+app.use("/api/lvmdp4", authMiddleware, lvmdp4Controller);
+app.use("/api/lvmdp4/daily-report", authMiddleware, lvmdp4DailyReportController);
 
 // Production & Packing routes
-app.use("/api/production", productionController);
-app.use("/api/packing", packingController);
+app.use("/api/production", authMiddleware, productionController);
+app.use("/api/packing", authMiddleware, packingController);
 
 // Utility Consumption routes
 import utilityController from "./utility/utility.controller";
-app.use("/api/utility", utilityController);
+app.use("/api/utility", authMiddleware, utilityController);
 
 // Daily Report routes
-app.use("/api/daily-report", dailyReportRouter);
+app.use("/api/daily-report", authMiddleware, dailyReportRouter);
 
 // Hourly Report routes
 import hourlyReportRouter from "./routes/hourlyReport.router";
-app.use("/api/hourly-report", hourlyReportRouter);
+app.use("/api/hourly-report", authMiddleware, hourlyReportRouter);
 
 // Summary routes
 import summaryRouter from "./routes/summary.router";
-app.use("/api/summary", summaryRouter);
+app.use("/api/summary", authMiddleware, summaryRouter);
 
 // Electrical Report routes (Professional reporting system)
 import electricalReportRouter from "./routes/electricalReport.router";
-app.use("/api/report", electricalReportRouter);
+app.use("/api/report", authMiddleware, electricalReportRouter);
 
 // Multi-plant routes
 import metadataRouter from "./routes/metadata.router";
@@ -96,10 +102,10 @@ import globalRouter from "./routes/global.router";
 import plantRouter from "./routes/plant.router";
 import machineRouter from "./routes/machine.router";
 
-app.use("/api/metadata", metadataRouter);
-app.use("/api/global", globalRouter);
-app.use("/api/plants", plantRouter);
-app.use("/api/machine", machineRouter);
+app.use("/api/metadata", authMiddleware, metadataRouter);
+app.use("/api/global", authMiddleware, globalRouter);
+app.use("/api/plants", authMiddleware, plantRouter);
+app.use("/api/machine", authMiddleware, machineRouter);
 
 // app.listen(PORT, () => {
 //   console.log(`Server is running on port ${PORT}`);

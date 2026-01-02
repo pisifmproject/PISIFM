@@ -36,6 +36,18 @@ export const api = axios.create({
 let isBackendConnected = true;
 let lastErrorTime = 0;
 
+// Request interceptor - add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
@@ -49,6 +61,16 @@ api.interceptors.response.use(
   },
   (error) => {
     const now = Date.now();
+    
+    // Handle 401 Unauthorized - redirect to login
+    if (error.response?.status === 401) {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
     
     // Only show warning once per 10 seconds
     if (now - lastErrorTime > 10000) {
@@ -372,5 +394,30 @@ export async function getPlantMachines(plantId: string) {
   const { data } = await api.get(`/plants/${plantId}/machines`, {
     params: { _t: Date.now() },
   });
+  return data;
+}
+
+
+// ---------- AUTH API ----------
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  user?: {
+    id: number;
+    username: string;
+    name: string | null;
+    role: string;
+    plantAccess: string[] | null;
+  };
+  token?: string;
+}
+
+export async function loginApi(username: string, password: string): Promise<LoginResponse> {
+  const { data } = await api.post("/auth/login", { username, password });
+  return data;
+}
+
+export async function getCurrentUser() {
+  const { data } = await api.get("/auth/me");
   return data;
 }

@@ -1,63 +1,86 @@
 // src/stores/auth.ts
 import { ref, computed } from "vue";
+import { loginApi, type LoginResponse } from "@/lib/api";
 
-export type UserRole = "tamu" | "user" | null;
+export type UserRole = 
+  | "ADMINISTRATOR" 
+  | "SUPERVISOR" 
+  | "OPERATOR" 
+  | "MAINTENANCE" 
+  | "QC" 
+  | "MANAGEMENT" 
+  | "VIEWER" 
+  | null;
 
 interface User {
+  id: number;
   username: string;
+  name: string | null;
   role: UserRole;
+  plantAccess: string[] | null;
 }
 
 const currentUser = ref<User | null>(null);
 const sessionInitialized = ref(false);
-
-// Hardcoded users
-const users = [
-  { username: "tamuifm", password: "hello01", role: "tamu" as UserRole },
-  { username: "userifm", password: "pisifm00", role: "user" as UserRole },
-];
+const isLoading = ref(false);
+const loginError = ref<string | null>(null);
 
 // Clear auth on fresh page load (not from cache/history)
-// This runs once when the module is first loaded
 function clearAuthOnFreshLoad() {
-  // Use sessionStorage to track if this is a fresh page load
   const isSessionActive = sessionStorage.getItem("session_active");
   
   if (!isSessionActive) {
-    // Fresh page load - clear any stored auth
     localStorage.removeItem("auth_user");
+    localStorage.removeItem("auth_token");
     sessionStorage.setItem("session_active", "true");
   }
 }
 
-// Execute immediately when module loads
 clearAuthOnFreshLoad();
 
 export function useAuth() {
   const isAuthenticated = computed(() => currentUser.value !== null);
   const userRole = computed(() => currentUser.value?.role || null);
   const username = computed(() => currentUser.value?.username || "");
+  const userName = computed(() => currentUser.value?.name || "");
+  const plantAccess = computed(() => currentUser.value?.plantAccess || []);
 
-  function login(username: string, password: string): boolean {
-    const user = users.find(
-      (u) => u.username === username && u.password === password
-    );
+  async function login(username: string, password: string): Promise<{ success: boolean; error?: string }> {
+    isLoading.value = true;
+    loginError.value = null;
 
-    if (user) {
-      currentUser.value = {
-        username: user.username,
-        role: user.role,
-      };
-      // Save to localStorage for current session navigation
-      localStorage.setItem("auth_user", JSON.stringify(currentUser.value));
-      return true;
+    try {
+      const response: LoginResponse = await loginApi(username, password);
+
+      if (response.success && response.user && response.token) {
+        currentUser.value = {
+          id: response.user.id,
+          username: response.user.username,
+          name: response.user.name,
+          role: response.user.role as UserRole,
+          plantAccess: response.user.plantAccess,
+        };
+        
+        localStorage.setItem("auth_user", JSON.stringify(currentUser.value));
+        localStorage.setItem("auth_token", response.token);
+        
+        return { success: true };
+      }
+
+      return { success: false, error: response.message || "Login failed" };
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || "User not found";
+      loginError.value = errorMessage;
+      return { success: false, error: errorMessage };
+    } finally {
+      isLoading.value = false;
     }
-    return false;
   }
 
   function logout() {
     currentUser.value = null;
     localStorage.removeItem("auth_user");
+    localStorage.removeItem("auth_token");
     sessionStorage.removeItem("session_active");
   }
 
@@ -65,27 +88,51 @@ export function useAuth() {
     if (sessionInitialized.value) return;
     
     const stored = localStorage.getItem("auth_user");
-    if (stored) {
+    const token = localStorage.getItem("auth_token");
+    
+    if (stored && token) {
       try {
         currentUser.value = JSON.parse(stored);
       } catch (e) {
         localStorage.removeItem("auth_user");
+        localStorage.removeItem("auth_token");
       }
     }
     sessionInitialized.value = true;
   }
 
-  function canAccessDailyReport(): boolean {
-    return userRole.value === "user";
+  function hasRole(...roles: UserRole[]): boolean {
+    return roles.includes(userRole.value);
   }
+
+  function canAccessPlant(plantId: string): boolean {
+    if (!currentUser.value) return false;
+    if (hasRole("ADMINISTRATOR", "MANAGEMENT")) return true;
+    return plantAccess.value.includes(plantId);
+  }
+
+  // Role-based access helpers
+  const canViewDashboard = computed(() => isAuthenticated.value);
+  const canViewReports = computed(() => hasRole("ADMINISTRATOR", "SUPERVISOR", "MANAGEMENT", "QC"));
+  const canEditSettings = computed(() => hasRole("ADMINISTRATOR"));
+  const canManageUsers = computed(() => hasRole("ADMINISTRATOR"));
 
   return {
     isAuthenticated,
     userRole,
     username,
+    userName,
+    plantAccess,
+    isLoading: computed(() => isLoading.value),
+    loginError: computed(() => loginError.value),
     login,
     logout,
     initAuth,
-    canAccessDailyReport,
+    hasRole,
+    canAccessPlant,
+    canViewDashboard,
+    canViewReports,
+    canEditSettings,
+    canManageUsers,
   };
 }

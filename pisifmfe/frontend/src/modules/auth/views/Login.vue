@@ -23,17 +23,19 @@ const handleSubmit = async (e: Event) => {
         return;
     }
 
-    // Simulate network delay for better UX feel
-    setTimeout(() => {
-        const success = login(username.value, password.value);
+    try {
+        const result = await login(username.value, password.value);
 
-        if (success) {
+        if (result.success) {
             router.push('/global');
         } else {
-            error.value = 'Invalid credentials provided. Please contact your system administrator.';
+            error.value = result.error || 'User not found';
             isLoading.value = false;
         }
-    }, 800);
+    } catch (err: any) {
+        error.value = 'User not found';
+        isLoading.value = false;
+    }
 };
 
 const navigateToLanding = () => {

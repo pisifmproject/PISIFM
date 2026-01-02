@@ -202,15 +202,22 @@ router.beforeEach((to, from, next) => {
   // Ensure auth state is initialized
   initAuth();
 
+  // Check if token exists
+  const token = localStorage.getItem("auth_token");
+  const hasValidAuth = isAuthenticated.value && token;
+
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!isAuthenticated.value) {
+    if (!hasValidAuth) {
+      // Clear any stale auth data
+      localStorage.removeItem("auth_user");
+      localStorage.removeItem("auth_token");
       next({ name: "Login", query: { redirect: to.fullPath } });
     } else {
       next();
     }
   } else {
     // If going to login or landing while authenticated, go to global
-    if ((to.name === 'Login' || to.name === 'Landing') && isAuthenticated.value) {
+    if ((to.name === 'Login' || to.name === 'Landing') && hasValidAuth) {
       next('/global');
       return;
     }
