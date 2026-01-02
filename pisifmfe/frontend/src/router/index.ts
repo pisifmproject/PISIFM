@@ -46,6 +46,25 @@ const routes: RouteRecordRaw[] = [
         name: "GlobalDashboard",
         component: GlobalDashboard
       },
+      // Admin Routes
+      {
+        path: "admin",
+        redirect: "/admin/visibility",
+        children: [
+          {
+            path: "visibility",
+            name: "VisibilityControl",
+            component: () => import("../modules/admin/views/VisibilityControl.vue"),
+            meta: { requiresAdmin: true }
+          },
+          {
+            path: "users",
+            name: "UserManagement",
+            component: () => import("../modules/admin/views/UserManagement.vue"),
+            meta: { requiresAdmin: true }
+          }
+        ]
+      },
       // Plant Routes
       {
         path: "plant/:plantId",
@@ -213,6 +232,14 @@ router.beforeEach((to, from, next) => {
       localStorage.removeItem("auth_token");
       next({ name: "Login", query: { redirect: to.fullPath } });
     } else {
+      // Check admin permission
+      if (to.matched.some(record => record.meta.requiresAdmin)) {
+        const { hasRole } = useAuth();
+        if (!hasRole('ADMINISTRATOR')) {
+          next('/global');
+          return;
+        }
+      }
       next();
     }
   } else {

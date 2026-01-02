@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { PLANTS, type PlantId } from "@/config/app.config";
+import { useAuth } from "@/stores/auth";
 import {
   LayoutDashboard,
   Factory,
@@ -13,7 +14,9 @@ import {
   ChevronDown,
   ChevronRight,
   Activity,
-  ChevronsLeft
+  ChevronsLeft,
+  Settings,
+  Users
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -27,6 +30,7 @@ const emit = defineEmits(['toggle']);
 
 const route = useRoute();
 const router = useRouter();
+const { canManageUsers } = useAuth();
 
 // Derived state
 const currentPlantId = computed(
@@ -43,6 +47,8 @@ const electricityExpanded = ref(false);
 const productionExpanded = ref(true);
 
 const plantsList = Object.values(PLANTS);
+
+const isAdminRoute = computed(() => route.path.startsWith('/admin'));
 
 function navigateTo(path: string) {
   router.push(path);
@@ -74,15 +80,50 @@ function toggleProduction() {
           </button>
       </div>
       
-      <div v-if="isPlantView && currentPlant" class="plant-badge">
+      <div v-if="isAdminRoute" class="plant-badge admin">System Admin</div>
+      <div v-else-if="isPlantView && currentPlant" class="plant-badge">
         {{ currentPlant.name }}
       </div>
       <div v-else class="plant-badge global">Corporate View</div>
     </div>
 
     <nav class="sidebar-nav">
+      <!-- ADMIN VIEW NAVIGATION -->
+      <template v-if="isAdminRoute">
+        <div class="nav-section">
+          <div class="nav-label">System Admin</div>
+          <div 
+            class="nav-item" 
+            :class="{ active: route.name === 'VisibilityControl' }"
+            @click="navigateTo('/admin/visibility')"
+          >
+            <Eye class="nav-icon" />
+            <span>Visibility Control</span>
+          </div>
+          <div 
+            class="nav-item" 
+            :class="{ active: route.name === 'UserManagement' }"
+            @click="navigateTo('/admin/users')"
+          >
+            <Users class="nav-icon" />
+            <span>Users & Roles</span>
+          </div>
+          <div class="nav-item"> <!-- Placeholder for Master Data -->
+            <LayoutDashboard class="nav-icon" />
+            <span>Master Data</span>
+          </div>
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <div class="nav-item back-link" @click="navigateTo('/global')">
+            <CornerUpLeft class="nav-icon" />
+            <span>Back to App</span>
+        </div>
+      </template>
+
       <!-- GLOBAL VIEW NAVIGATION -->
-      <template v-if="!isPlantView">
+      <template v-else-if="!isPlantView">
         <div class="nav-section">
           <div class="nav-label">Overview</div>
           <a class="nav-item active">
@@ -103,6 +144,18 @@ function toggleProduction() {
             <span>{{ plant.name }}</span>
           </div>
         </div>
+        
+        <template v-if="canManageUsers">
+           <div class="nav-divider"></div>
+           <div 
+            class="nav-item" 
+            :class="{ active: route.path.startsWith('/admin') }"
+            @click="navigateTo('/admin/visibility')"
+           >
+              <Settings class="nav-icon" />
+              <span>System Settings</span>
+           </div>
+        </template>
       </template>
 
       <!-- PLANT VIEW NAVIGATION -->
@@ -247,6 +300,9 @@ function toggleProduction() {
           </div>
         </div>
       </template>
+      
+      <!-- ADMINISTRATION -->
+
     </nav>
   </aside>
 </template>
@@ -331,6 +387,12 @@ function toggleProduction() {
   background-color: #3b82f6;
   color: white;
   border-color: #2563eb;
+}
+
+.plant-badge.admin {
+  background-color: #f59e0b;
+  color: #fff;
+  border-color: #d97706;
 }
 
 .sidebar-nav {

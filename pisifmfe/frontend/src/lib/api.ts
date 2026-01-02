@@ -421,3 +421,33 @@ export async function getCurrentUser() {
   const { data } = await api.get("/auth/me");
   return data;
 }
+
+// ---------- USER MANAGEMENT ----------
+export interface UserData {
+  id?: number;
+  username: string;
+  password?: string;
+  name: string;
+  role: string;
+  plantAccess: string[];
+}
+
+export async function getUsers() {
+  const { data } = await api.get("/users");
+  return data;
+}
+
+export async function createUser(user: UserData) {
+  const { data } = await api.post("/users", user);
+  return data;
+}
+
+export async function updateUser(id: number, user: Partial<UserData>) {
+  const { data } = await api.put(`/users/${id}`, user);
+  return data;
+}
+
+export async function deleteUser(id: number) {
+  const { data } = await api.delete(`/users/${id}`);
+  return data;
+}
