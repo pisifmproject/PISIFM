@@ -16,6 +16,7 @@ import dailyReportRouter from "./routes/dailyReport.router";
 import lvmdpRouter from "./routes/lvmdp.router";
 import debugRouter from "./routes/debug.router";
 import authController from "./auth/auth.controller";
+import usersController from "./auth/users.controller";
 import { authMiddleware } from "./auth/auth.middleware";
 import "./utils/pgTimezoneFix";
 
@@ -58,6 +59,9 @@ app.get("/api", (_req, res) => {
 
 // Auth routes (public)
 app.use("/api/auth", authController);
+
+// Users management routes (admin only)
+app.use("/api/users", usersController);
 
 // Protected routes - apply auth middleware
 app.use("/api/lvmdp", authMiddleware, lvmdpRouter);

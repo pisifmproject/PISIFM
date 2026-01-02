@@ -2,10 +2,12 @@
 import { computed, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { PLANTS } from '@/config/app.config';
+import { useAuth } from '@/stores/auth';
 import { Factory, Activity, Zap, AlertTriangle, TrendingUp } from 'lucide-vue-next';
 import { getLvmdpTrend, getLvmdpShiftToday } from '@/lib/api';
 
 const router = useRouter();
+const { canAccessPlant } = useAuth();
 
 // --- Types & Constants ---
 type Period = 'Day' | 'Week' | 'Month' | 'Year';
@@ -17,6 +19,10 @@ const selectedPeriod = ref<Period>('Day');
 const cikupaEnergy = ref(0);
 const isLoading = ref(false);
 
+// Filter plants based on user access
+const accessiblePlants = computed(() => {
+    return Object.values(PLANTS).filter(plant => canAccessPlant(plant.id));
+});
 
 const plantData = ref({
     cikupa: { output: 15600, oee: 84.95, alarms: 2, status: 'WARNING' },
@@ -27,11 +33,33 @@ const plantData = ref({
 
 // --- Computed ---
 const globalStats = computed(() => {
-    const output = plantData.value.cikupa.output + plantData.value.cikokol.output + plantData.value.semarang.output + plantData.value.agro.output;
-    const energy = cikupaEnergy.value + plantData.value.cikokol.energy + plantData.value.semarang.energy + plantData.value.agro.energy;
-    const oee = (plantData.value.cikupa.oee + plantData.value.cikokol.oee + plantData.value.semarang.oee + plantData.value.agro.oee) / 4;
-    const alarms = plantData.value.cikupa.alarms + plantData.value.cikokol.alarms + plantData.value.semarang.alarms + plantData.value.agro.alarms;
-    return { output, energy, oee, alarms };
+    let output = 0;
+    let energy = 0;
+    let oee = 0;
+    let alarms = 0;
+    let count = 0;
+
+    accessiblePlants.value.forEach(plant => {
+        const data = plantData.value[plant.id as keyof typeof plantData.value];
+        if (data) {
+            output += data.output;
+            oee += data.oee;
+            alarms += data.alarms;
+            count++;
+            if (plant.id === 'cikupa') {
+                energy += cikupaEnergy.value;
+            } else if ('energy' in data) {
+                energy += (data as any).energy;
+            }
+        }
+    });
+
+    return { 
+        output, 
+        energy, 
+        oee: count > 0 ? oee / count : 0, 
+        alarms 
+    };
 });
 
 function navigateToPlant(plantId: string) {
@@ -185,141 +213,67 @@ watch(selectedPeriod, () => {
         </div>
         
         <div class="plants-grid">
-            <!-- Plant Cikokol (Dummy) -->
+            <!-- Dynamic Plant Cards based on access -->
             <div 
+                v-for="plant in accessiblePlants"
+                :key="plant.id"
                 class="plant-card" 
-                @click="navigateToPlant('cikokol')"
+                @click="navigateToPlant(plant.id)"
             >
+                <div v-if="plant.id === 'cikupa'" class="pc-glow"></div>
                 <div class="pc-header">
                     <div>
-                        <h3 class="pc-name">Plant Cikokol</h3>
-                        <span class="pc-loc">TANGERANG</span>
+                        <h3 class="pc-name" :class="{ 'text-blue-400': plant.id === 'cikupa' }">{{ plant.name }}</h3>
+                        <span class="pc-loc">{{ plant.location }}</span>
                     </div>
-                    <span class="pc-badge warning">WARNING</span>
+                    <span 
+                        class="pc-badge" 
+                        :class="plantData[plant.id as keyof typeof plantData]?.status === 'NORMAL' ? 'normal' : 'warning'"
+                    >
+                        {{ plantData[plant.id as keyof typeof plantData]?.status || 'NORMAL' }}
+                    </span>
                 </div>
                 <div class="pc-stats">
                     <div class="pc-stat-col">
                         <span class="label">OUTPUT</span>
-                        <span class="val">{{ formatNumber(plantData.cikokol.output) }} <small>kg</small></span>
+                        <span class="val">{{ formatNumber(plantData[plant.id as keyof typeof plantData]?.output || 0) }} <small>kg</small></span>
                     </div>
                     <div class="pc-stat-col text-right">
                         <span class="label">OEE</span>
-                        <span class="val text-orange">{{ formatNumber(plantData.cikokol.oee, 2) }}%</span>
+                        <span class="val" :class="(plantData[plant.id as keyof typeof plantData]?.oee || 0) >= 80 ? 'text-green' : 'text-orange'">
+                            {{ formatNumber(plantData[plant.id as keyof typeof plantData]?.oee || 0, 2) }}%
+                        </span>
                     </div>
                 </div>
                 <div class="pc-stats mt-4">
                     <div class="pc-stat-col">
-                         <span class="label">ENERGY</span>
-                        <span class="val text-yellow">{{ formatNumber(plantData.cikokol.energy) }} <small>kWh</small></span>
+                        <span class="label">ENERGY</span>
+                        <template v-if="plant.id === 'cikupa'">
+                            <span v-if="isLoading" class="val text-yellow text-sm">Loading...</span>
+                            <span v-else class="val text-yellow">{{ formatNumber(cikupaEnergy) }} <small>kWh</small></span>
+                        </template>
+                        <span v-else class="val text-yellow">
+                            {{ formatNumber((plantData[plant.id as keyof typeof plantData] as any)?.energy || 0) }} <small>kWh</small>
+                        </span>
                     </div>
                     <div class="pc-stat-col text-right">
-                         <span class="label">ALARMS</span>
-                         <span class="val text-red">{{ plantData.cikokol.alarms }} Active</span>
+                        <span class="label">ALARMS</span>
+                        <span 
+                            class="val" 
+                            :class="(plantData[plant.id as keyof typeof plantData]?.alarms || 0) > 0 ? 'text-red' : 'text-gray-400'"
+                        >
+                            {{ plantData[plant.id as keyof typeof plantData]?.alarms || 0 }} Active
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <!-- Plant Semarang (Dummy) -->
-             <div 
-                class="plant-card"
-                @click="navigateToPlant('semarang')"
-            >
-                <div class="pc-header">
-                    <div>
-                        <h3 class="pc-name">Plant Semarang</h3>
-                        <span class="pc-loc">CENTRAL JAVA</span>
-                    </div>
-                    <span class="pc-badge warning">WARNING</span>
-                </div>
-                <div class="pc-stats">
-                    <div class="pc-stat-col">
-                        <span class="label">OUTPUT</span>
-                        <span class="val">{{ formatNumber(plantData.semarang.output) }} <small>kg</small></span>
-                    </div>
-                    <div class="pc-stat-col text-right">
-                        <span class="label">OEE</span>
-                        <span class="val text-orange">{{ formatNumber(plantData.semarang.oee, 2) }}%</span>
-                    </div>
-                </div>
-                <div class="pc-stats mt-4">
-                    <div class="pc-stat-col">
-                         <span class="label">ENERGY</span>
-                        <span class="val text-yellow">{{ formatNumber(plantData.semarang.energy) }} <small>kWh</small></span>
-                    </div>
-                    <div class="pc-stat-col text-right">
-                         <span class="label">ALARMS</span>
-                         <span class="val text-red">{{ plantData.semarang.alarms }} Active</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Plant Cikupa (Real Energy) -->
-            <div 
-                class="plant-card" 
-                @click="navigateToPlant('cikupa')"
-            >
-                <div class="pc-glow"></div>
-                <div class="pc-header">
-                    <div>
-                        <h3 class="pc-name text-blue-400">Plant Cikupa</h3>
-                        <span class="pc-loc">TANGERANG</span>
-                    </div>
-                    <span class="pc-badge warning">WARNING</span>
-                </div>
-                <div class="pc-stats">
-                    <div class="pc-stat-col">
-                        <span class="label">OUTPUT</span>
-                        <span class="val">{{ formatNumber(plantData.cikupa.output) }} <small>kg</small></span>
-                    </div>
-                    <div class="pc-stat-col text-right">
-                        <span class="label">OEE</span>
-                        <span class="val text-green">{{ formatNumber(plantData.cikupa.oee, 2) }}%</span>
-                    </div>
-                </div>
-                <div class="pc-stats mt-4">
-                    <div class="pc-stat-col">
-                         <span class="label">ENERGY</span>
-                         <span v-if="isLoading" class="val text-yellow text-sm">Loading...</span>
-                        <span v-else class="val text-yellow">{{ formatNumber(cikupaEnergy) }} <small>kWh</small></span>
-                    </div>
-                    <div class="pc-stat-col text-right">
-                         <span class="label">ALARMS</span>
-                         <span class="val text-red">{{ plantData.cikupa.alarms }} Active</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Plant Agro (Dummy) -->
-            <div 
-                class="plant-card" 
-                @click="navigateToPlant('agro')"
-            >
-                <div class="pc-header">
-                    <div>
-                        <h3 class="pc-name">Plant Agro</h3>
-                        <span class="pc-loc">DEVELOPMENT</span>
-                    </div>
-                    <span class="pc-badge normal">NORMAL</span>
-                </div>
-                <div class="pc-stats">
-                    <div class="pc-stat-col">
-                        <span class="label">OUTPUT</span>
-                        <span class="val">{{ formatNumber(plantData.agro.output) }} <small>kg</small></span>
-                    </div>
-                    <div class="pc-stat-col text-right">
-                        <span class="label">OEE</span>
-                        <span class="val text-green">{{ formatNumber(plantData.agro.oee, 2) }}%</span>
-                    </div>
-                </div>
-                <div class="pc-stats mt-4">
-                    <div class="pc-stat-col">
-                         <span class="label">ENERGY</span>
-                        <span class="val text-yellow">{{ formatNumber(plantData.agro.energy) }} <small>kWh</small></span>
-                    </div>
-                    <div class="pc-stat-col text-right">
-                         <span class="label">ALARMS</span>
-                         <span class="val text-gray-400">0 Active</span>
-                    </div>
+            <!-- No access message -->
+            <div v-if="accessiblePlants.length === 0" class="plant-card no-access">
+                <div class="text-center py-8">
+                    <Factory class="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                    <p class="text-slate-500">No plant access assigned</p>
+                    <p class="text-slate-600 text-sm">Contact administrator for access</p>
                 </div>
             </div>
         </div>

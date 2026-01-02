@@ -13,15 +13,17 @@ Real-time factory monitoring system untuk production lines, electrical panels (L
 
 ## 👤 User Accounts
 
-| Username | Password | Role | Access |
-|----------|----------|------|--------|
-| admin | admifm | ADMINISTRATOR | Full access, user management |
-| supervisor | spvifm | SUPERVISOR | All dashboards, reports |
-| operator | oprifm | OPERATOR | Plant A only |
-| maintenance | mtcifm | MAINTENANCE | All plants |
-| qc | qcifm | QC | Plant A & B |
-| management | mngifm | MANAGEMENT | All plants, reports |
-| guest | gsifm | VIEWER | Plant A (view only) |
+| Username | Password | Role | Plant Access |
+|----------|----------|------|--------------|
+| admin | admifm | ADMINISTRATOR | All Plants |
+| supervisor | spvifm | SUPERVISOR | All Plants |
+| operator | oprifm | OPERATOR | Cikupa |
+| maintenance | mtcifm | MAINTENANCE | All Plants |
+| qc | qcifm | QC | Cikupa, Semarang |
+| management | mngifm | MANAGEMENT | All Plants |
+| guest | gsifm | VIEWER | Cikupa |
+
+Plants: cikupa, semarang, cikokol, agro
 
 ## 🚀 Quick Start
 

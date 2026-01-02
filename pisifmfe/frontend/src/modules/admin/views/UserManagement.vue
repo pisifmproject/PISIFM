@@ -104,20 +104,33 @@ function closeModal() {
 async function saveUser() {
   try {
     if (isEditing.value && formData.value.id) {
-      // Update
-      const payload: Partial<UserData> = { ...formData.value };
-      if (!payload.password) delete payload.password; // Don't send empty password
+      // Update - only send fields that should be updated
+      const payload: Partial<UserData> = {
+        name: formData.value.name,
+        role: formData.value.role,
+        plantAccess: formData.value.plantAccess,
+      };
+      
+      // Only include password if it's not empty
+      if (formData.value.password && formData.value.password.trim() !== '') {
+        payload.password = formData.value.password;
+      }
       
       await updateUser(formData.value.id, payload);
     } else {
-      // Create
+      // Create - validate required fields
+      if (!formData.value.username || !formData.value.password || !formData.value.name) {
+        alert("Please fill in all required fields (Username, Password, Name)");
+        return;
+      }
       await createUser(formData.value);
     }
     await loadUsers();
     closeModal();
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to save user", error);
-    alert("Failed to save user. ensure username is unique.");
+    const errorMsg = error.response?.data?.error || "Failed to save user";
+    alert(errorMsg);
   }
 }
 

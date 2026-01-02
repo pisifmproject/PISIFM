@@ -430,6 +430,9 @@ export interface UserData {
   name: string;
   role: string;
   plantAccess: string[];
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export async function getUsers() {

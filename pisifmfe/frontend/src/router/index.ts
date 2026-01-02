@@ -216,7 +216,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const { isAuthenticated, initAuth } = useAuth();
+  const { isAuthenticated, initAuth, hasRole, canAccessPlant } = useAuth();
   
   // Ensure auth state is initialized
   initAuth();
@@ -234,12 +234,20 @@ router.beforeEach((to, from, next) => {
     } else {
       // Check admin permission
       if (to.matched.some(record => record.meta.requiresAdmin)) {
-        const { hasRole } = useAuth();
         if (!hasRole('ADMINISTRATOR')) {
           next('/global');
           return;
         }
       }
+      
+      // Check plant access permission
+      const plantId = to.params.plantId as string;
+      if (plantId && !canAccessPlant(plantId)) {
+        console.warn(`Access denied to plant ${plantId}, redirecting to global`);
+        next('/global');
+        return;
+      }
+      
       next();
     }
   } else {

@@ -16,7 +16,8 @@ import {
   Activity,
   ChevronsLeft,
   Settings,
-  Users
+  Users,
+  Eye
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -30,7 +31,7 @@ const emit = defineEmits(['toggle']);
 
 const route = useRoute();
 const router = useRouter();
-const { canManageUsers } = useAuth();
+const { canManageUsers, canAccessPlant, hasRole } = useAuth();
 
 // Derived state
 const currentPlantId = computed(
@@ -46,7 +47,10 @@ const energyExpanded = ref(true);
 const electricityExpanded = ref(false);
 const productionExpanded = ref(true);
 
-const plantsList = Object.values(PLANTS);
+// Filter plants based on user access
+const accessiblePlants = computed(() => {
+  return Object.values(PLANTS).filter(plant => canAccessPlant(plant.id));
+});
 
 const isAdminRoute = computed(() => route.path.startsWith('/admin'));
 
@@ -135,13 +139,17 @@ function toggleProduction() {
         <div class="nav-section">
           <div class="nav-label">Plants</div>
           <div
-            v-for="plant in plantsList"
+            v-for="plant in accessiblePlants"
             :key="plant.id"
             class="nav-item"
             @click="navigateTo(`/plant/${plant.id}`)"
           >
             <Factory class="nav-icon" />
             <span>{{ plant.name }}</span>
+          </div>
+          <div v-if="accessiblePlants.length === 0" class="nav-item disabled">
+            <Factory class="nav-icon" />
+            <span class="text-slate-500 italic">No plant access</span>
           </div>
         </div>
         

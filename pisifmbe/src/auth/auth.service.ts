@@ -105,3 +105,72 @@ export async function getAllUsers(): Promise<Omit<AppUser, "passwordHash">[]> {
   const users = await db.select().from(appUsers);
   return users.map(({ passwordHash, ...user }) => user);
 }
+
+export interface CreateUserInput {
+  username: string;
+  password: string;
+  name: string;
+  role: string;
+  plantAccess: string[];
+}
+
+export async function createUserInDb(input: CreateUserInput): Promise<Omit<AppUser, "passwordHash">> {
+  const passwordHash = await hashPassword(input.password);
+  
+  const result = await db
+    .insert(appUsers)
+    .values({
+      username: input.username,
+      passwordHash,
+      name: input.name,
+      role: input.role,
+      plantAccess: input.plantAccess,
+      isActive: true,
+    })
+    .returning();
+
+  const { passwordHash: _, ...user } = result[0];
+  return user;
+}
+
+export interface UpdateUserInput {
+  name?: string;
+  password?: string;
+  role?: string;
+  plantAccess?: string[];
+  isActive?: boolean;
+}
+
+export async function updateUserInDb(id: number, input: UpdateUserInput): Promise<Omit<AppUser, "passwordHash"> | null> {
+  const updateData: Record<string, any> = {
+    updatedAt: new Date(),
+  };
+
+  if (input.name !== undefined) updateData.name = input.name;
+  if (input.role !== undefined) updateData.role = input.role;
+  if (input.plantAccess !== undefined) updateData.plantAccess = input.plantAccess;
+  if (input.isActive !== undefined) updateData.isActive = input.isActive;
+  if (input.password) {
+    updateData.passwordHash = await hashPassword(input.password);
+  }
+
+  const result = await db
+    .update(appUsers)
+    .set(updateData)
+    .where(eq(appUsers.id, id))
+    .returning();
+
+  if (result.length === 0) return null;
+
+  const { passwordHash: _, ...user } = result[0];
+  return user;
+}
+
+export async function deleteUserFromDb(id: number): Promise<boolean> {
+  const result = await db
+    .delete(appUsers)
+    .where(eq(appUsers.id, id))
+    .returning();
+
+  return result.length > 0;
+}
