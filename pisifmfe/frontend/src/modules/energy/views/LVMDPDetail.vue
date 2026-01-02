@@ -392,6 +392,30 @@ const fmt = (val: number | undefined, dec = 1) =>
     : "-";
 
 
+// Format YYYY-MM-DD to DD/MM/YYYY
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+const dateInput = ref<HTMLInputElement | null>(null);
+
+const openDatePicker = () => {
+  if (dateInput.value) {
+    // Try modern showPicker API first
+    if ('showPicker' in HTMLInputElement.prototype) {
+      try {
+        dateInput.value.showPicker();
+        return;
+      } catch (e) {
+        // ignore
+      }
+    }
+    // Fallback to click (might not work in all browsers if hidden, hence the overlay)
+    dateInput.value.click();
+  }
+};
 </script>
 
 <template>
@@ -627,9 +651,15 @@ const fmt = (val: number | undefined, dec = 1) =>
     <div class="card table-card">
       <div class="card-header flex-between">
         <h3>Shift Performance</h3>
-        <div class="date-picker-wrapper">
+        <div class="date-picker-wrapper" @click="openDatePicker">
           <Clock class="w-4 h-4 text-gray-400" />
-          <input type="date" v-model="shiftDate" class="bg-transparent text-sm text-gray-300 border-none outline-none focus:ring-0 calendar-input" />
+          <span class="text-sm text-gray-300 font-medium">{{ formatDate(shiftDate) }}</span>
+          <input 
+            ref="dateInput"
+            type="date" 
+            v-model="shiftDate" 
+            class="hidden-input" 
+          />
         </div>
       </div>
       <div class="table-responsive">
@@ -1531,5 +1561,21 @@ td {
   font-weight: 700;
   color: #eab308;
   font-family: monospace;
+}
+
+.date-picker-wrapper {
+  position: relative; /* Ensure relative positioning */
+  cursor: pointer;
+}
+
+.hidden-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 10;
 }
 </style>
