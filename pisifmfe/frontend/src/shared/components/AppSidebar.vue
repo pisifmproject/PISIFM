@@ -127,10 +127,7 @@ function toggleProduction() {
             <Users class="nav-icon" />
             <span>Users & Roles</span>
           </div>
-          <div class="nav-item"> <!-- Placeholder for Master Data -->
-            <LayoutDashboard class="nav-icon" />
-            <span>Master Data</span>
-          </div>
+
         </div>
 
         <div class="nav-divider"></div>

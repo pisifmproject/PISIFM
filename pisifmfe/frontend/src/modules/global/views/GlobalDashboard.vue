@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { PLANTS } from '@/config/app.config';
 import { useAuth } from '@/stores/auth';
 import { useVisibility } from '@/composables/useVisibility';
-import { Factory, Activity, Zap, AlertTriangle, TrendingUp } from 'lucide-vue-next';
+import { Factory, Activity, Zap, AlertTriangle, TrendingUp, Lock } from 'lucide-vue-next';
 import { getLvmdpTrend, getLvmdpShiftToday } from '@/lib/api';
 
 const router = useRouter();
@@ -21,10 +21,8 @@ const selectedPeriod = ref<Period>('Day');
 const cikupaEnergy = ref(0);
 const isLoading = ref(false);
 
-// Filter plants based on user access
-const accessiblePlants = computed(() => {
-    return Object.values(PLANTS).filter(plant => canAccessPlant(plant.id));
-});
+// Show ALL plants
+const allPlants = computed(() => Object.values(PLANTS));
 
 const plantData = ref({
     cikupa: { output: 15600, oee: 84.95, alarms: 2, status: 'WARNING' },
@@ -41,7 +39,8 @@ const globalStats = computed(() => {
     let alarms = 0;
     let count = 0;
 
-    accessiblePlants.value.forEach(plant => {
+    // Iterate ALL plants to show total corporate data
+    allPlants.value.forEach(plant => {
         const data = plantData.value[plant.id as keyof typeof plantData.value];
         if (data) {
             output += data.output;
@@ -64,8 +63,14 @@ const globalStats = computed(() => {
     };
 });
 
-function navigateToPlant(plantId: string) {
-    router.push(`/plant/${plantId}`);
+function handlePlantClick(plantId: string) {
+    if (canAccessPlant(plantId)) {
+        router.push(`/plant/${plantId}`);
+    } else {
+        // Optional: Show alert or visual feedback
+        // alert("Access Denied: You do not have permission to view this plant.");
+        // The lock icon is enough
+    }
 }
 
 const formatNumber = (num: number, decimals = 0) => {
@@ -215,13 +220,19 @@ watch(selectedPeriod, () => {
         </div>
         
         <div class="plants-grid">
-            <!-- Dynamic Plant Cards based on access -->
+    <!-- Dynamic Plant Cards based on ALL plants (access controlled) -->
             <div 
-                v-for="plant in accessiblePlants"
+                v-for="plant in allPlants"
                 :key="plant.id"
                 class="plant-card" 
-                @click="navigateToPlant(plant.id)"
+                :class="{ 'locked': !canAccessPlant(plant.id), 'clickable': canAccessPlant(plant.id) }"
+                @click="handlePlantClick(plant.id)"
             >
+                <!-- Lock Overlay for inaccessible plants -->
+                <div v-if="!canAccessPlant(plant.id)" class="lock-overlay">
+                    <Lock class="w-8 h-8 text-slate-500" />
+                </div>
+
                 <div v-if="plant.id === 'cikupa'" class="pc-glow"></div>
                 <div class="pc-header">
                     <div>
@@ -231,10 +242,19 @@ watch(selectedPeriod, () => {
                     <span 
                         class="pc-badge" 
                         :class="plantData[plant.id as keyof typeof plantData]?.status === 'NORMAL' ? 'normal' : 'warning'"
+                        v-if="canAccessPlant(plant.id)"
                     >
                         {{ plantData[plant.id as keyof typeof plantData]?.status || 'NORMAL' }}
                     </span>
+                    <span v-else class="pc-badge locked-badge">
+                        LOCKED
+                    </span>
                 </div>
+                
+                <!-- Blur content if locked? Or show data but prevent click? 
+                     User said: "tampilkan semua plant beserta datanya" -> Show data.
+                     "hanya plant yang diberi akses saja yang clickable" -> Prevent click.
+                -->
                 <div class="pc-stats">
                     <div class="pc-stat-col">
                         <span class="label">OUTPUT</span>
@@ -267,15 +287,6 @@ watch(selectedPeriod, () => {
                             {{ plantData[plant.id as keyof typeof plantData]?.alarms || 0 }} Active
                         </span>
                     </div>
-                </div>
-            </div>
-
-            <!-- No access message -->
-            <div v-if="accessiblePlants.length === 0" class="plant-card no-access">
-                <div class="text-center py-8">
-                    <Factory class="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                    <p class="text-slate-500">No plant access assigned</p>
-                    <p class="text-slate-600 text-sm">Contact administrator for access</p>
                 </div>
             </div>
         </div>
@@ -557,4 +568,32 @@ watch(selectedPeriod, () => {
 .text-orange { color: #fb923c !important; }
 .text-red { color: #f87171 !important; }
 .text-blue-400 { color: #60a5fa !important; }
+
+/* Locked State Styles */
+.plant-card.locked {
+    opacity: 0.8;
+    cursor: not-allowed !important;
+}
+
+.plant-card.clickable {
+    cursor: pointer;
+}
+
+.lock-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.6);
+    z-index: 10;
+    backdrop-filter: blur(2px);
+    border-radius: 12px;
+}
+
+.pc-badge.locked-badge {
+    background: #334155;
+    color: #94a3b8;
+    border: 1px solid #475569;
+}
 </style>

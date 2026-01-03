@@ -430,15 +430,25 @@ watch([selectedPeriod, plantId], () => {
     display: flex; justify-content: space-between; align-items: center;
     cursor: pointer; transition: all 0.2s;
 }
+.util-row > div:first-child {
+    flex: 1;
+    min-width: 0;
+}
+.util-row > div:last-child {
+    flex-shrink: 0;
+    margin-left: 1rem;
+    text-align: right;
+}
 .util-row:hover {
     border-color: #3b82f6; background: rgba(59, 130, 246, 0.1);
 }
 .u-icon-box {
     background: rgba(255,255,255,0.05); padding: 0.6rem; border-radius: 8px; color: #3b82f6;
+    flex-shrink: 0;
 }
 .util-row:hover .u-icon-box { color: white; background: #3b82f6; }
 
-.u-name { font-weight: 600; color: white; font-size: 0.95rem; }
+.u-name { font-weight: 600; color: white; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .u-val { font-weight: 700; color: white; font-size: 1rem; }
 
 /* Colors */
