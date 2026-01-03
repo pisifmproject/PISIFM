@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { PLANTS } from '@/config/app.config';
 import { ArrowLeft, Zap, Cloud, Droplet, Wind, Activity, Timer, Wrench, Package } from 'lucide-vue-next';
 import { getMachineProcessData, getMachinePerformanceData, getMachineUtilityData } from '@/lib/api';
+import { useVisibility } from '@/composables/useVisibility';
+import { useAuth } from '@/stores/auth';
 
 // Charts
 import { use } from "echarts/core";
@@ -29,6 +31,8 @@ use([
 
 const route = useRoute();
 const router = useRouter();
+const { isVisible } = useVisibility();
+const { hasRole } = useAuth();
 
 const plantId = computed(() => route.params.plantId as string);
 const machineId = computed(() => route.params.machineId as string);
@@ -249,6 +253,16 @@ watch(() => route.meta.tab, (newTab, oldTab) => {
 
 // Setup interval to fetch all data every 3 seconds
 onMounted(() => {
+    // Check if user has access to this machine
+    const machineKey = `SHOW_MACHINE_${machineId.value}`;
+    const canAccessMachine = hasRole('ADMINISTRATOR') || isVisible(machineKey, { plantId: plantId.value });
+    
+    if (!canAccessMachine) {
+        console.warn(`Access denied to machine ${machineId.value}, redirecting to plant dashboard`);
+        router.replace(`/plant/${plantId.value}`);
+        return;
+    }
+    
     logTabChange();
     fetchAllData(true); // Initial fetch with loading
     dataFetchInterval = setInterval(() => {

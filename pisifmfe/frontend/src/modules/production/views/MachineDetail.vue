@@ -4,9 +4,14 @@ import { useRoute, useRouter } from 'vue-router';
 import { PLANTS, type PlantId } from '@/config/app.config';
 import { Cog, Activity, Zap, TrendingUp, AlertTriangle, Wrench } from 'lucide-vue-next';
 import { getMachineProcessData, getMachineUtilityData, getMachinePerformanceData } from '@/lib/api';
+import { useVisibility } from '@/composables/useVisibility';
+import { useAuth } from '@/stores/auth';
 
 const route = useRoute();
 const router = useRouter();
+const { isVisible } = useVisibility();
+const { hasRole } = useAuth();
+
 const plantId = computed(() => route.params.plantId as PlantId);
 const machineId = computed(() => route.params.machineId as string);
 const activeTab = computed(() => (route.meta.tab as string) || 'performance');
@@ -73,6 +78,16 @@ watch([plantId, machineId, activeTab], () => {
 }, { immediate: false });
 
 onMounted(() => {
+  // Check if user has access to this machine
+  const machineKey = `SHOW_MACHINE_${machineId.value}`;
+  const canAccessMachine = hasRole('ADMINISTRATOR') || isVisible(machineKey, { plantId: plantId.value });
+  
+  if (!canAccessMachine) {
+    console.warn(`Access denied to machine ${machineId.value}, redirecting to plant dashboard`);
+    router.replace(`/plant/${plantId.value}`);
+    return;
+  }
+  
   fetchMachineData(true); // Log on initial mount
   // Auto-refresh without logging
   refreshInterval = window.setInterval(() => fetchMachineData(false), 3000);
