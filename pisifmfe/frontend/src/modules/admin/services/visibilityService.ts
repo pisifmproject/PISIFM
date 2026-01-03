@@ -1,6 +1,6 @@
-// src/modules/admin/services/visibilityService.ts
 import { UserRole, DataItem, VisibilityCategory, VisibilityGroup } from '../types';
 import { plantService } from './plantService';
+import { useAuth } from '@/stores/auth';
 
 /* ============================================================
    API CONFIGURATION
@@ -278,23 +278,25 @@ const getAuthToken = (): string | null => {
 
 // API helper with auth
 const apiRequest = async (url: string, options: RequestInit = {}) => {
-  const token = getAuthToken();
-  const headers: Record<string, string> = {
+  const authStore = useAuth();
+  // Access token, handling potential type mismatch or getter
+  const token = (authStore as any).token || (authStore as any).accessToken;
+
+  const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...options.headers,
   };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
   
   const response = await fetch(url, {
     ...options,
     headers,
-    credentials: 'include',
   });
   
   if (!response.ok) {
+    if (response.status === 401) {
+       console.warn('Unauthorized access to visibility settings');
+    }
     throw new Error(`API error: ${response.status}`);
   }
   

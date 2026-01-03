@@ -359,12 +359,15 @@ onUnmounted(() => {
                 class="util-card"
                 @click="navigateTo(u.route)"
             >
-                <div class="util-icon">
-                    <component :is="u.icon" class="w-5 h-5" />
-                </div>
-                <div class="util-info">
+                <div class="util-left">
+                    <div class="util-icon">
+                        <component :is="u.icon" class="w-5 h-5" />
+                    </div>
                     <span class="u-label">{{ u.label }}</span>
-                    <span class="u-val">{{ u.val }} <small>{{ u.unit }}</small></span>
+                </div>
+                <div class="util-right">
+                    <span class="u-val">{{ u.val }}</span>
+                    <span class="u-unit">{{ u.unit }}</span>
                 </div>
             </div>
         </div>
@@ -545,7 +548,7 @@ onUnmounted(() => {
 /* Utility Grid */
 .utility-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1rem;
 }
 
@@ -553,19 +556,49 @@ onUnmounted(() => {
     background: #1e293b;
     border: 1px solid #334155;
     border-radius: 10px;
-    padding: 1rem;
+    padding: 1rem 1.25rem;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 1rem;
     cursor: pointer;
     transition: all 0.2s;
 }
 .util-card:hover { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
-.util-icon { color: #facc15; }
-.util-info { display: flex; flex-direction: column; }
-.u-label { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
-.u-val { font-size: 1rem; font-weight: 700; color: white; }
-.u-val small { font-size: 0.7rem; color: #64748b; font-weight: 500; }
+
+.util-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0; 
+}
+
+.util-icon { 
+    color: #facc15; 
+    background: rgba(255,255,255,0.05);
+    padding: 0.5rem;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+.util-card:hover .util-icon { background: #3b82f6; color: white; }
+
+.u-label { 
+    font-size: 0.75rem; 
+    color: #94a3b8; 
+    font-weight: 600; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.util-right {
+    text-align: right;
+    margin-left: 0.5rem;
+    flex-shrink: 0;
+}
+
+.u-val { font-size: 1.1rem; font-weight: 700; color: white; display: block; line-height: 1; }
+.u-unit { font-size: 0.7rem; color: #64748b; font-weight: 500; display: block; margin-top: 0.2rem; }
 
 /* Mid Grid */
 .mid-grid {
