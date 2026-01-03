@@ -278,10 +278,8 @@ const getAuthToken = (): string | null => {
 
 // API helper with auth
 const apiRequest = async (url: string, options: RequestInit = {}) => {
-  const authStore = useAuth();
-  // Access token, handling potential type mismatch or getter
-  const token = (authStore as any).token || (authStore as any).accessToken;
-
+  const token = getAuthToken();
+  
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -295,7 +293,7 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
   
   if (!response.ok) {
     if (response.status === 401) {
-       console.warn('Unauthorized access to visibility settings');
+       console.warn('Unauthorized access to visibility settings - token may be expired');
     }
     throw new Error(`API error: ${response.status}`);
   }
