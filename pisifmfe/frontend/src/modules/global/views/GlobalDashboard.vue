@@ -242,13 +242,11 @@ watch(selectedPeriod, () => {
                     <span 
                         class="pc-badge" 
                         :class="plantData[plant.id as keyof typeof plantData]?.status === 'NORMAL' ? 'normal' : 'warning'"
-                        v-if="canAccessPlant(plant.id)"
+                        v-if="true"
                     >
                         {{ plantData[plant.id as keyof typeof plantData]?.status || 'NORMAL' }}
                     </span>
-                    <span v-else class="pc-badge locked-badge">
-                        LOCKED
-                    </span>
+                    <!-- Locked badge removed to show data, lock appears on hover -->
                 </div>
                 
                 <!-- Blur content if locked? Or show data but prevent click? 
@@ -571,8 +569,8 @@ watch(selectedPeriod, () => {
 
 /* Locked State Styles */
 .plant-card.locked {
-    opacity: 0.8;
-    cursor: not-allowed !important;
+    cursor: not-allowed;
+    position: relative;
 }
 
 .plant-card.clickable {
@@ -585,10 +583,16 @@ watch(selectedPeriod, () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(15, 23, 42, 0.85);
     z-index: 10;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
     border-radius: 12px;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.3s ease;
+}
+
+.plant-card.locked:hover .lock-overlay {
+    opacity: 1;
 }
 
 .pc-badge.locked-badge {
