@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "../db";
 import { appUsers, AppUser } from "./auth.schema";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 
 const JWT_SECRET = process.env.JWT_SECRET || "pisifm-secret-key-2025";
 const JWT_EXPIRES_IN = "24h";
@@ -49,11 +49,17 @@ export function verifyToken(token: string): TokenPayload | null {
   }
 }
 
-export async function login(username: string, password: string): Promise<LoginResult> {
+export async function login(usernameOrCorporateId: string, password: string): Promise<LoginResult> {
+  // Cari user berdasarkan username ATAU corporate_id
   const users = await db
     .select()
     .from(appUsers)
-    .where(eq(appUsers.username, username))
+    .where(
+      or(
+        eq(appUsers.username, usernameOrCorporateId),
+        eq(appUsers.corporateId, usernameOrCorporateId)
+      )
+    )
     .limit(1);
 
   if (users.length === 0) {
@@ -68,7 +74,7 @@ export async function login(username: string, password: string): Promise<LoginRe
 
   const isValidPassword = await verifyPassword(password, user.passwordHash);
   if (!isValidPassword) {
-    return { success: false, message: "User not found" };
+    return { success: false, message: "Invalid credentials" };
   }
 
   const token = generateToken({

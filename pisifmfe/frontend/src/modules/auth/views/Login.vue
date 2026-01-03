@@ -105,7 +105,7 @@ const navigateToLanding = () => {
                                 <input 
                                     type="text" 
                                     class="block w-full pl-10 pr-3 py-3 border border-slate-800 rounded-lg leading-5 bg-slate-900/50 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-900 transition-all shadow-sm text-sm font-medium"
-                                    placeholder="Enter your username"
+                                    placeholder="Enter corporate ID or username"
                                     v-model="username"
                                     :disabled="isLoading"
                                 />
