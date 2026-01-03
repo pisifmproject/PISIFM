@@ -1,6 +1,6 @@
 # Dependencies
 node_modules/
-package-lock.json
+# package-lock.json - KEEP THIS for consistent dependencies
 
 # Environment variables
 # .env - INCLUDED in repo for easy deployment
