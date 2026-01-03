@@ -14,6 +14,7 @@ export interface LoginResult {
   user?: {
     id: number;
     username: string;
+    corporateId: string;
     name: string | null;
     role: string;
     plantAccess: string[] | null;
@@ -83,6 +84,7 @@ export async function login(username: string, password: string): Promise<LoginRe
     user: {
       id: user.id,
       username: user.username,
+      corporateId: user.corporateId,
       name: user.name,
       role: user.role,
       plantAccess: user.plantAccess,
@@ -108,6 +110,7 @@ export async function getAllUsers(): Promise<Omit<AppUser, "passwordHash">[]> {
 
 export interface CreateUserInput {
   username: string;
+  corporateId: string;
   password: string;
   name: string;
   role: string;
@@ -121,6 +124,7 @@ export async function createUserInDb(input: CreateUserInput): Promise<Omit<AppUs
     .insert(appUsers)
     .values({
       username: input.username,
+      corporateId: input.corporateId,
       passwordHash,
       name: input.name,
       role: input.role,
@@ -135,6 +139,7 @@ export async function createUserInDb(input: CreateUserInput): Promise<Omit<AppUs
 
 export interface UpdateUserInput {
   name?: string;
+  corporateId?: string;
   password?: string;
   role?: string;
   plantAccess?: string[];
@@ -147,6 +152,7 @@ export async function updateUserInDb(id: number, input: UpdateUserInput): Promis
   };
 
   if (input.name !== undefined) updateData.name = input.name;
+  if (input.corporateId !== undefined) updateData.corporateId = input.corporateId;
   if (input.role !== undefined) updateData.role = input.role;
   if (input.plantAccess !== undefined) updateData.plantAccess = input.plantAccess;
   if (input.isActive !== undefined) updateData.isActive = input.isActive;

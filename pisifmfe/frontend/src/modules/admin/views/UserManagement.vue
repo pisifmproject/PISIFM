@@ -31,6 +31,7 @@ const userToDelete = ref<number | null>(null);
 // Form State
 const formData = ref<UserData>({
   username: '',
+  corporateId: '',
   name: '',
   role: 'VIEWER',
   plantAccess: [],
@@ -70,6 +71,7 @@ const filteredUsers = computed(() => {
   return users.value.filter(u => 
     u.name.toLowerCase().includes(lower) || 
     u.username.toLowerCase().includes(lower) ||
+    u.corporateId?.toLowerCase().includes(lower) ||
     u.role.toLowerCase().includes(lower)
   );
 });
@@ -79,6 +81,7 @@ function openAddModal() {
   isEditing.value = false;
   formData.value = {
     username: '',
+    corporateId: '',
     name: '',
     role: 'VIEWER',
     plantAccess: [],
@@ -107,6 +110,7 @@ async function saveUser() {
       // Update - only send fields that should be updated
       const payload: Partial<UserData> = {
         name: formData.value.name,
+        corporateId: formData.value.corporateId,
         role: formData.value.role,
         plantAccess: formData.value.plantAccess,
       };
@@ -119,8 +123,8 @@ async function saveUser() {
       await updateUser(formData.value.id, payload);
     } else {
       // Create - validate required fields
-      if (!formData.value.username || !formData.value.password || !formData.value.name) {
-        alert("Please fill in all required fields (Username, Password, Name)");
+      if (!formData.value.username || !formData.value.corporateId || !formData.value.password || !formData.value.name) {
+        alert("Please fill in all required fields (Username, Corporate ID, Password, Name)");
         return;
       }
       await createUser(formData.value);
@@ -218,7 +222,8 @@ onMounted(() => {
           <thead>
             <tr class="border-b border-slate-700/50 text-xs text-slate-400 uppercase tracking-wider font-semibold">
               <th class="p-4">Full Name</th>
-              <th class="p-4">Corporate ID (Username)</th>
+              <th class="p-4">Username</th>
+              <th class="p-4">Corporate ID</th>
               <th class="p-4">Role</th>
               <th class="p-4">Plant Access</th>
               <th class="p-4 text-right">Actions</th>
@@ -226,10 +231,10 @@ onMounted(() => {
           </thead>
           <tbody class="divide-y divide-slate-700/50">
             <tr v-if="isLoading" class="animate-pulse">
-              <td colspan="5" class="p-8 text-center text-slate-500">Loading users...</td>
+              <td colspan="6" class="p-8 text-center text-slate-500">Loading users...</td>
             </tr>
             <tr v-else-if="filteredUsers.length === 0">
-              <td colspan="5" class="p-8 text-center text-slate-500">No users found</td>
+              <td colspan="6" class="p-8 text-center text-slate-500">No users found</td>
             </tr>
             <tr 
               v-for="user in filteredUsers" 
@@ -238,6 +243,7 @@ onMounted(() => {
             >
               <td class="p-4 font-medium text-slate-200">{{ user.name }}</td>
               <td class="p-4 text-slate-400 font-mono text-sm">{{ user.username }}</td>
+              <td class="p-4 text-blue-400 font-mono text-sm">{{ user.corporateId }}</td>
               <td class="p-4">
                 <span 
                   class="px-2.5 py-1 rounded-md text-xs font-semibold border"
@@ -324,7 +330,7 @@ onMounted(() => {
                 />
               </div>
               <div class="space-y-2">
-                <label class="text-xs font-medium text-slate-400 uppercase">Username / Corporate ID</label>
+                <label class="text-xs font-medium text-slate-400 uppercase">Username</label>
                 <input 
                   v-model="formData.username"
                   type="text" 
@@ -335,8 +341,32 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- Role & Auth -->
+            <!-- Corporate ID -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label class="text-xs font-medium text-slate-400 uppercase">Corporate ID</label>
+                <input 
+                  v-model="formData.corporateId"
+                  type="text" 
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:border-blue-500 focus:outline-none"
+                  placeholder="e.g. 12345"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="text-xs font-medium text-slate-400 uppercase">
+                  Password {{ isEditing ? '(Leave blank to keep current)' : '' }}
+                </label>
+                <input 
+                  v-model="formData.password"
+                  type="password" 
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:border-blue-500 focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <!-- Role -->
+            <div class="grid grid-cols-1 gap-6">
               <div class="space-y-2">
                 <label class="text-xs font-medium text-slate-400 uppercase">Role</label>
                 <div class="relative">
@@ -350,18 +380,6 @@ onMounted(() => {
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                   </div>
                 </div>
-              </div>
-
-               <div class="space-y-2">
-                <label class="text-xs font-medium text-slate-400 uppercase">
-                  Password {{ isEditing ? '(Leave blank to keep current)' : '' }}
-                </label>
-                <input 
-                  v-model="formData.password"
-                  type="password" 
-                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:border-blue-500 focus:outline-none"
-                  placeholder="••••••••"
-                />
               </div>
             </div>
 

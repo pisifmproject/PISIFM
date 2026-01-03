@@ -50,14 +50,15 @@ router.get("/:id", async (req: Request, res: Response) => {
 // POST /api/users - Create new user
 router.post("/", async (req: Request, res: Response) => {
   try {
-    const { username, password, name, role, plantAccess } = req.body;
+    const { username, corporateId, password, name, role, plantAccess } = req.body;
 
-    if (!username || !password || !name || !role) {
+    if (!username || !corporateId || !password || !name || !role) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const user = await createUserInDb({
       username,
+      corporateId,
       password,
       name,
       role,
@@ -68,6 +69,9 @@ router.post("/", async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Create user error:", error);
     if (error.code === "23505") {
+      if (error.constraint?.includes("corporate_id")) {
+        return res.status(400).json({ error: "Corporate ID already exists" });
+      }
       return res.status(400).json({ error: "Username already exists" });
     }
     res.status(500).json({ error: "Failed to create user" });
@@ -82,12 +86,13 @@ router.put("/:id", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid user ID" });
     }
 
-    const { name, password, role, plantAccess, isActive } = req.body;
+    const { name, corporateId, password, role, plantAccess, isActive } = req.body;
     
-    console.log(`Updating user ${id}:`, { name, role, plantAccess, hasPassword: !!password });
+    console.log(`Updating user ${id}:`, { name, corporateId, role, plantAccess, hasPassword: !!password });
 
     const user = await updateUserInDb(id, {
       name,
+      corporateId,
       password: password || undefined,
       role,
       plantAccess,
@@ -101,6 +106,9 @@ router.put("/:id", async (req: Request, res: Response) => {
     res.json(user);
   } catch (error: any) {
     console.error("Update user error:", error);
+    if (error.code === "23505" && error.constraint?.includes("corporate_id")) {
+      return res.status(400).json({ error: "Corporate ID already exists" });
+    }
     res.status(500).json({ error: error.message || "Failed to update user" });
   }
 });

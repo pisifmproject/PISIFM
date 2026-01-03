@@ -312,63 +312,16 @@ export const productionLineAPC39 = pgTable("production_line_a_pc39", {
 });
 
 /* ===========================
-   PACKING LINE TABLES
-   (Menyimpan data packing line)
+   PRODUCTION TABLES
+   (Menyimpan data production per mesin)
+   Nama tabel: production_<nama_mesin>
 =========================== */
 
-/** Packing Line A - Weigher */
-export const packingLineAWeigher = pgTable("packing_line_a_weigher", {
+// Production PC14
+export const productionPC14 = pgTable("production_pc14", {
   id: text("id").primaryKey(),
   timestamp: timestamp("timestamp").notNull(),
-  lineId: text("line_id").notNull().default("LINE_PC14_WEIGHER"),
-
-  // Packing Metrics
-  targetPacks: integer("target_packs").default(0),
-  actualPacks: integer("actual_packs").default(0),
-  rejectCount: integer("reject_count").default(0),
-
-  // Weight Metrics
-  avgWeight: doublePrecision("avg_weight").default(0),
-  minWeight: doublePrecision("min_weight").default(0),
-  maxWeight: doublePrecision("max_weight").default(0),
-
-  // Machine Status
-  status: text("status").default("idle"), // running, idle, maintenance, down
-  efficiency: doublePrecision("efficiency").default(0),
-
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-/** Packing Line A - BagMaker */
-export const packingLineABagMaker = pgTable("packing_line_a_bagmaker", {
-  id: text("id").primaryKey(),
-  timestamp: timestamp("timestamp").notNull(),
-  lineId: text("line_id").notNull().default("LINE_PC14_BAGMAKER"),
-
-  // Packing Metrics
-  targetBags: integer("target_bags").default(0),
-  actualBags: integer("actual_bags").default(0),
-  defectBags: integer("defect_bags").default(0),
-
-  // Machine Status
-  status: text("status").default("idle"), // running, idle, maintenance, down
-  efficiency: doublePrecision("efficiency").default(0),
-  speedRpm: doublePrecision("speed_rpm").default(0),
-
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-/* ===========================
-   ADDITIONAL PRODUCTION LINES
-=========================== */
-
-// Production Line A - PC14
-export const productionLineAPC14 = pgTable("production_line_a_pc14", {
-  id: text("id").primaryKey(),
-  timestamp: timestamp("timestamp").notNull(),
-  lineId: text("line_id").notNull().default("LINE_A_PC14"),
+  machineId: text("machine_id").notNull().default("PC14"),
   targetProduction: integer("target_production").default(0),
   actualProduction: integer("actual_production").default(0),
   defectCount: integer("defect_count").default(0),
@@ -381,11 +334,11 @@ export const productionLineAPC14 = pgTable("production_line_a_pc14", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Production Line A - TS1000
-export const productionLineATS1000 = pgTable("production_line_a_ts1000", {
+// Production TS1000
+export const productionTS1000 = pgTable("production_ts1000", {
   id: text("id").primaryKey(),
   timestamp: timestamp("timestamp").notNull(),
-  lineId: text("line_id").notNull().default("LINE_A_TS1000"),
+  machineId: text("machine_id").notNull().default("TS1000"),
   targetProduction: integer("target_production").default(0),
   actualProduction: integer("actual_production").default(0),
   defectCount: integer("defect_count").default(0),
@@ -398,11 +351,11 @@ export const productionLineATS1000 = pgTable("production_line_a_ts1000", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Production Line A - FCP
-export const productionLineAFCP = pgTable("production_line_a_fcp", {
+// Production FCP
+export const productionFCP = pgTable("production_fcp", {
   id: text("id").primaryKey(),
   timestamp: timestamp("timestamp").notNull(),
-  lineId: text("line_id").notNull().default("LINE_A_FCP"),
+  machineId: text("machine_id").notNull().default("FCP"),
   targetProduction: integer("target_production").default(0),
   actualProduction: integer("actual_production").default(0),
   defectCount: integer("defect_count").default(0),
@@ -415,11 +368,11 @@ export const productionLineAFCP = pgTable("production_line_a_fcp", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Production Line A - TWS56
-export const productionLineATWS56 = pgTable("production_line_a_tws56", {
+// Production TWS56
+export const productionTWS56 = pgTable("production_tws56", {
   id: text("id").primaryKey(),
   timestamp: timestamp("timestamp").notNull(),
-  lineId: text("line_id").notNull().default("LINE_A_TWS56"),
+  machineId: text("machine_id").notNull().default("TWS56"),
   targetProduction: integer("target_production").default(0),
   actualProduction: integer("actual_production").default(0),
   defectCount: integer("defect_count").default(0),
@@ -432,11 +385,11 @@ export const productionLineATWS56 = pgTable("production_line_a_tws56", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Production Line A - TWS72
-export const productionLineATWS72 = pgTable("production_line_a_tws72", {
+// Production TWS72
+export const productionTWS72 = pgTable("production_tws72", {
   id: text("id").primaryKey(),
   timestamp: timestamp("timestamp").notNull(),
-  lineId: text("line_id").notNull().default("LINE_A_TWS72"),
+  machineId: text("machine_id").notNull().default("TWS72"),
   targetProduction: integer("target_production").default(0),
   actualProduction: integer("actual_production").default(0),
   defectCount: integer("defect_count").default(0),
@@ -449,11 +402,11 @@ export const productionLineATWS72 = pgTable("production_line_a_tws72", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Production Line A - COPACK
-export const productionLineACOPACK = pgTable("production_line_a_copack", {
+// Production COPACK
+export const productionCOPACK = pgTable("production_copack", {
   id: text("id").primaryKey(),
   timestamp: timestamp("timestamp").notNull(),
-  lineId: text("line_id").notNull().default("LINE_A_COPACK"),
+  machineId: text("machine_id").notNull().default("COPACK"),
   targetProduction: integer("target_production").default(0),
   actualProduction: integer("actual_production").default(0),
   defectCount: integer("defect_count").default(0),
@@ -466,11 +419,11 @@ export const productionLineACOPACK = pgTable("production_line_a_copack", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Production Line A - IHP
-export const productionLineAIHP = pgTable("production_line_a_ihp", {
+// Production IHP
+export const productionIHP = pgTable("production_ihp", {
   id: text("id").primaryKey(),
   timestamp: timestamp("timestamp").notNull(),
-  lineId: text("line_id").notNull().default("LINE_A_IHP"),
+  machineId: text("machine_id").notNull().default("IHP"),
   targetProduction: integer("target_production").default(0),
   actualProduction: integer("actual_production").default(0),
   defectCount: integer("defect_count").default(0),
@@ -483,68 +436,6 @@ export const productionLineAIHP = pgTable("production_line_a_ihp", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-/* ===========================
-   ADDITIONAL PACKING LINES (B-I)
-=========================== */
-
-// Helper function to create packing line schemas (untuk menghindari repetisi)
-const createPackingWeigherTable = (line: string) =>
-  pgTable(`packing_line_${line.toLowerCase()}_weigher`, {
-    id: text("id").primaryKey(),
-    timestamp: timestamp("timestamp").notNull(),
-    lineId: text("line_id").notNull().default(`LINE_${line}_WEIGHER`),
-    targetPacks: integer("target_packs").default(0),
-    actualPacks: integer("actual_packs").default(0),
-    rejectCount: integer("reject_count").default(0),
-    avgWeight: doublePrecision("avg_weight").default(0),
-    minWeight: doublePrecision("min_weight").default(0),
-    maxWeight: doublePrecision("max_weight").default(0),
-    status: text("status").default("idle"),
-    efficiency: doublePrecision("efficiency").default(0),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow(),
-  });
-
-const createPackingBagMakerTable = (line: string) =>
-  pgTable(`packing_line_${line.toLowerCase()}_bagmaker`, {
-    id: text("id").primaryKey(),
-    timestamp: timestamp("timestamp").notNull(),
-    lineId: text("line_id").notNull().default(`LINE_${line}_BAGMAKER`),
-    targetBags: integer("target_bags").default(0),
-    actualBags: integer("actual_bags").default(0),
-    defectBags: integer("defect_bags").default(0),
-    status: text("status").default("idle"),
-    efficiency: doublePrecision("efficiency").default(0),
-    speedRpm: doublePrecision("speed_rpm").default(0),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow(),
-  });
-
-// Packing Lines - Weigher (by machine name)
-export const packingLinePC39Weigher = createPackingWeigherTable("PC39");
-export const packingLineCassavaInhouseWeigher =
-  createPackingWeigherTable("CASSAVA_INHOUSE");
-export const packingLineCassavaCopackWeigher =
-  createPackingWeigherTable("CASSAVA_COPACK");
-export const packingLineTortilaWeigher = createPackingWeigherTable("TORTILA");
-export const packingLineFCPWeigher = createPackingWeigherTable("FCP");
-export const packingLineTWS56Weigher = createPackingWeigherTable("TWS56");
-export const packingLineTWS72Weigher = createPackingWeigherTable("TWS72");
-export const packingLinePackingPouchWeigher =
-  createPackingWeigherTable("PACKING_POUCH");
-
-// Packing Lines - BagMaker (by machine name)
-export const packingLinePC39BagMaker = createPackingBagMakerTable("PC39");
-export const packingLineCassavaInhouseBagMaker =
-  createPackingBagMakerTable("CASSAVA_INHOUSE");
-export const packingLineCassavaCopackBagMaker =
-  createPackingBagMakerTable("CASSAVA_COPACK");
-export const packingLineTortilaBagMaker = createPackingBagMakerTable("TORTILA");
-export const packingLineFCPBagMaker = createPackingBagMakerTable("FCP");
-export const packingLineTWS56BagMaker = createPackingBagMakerTable("TWS56");
-export const packingLineTWS72BagMaker = createPackingBagMakerTable("TWS72");
-export const packingLinePackingPouchBagMaker =
-  createPackingBagMakerTable("PACKING_POUCH");
 /* ===========================
    VISIBILITY SETTINGS TABLE
    (Persistent role-based UI visibility settings)

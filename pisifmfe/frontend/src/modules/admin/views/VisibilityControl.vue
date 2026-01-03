@@ -32,6 +32,7 @@ import { api } from '@/lib/api';
 interface AppUser {
   id: number;
   username: string;
+  corporateId: string;
   name: string | null;
   role: string;
 }
@@ -39,6 +40,7 @@ interface AppUser {
 // State
 const selectedMode = ref<'role' | 'user'>('role');
 const selectedRole = ref<UserRole>(UserRole.SUPERVISOR);
+const selectedUserRole = ref<UserRole>(UserRole.SUPERVISOR); // Role filter for user mode
 const selectedUserId = ref<number | null>(null);
 const selectedPlant = ref<string>('ALL_PLANTS');
 const searchQuery = ref('');
@@ -66,9 +68,19 @@ async function fetchUsers() {
   }
 }
 
+// Computed: users filtered by selected role
+const filteredUsersByRole = computed(() => {
+  return users.value.filter(u => u.role === selectedRole.value);
+});
+
+// Watch for role change - reset selected user
+watch(selectedRole, () => {
+  selectedUserId.value = null;
+});
+
 // Computed: effective role for visibility check
 const effectiveRole = computed(() => {
-  if (selectedMode.value === 'user' && selectedUserId.value) {
+  if (selectedUserId.value) {
     const user = users.value.find(u => u.id === selectedUserId.value);
     return user?.role as UserRole || UserRole.VIEWER;
   }
@@ -77,7 +89,7 @@ const effectiveRole = computed(() => {
 
 // Computed: effective target key (role or user:id)
 const effectiveTargetKey = computed(() => {
-  if (selectedMode.value === 'user' && selectedUserId.value) {
+  if (selectedUserId.value) {
     return `USER:${selectedUserId.value}`;
   }
   return selectedRole.value;
@@ -373,43 +385,23 @@ async function toggleAllInGroup(category: string, group: string, visible: boolea
 
     <!-- Filters -->
     <div class="filters">
-      <!-- Mode Toggle -->
+      <!-- Role Select (Always visible now) -->
       <div class="filter-group">
-        <label class="filter-label">Mode</label>
-        <div class="mode-toggle">
-          <button 
-            @click="selectedMode = 'role'" 
-            :class="['mode-btn', { active: selectedMode === 'role' }]"
-          >
-            <Users class="w-4 h-4" />
-            <span>By Role</span>
-          </button>
-          <button 
-            @click="selectedMode = 'user'" 
-            :class="['mode-btn', { active: selectedMode === 'user' }]"
-          >
-            <User class="w-4 h-4" />
-            <span>By User</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Role Select (shown when mode is 'role') -->
-      <div v-if="selectedMode === 'role'" class="filter-group">
         <label class="filter-label">Role</label>
         <select v-model="selectedRole" class="filter-select">
           <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
         </select>
       </div>
 
-      <!-- User Select (shown when mode is 'user') -->
-      <div v-if="selectedMode === 'user'" class="filter-group">
-        <label class="filter-label">User</label>
-        <select v-model="selectedUserId" class="filter-select user-select">
-          <option :value="null" disabled>Select a user...</option>
-          <option v-for="user in users" :key="user.id" :value="user.id">
-            {{ user.name || user.username }} ({{ user.role }}) - ID: {{ user.id }}
+      <!-- User Select (Optional Override) -->
+      <div class="filter-group">
+        <label class="filter-label">User (Optional)</label>
+        <select v-model="selectedUserId" class="filter-select user-select" :disabled="filteredUsersByRole.length === 0">
+          <option :value="null">All {{ selectedRole }} Users (Default)</option>
+          <option v-for="user in filteredUsersByRole" :key="user.id" :value="user.id">
+            {{ user.name || user.username }}
           </option>
+          <option v-if="filteredUsersByRole.length === 0" disabled>No users found</option>
         </select>
       </div>
       

@@ -426,6 +426,7 @@ export async function getCurrentUser() {
 export interface UserData {
   id?: number;
   username: string;
+  corporateId: string;
   password?: string;
   name: string;
   role: string;
