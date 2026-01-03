@@ -379,21 +379,21 @@ const getScopeKey = (context: { category: VisibilityCategory, plantId?: string, 
   }
 };
 
-const ensureScope = (role: UserRole, scopeKey: string) => {
-  if (!state[role]) state[role] = {};
-  if (!state[role][scopeKey]) state[role][scopeKey] = {};
+const ensureScope = (targetKey: string, scopeKey: string) => {
+  if (!state[targetKey]) state[targetKey] = {};
+  if (!state[targetKey][scopeKey]) state[targetKey][scopeKey] = {};
 };
 
 /* ============================================================
    PUBLIC API
 ============================================================ */
 
-export const getVisibilityRulesForRoleAndScope = (role: UserRole, scopeKey: string): VisibilityRules => {
-  return state[role]?.[scopeKey] || {};
+export const getVisibilityRulesForRoleAndScope = (targetKey: string, scopeKey: string): VisibilityRules => {
+  return state[targetKey]?.[scopeKey] || {};
 };
 
 export const updateVisibilityRule = async (
-  role: UserRole,
+  targetKey: string, // Can be role name (e.g., "SUPERVISOR") or user key (e.g., "USER:123")
   context: { category: VisibilityCategory, plantId?: string, machineId?: string },
   dataItemKey: string,
   visible: boolean
@@ -401,28 +401,28 @@ export const updateVisibilityRule = async (
   const scopeKey = getScopeKey(context);
   
   // Store previous value for rollback
-  ensureScope(role, scopeKey);
-  const previousValue = state[role][scopeKey][dataItemKey];
+  ensureScope(targetKey as UserRole, scopeKey);
+  const previousValue = state[targetKey][scopeKey][dataItemKey];
   
   // Update local state immediately for responsive UI
-  state[role][scopeKey][dataItemKey] = visible;
+  state[targetKey][scopeKey][dataItemKey] = visible;
   visibilityVersion.value++; // Trigger reactive updates
   
   // Persist to database and wait for confirmation
   try {
-    await saveSettingToDB(role, scopeKey, dataItemKey, visible);
-    console.log(`Visibility updated: ${role}/${scopeKey}/${dataItemKey} = ${visible}`);
+    await saveSettingToDB(targetKey, scopeKey, dataItemKey, visible);
+    console.log(`Visibility updated: ${targetKey}/${scopeKey}/${dataItemKey} = ${visible}`);
   } catch (error) {
     console.error('Failed to persist visibility setting:', error);
     // Revert local state on error
-    state[role][scopeKey][dataItemKey] = previousValue;
+    state[targetKey][scopeKey][dataItemKey] = previousValue;
     visibilityVersion.value++; // Trigger reactive updates for rollback
     throw error; // Re-throw to notify caller
   }
 };
 
 export const bulkUpdateVisibilityRules = async (
-  role: UserRole,
+  targetKey: string, // Can be role name or user key
   context: { category: VisibilityCategory, plantId?: string },
   updates: Record<string, boolean>
 ): Promise<void> => {
@@ -449,7 +449,7 @@ export const bulkUpdateVisibilityRules = async (
 export const isDataItemVisible = (
   role: UserRole,
   dataItemKey: string,
-  context?: { plantId?: string; machineId?: string }
+  context?: { plantId?: string; machineId?: string; userId?: number }
 ): boolean => {
   // Administrator always sees everything
   if (role === UserRole.ADMINISTRATOR) return true;
@@ -457,6 +457,31 @@ export const isDataItemVisible = (
   const item = DATA_ITEM_REGISTRY.find(i => i.key === dataItemKey);
   if (!item) return true;
 
+  // Check user-specific settings first (if userId provided)
+  if (context?.userId) {
+    const userKey = `USER:${context.userId}`;
+    const userState = state[userKey] || {};
+    
+    // Check user-specific context hierarchy
+    if (context?.machineId) {
+      const machineScopeKey = `MACHINE:${context.machineId}`;
+      if (userState[machineScopeKey]?.[dataItemKey] !== undefined) {
+        return userState[machineScopeKey][dataItemKey];
+      }
+    }
+    if (context?.plantId) {
+      const plantScopeKey = `PLANT:${context.plantId}`;
+      if (userState[plantScopeKey]?.[dataItemKey] !== undefined) {
+        return userState[plantScopeKey][dataItemKey];
+      }
+    }
+    const allPlantsScopeKey = 'PLANT:ALL_PLANTS';
+    if (userState[allPlantsScopeKey]?.[dataItemKey] !== undefined) {
+      return userState[allPlantsScopeKey][dataItemKey];
+    }
+  }
+
+  // Fall back to role-based settings
   const roleState = state[role] || {};
 
   // Check specific context hierarchy

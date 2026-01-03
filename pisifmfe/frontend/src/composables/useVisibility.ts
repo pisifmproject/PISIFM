@@ -12,6 +12,20 @@ export function useVisibility(context?: { plantId?: string; machineId?: string }
     return (userRole.value as UserRole) || UserRole.VIEWER;
   });
 
+  // Get current user ID from localStorage
+  const getCurrentUserId = (): number | undefined => {
+    try {
+      const authUser = localStorage.getItem('auth_user');
+      if (authUser) {
+        const user = JSON.parse(authUser);
+        return user.id;
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return undefined;
+  };
+
   /**
    * Check if a data item should be visible
    * @param key - The data item key from DATA_ITEM_REGISTRY
@@ -20,7 +34,10 @@ export function useVisibility(context?: { plantId?: string; machineId?: string }
   function isVisible(key: string, overrideContext?: { plantId?: string; machineId?: string }): boolean {
     // Access visibilityVersion to create reactive dependency
     const _ = visibilityVersion.value;
-    const ctx = overrideContext || context;
+    const ctx = {
+      ...(overrideContext || context),
+      userId: getCurrentUserId()
+    };
     return isDataItemVisible(currentRole.value, key, ctx);
   }
 

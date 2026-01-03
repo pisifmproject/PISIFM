@@ -11,7 +11,9 @@ import {
   Settings,
   Search,
   RotateCcw,
-  Loader2
+  Loader2,
+  User,
+  Users
 } from 'lucide-vue-next';
 import { 
   DATA_ITEM_REGISTRY,
@@ -24,15 +26,62 @@ import {
 } from '../services/visibilityService';
 import { UserRole, VisibilityCategory, VisibilityGroup, type DataItem } from '../types';
 import { plantService } from '../services/plantService';
+import { api } from '@/lib/api';
+
+// Types
+interface AppUser {
+  id: number;
+  username: string;
+  name: string | null;
+  role: string;
+}
 
 // State
+const selectedMode = ref<'role' | 'user'>('role');
 const selectedRole = ref<UserRole>(UserRole.SUPERVISOR);
+const selectedUserId = ref<number | null>(null);
 const selectedPlant = ref<string>('ALL_PLANTS');
 const searchQuery = ref('');
 const expandedCategories = ref<Set<string>>(new Set(['GLOBAL_DASHBOARD', 'PLANT_DASHBOARD']));
 const expandedGroups = ref<Set<string>>(new Set());
 const isLoading = ref(true);
 const isSaving = ref(false);
+const users = ref<AppUser[]>([]);
+
+// Fetch users
+async function fetchUsers() {
+  try {
+    const response = await api.get('/users');
+    // Sort by name (A-Z) then by ID (ascending)
+    users.value = response.data
+      .filter((u: AppUser) => u.role !== 'ADMINISTRATOR')
+      .sort((a: AppUser, b: AppUser) => {
+        const nameA = (a.name || a.username).toLowerCase();
+        const nameB = (b.name || b.username).toLowerCase();
+        if (nameA !== nameB) return nameA.localeCompare(nameB);
+        return a.id - b.id;
+      });
+  } catch (error) {
+    console.error('Failed to fetch users:', error);
+  }
+}
+
+// Computed: effective role for visibility check
+const effectiveRole = computed(() => {
+  if (selectedMode.value === 'user' && selectedUserId.value) {
+    const user = users.value.find(u => u.id === selectedUserId.value);
+    return user?.role as UserRole || UserRole.VIEWER;
+  }
+  return selectedRole.value;
+});
+
+// Computed: effective target key (role or user:id)
+const effectiveTargetKey = computed(() => {
+  if (selectedMode.value === 'user' && selectedUserId.value) {
+    return `USER:${selectedUserId.value}`;
+  }
+  return selectedRole.value;
+});
 
 // Data
 const roles = Object.values(UserRole).filter(r => r !== UserRole.ADMINISTRATOR);
@@ -133,6 +182,8 @@ const loadRules = () => {
 onMounted(async () => {
   isLoading.value = true;
   try {
+    // Fetch users list
+    await fetchUsers();
     // Initialize visibility state from database
     await initializeVisibilityState();
   } catch (error) {
@@ -156,7 +207,7 @@ function getItemVisibility(item: DataItem): boolean {
     plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
   };
   const scopeKey = getScopeKeyForSettings(context);
-  const rules = getVisibilityRulesForRoleAndScope(selectedRole.value, scopeKey);
+  const rules = getVisibilityRulesForRoleAndScope(effectiveTargetKey.value, scopeKey);
   
   if (rules[item.key] !== undefined) {
     return rules[item.key];
@@ -175,7 +226,7 @@ async function toggleVisibility(item: DataItem) {
   
   isSaving.value = true;
   try {
-    await updateVisibilityRule(selectedRole.value, context, item.key, !currentValue);
+    await updateVisibilityRule(effectiveTargetKey.value, context, item.key, !currentValue);
     updateTrigger.value++; // Force re-render after successful save
     console.log(`Toggle successful: ${item.key} = ${!currentValue}`);
   } catch (error) {
@@ -268,7 +319,7 @@ async function toggleAllInGroup(category: string, group: string, visible: boolea
         plantId: selectedPlant.value === 'ALL_PLANTS' ? undefined : selectedPlant.value
       };
       try {
-        await updateVisibilityRule(selectedRole.value, context, item.key, visible);
+        await updateVisibilityRule(effectiveTargetKey.value, context, item.key, visible);
         successCount++;
       } catch (error) {
         console.error(`Failed to update ${item.key}:`, error);
@@ -322,10 +373,43 @@ async function toggleAllInGroup(category: string, group: string, visible: boolea
 
     <!-- Filters -->
     <div class="filters">
+      <!-- Mode Toggle -->
       <div class="filter-group">
+        <label class="filter-label">Mode</label>
+        <div class="mode-toggle">
+          <button 
+            @click="selectedMode = 'role'" 
+            :class="['mode-btn', { active: selectedMode === 'role' }]"
+          >
+            <Users class="w-4 h-4" />
+            <span>By Role</span>
+          </button>
+          <button 
+            @click="selectedMode = 'user'" 
+            :class="['mode-btn', { active: selectedMode === 'user' }]"
+          >
+            <User class="w-4 h-4" />
+            <span>By User</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Role Select (shown when mode is 'role') -->
+      <div v-if="selectedMode === 'role'" class="filter-group">
         <label class="filter-label">Role</label>
         <select v-model="selectedRole" class="filter-select">
           <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
+        </select>
+      </div>
+
+      <!-- User Select (shown when mode is 'user') -->
+      <div v-if="selectedMode === 'user'" class="filter-group">
+        <label class="filter-label">User</label>
+        <select v-model="selectedUserId" class="filter-select user-select">
+          <option :value="null" disabled>Select a user...</option>
+          <option v-for="user in users" :key="user.id" :value="user.id">
+            {{ user.name || user.username }} ({{ user.role }}) - ID: {{ user.id }}
+          </option>
         </select>
       </div>
       
@@ -502,6 +586,7 @@ async function toggleAllInGroup(category: string, group: string, visible: boolea
   background: #1e293b;
   border-radius: 0.75rem;
   border: 1px solid #334155;
+  flex-wrap: wrap;
 }
 
 .filter-group {
@@ -518,6 +603,38 @@ async function toggleAllInGroup(category: string, group: string, visible: boolea
   letter-spacing: 0.05em;
 }
 
+.mode-toggle {
+  display: flex;
+  gap: 0.25rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  color: #64748b;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  color: #94a3b8;
+}
+
+.mode-btn.active {
+  background: #3b82f6;
+  color: white;
+}
+
 .filter-select {
   padding: 0.5rem 0.75rem;
   background: #0f172a;
@@ -526,6 +643,10 @@ async function toggleAllInGroup(category: string, group: string, visible: boolea
   color: #e2e8f0;
   font-size: 0.875rem;
   min-width: 180px;
+}
+
+.filter-select.user-select {
+  min-width: 280px;
 }
 
 .search-input {
