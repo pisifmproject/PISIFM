@@ -5,6 +5,7 @@ import { hashPassword } from "./auth.service";
 
 interface SeedUser {
   username: string;
+  corporateId: string;
   password: string;
   name: string;
   role: string;
@@ -14,6 +15,7 @@ interface SeedUser {
 const seedUsers: SeedUser[] = [
   {
     username: "admin",
+    corporateId: "CORP00001",
     password: "admifm",
     name: "Administrator",
     role: "ADMINISTRATOR",
@@ -21,6 +23,7 @@ const seedUsers: SeedUser[] = [
   },
   {
     username: "supervisor",
+    corporateId: "CORP00002",
     password: "spvifm",
     name: "Supervisor",
     role: "SUPERVISOR",
@@ -28,6 +31,7 @@ const seedUsers: SeedUser[] = [
   },
   {
     username: "operator",
+    corporateId: "CORP00003",
     password: "oprifm",
     name: "Operator",
     role: "OPERATOR",
@@ -35,6 +39,7 @@ const seedUsers: SeedUser[] = [
   },
   {
     username: "maintenance",
+    corporateId: "CORP00004",
     password: "mtcifm",
     name: "Maintenance",
     role: "MAINTENANCE",
@@ -42,6 +47,7 @@ const seedUsers: SeedUser[] = [
   },
   {
     username: "qc",
+    corporateId: "CORP00005",
     password: "qcifm",
     name: "Quality Control",
     role: "QC",
@@ -49,6 +55,7 @@ const seedUsers: SeedUser[] = [
   },
   {
     username: "management",
+    corporateId: "CORP00006",
     password: "mngifm",
     name: "Management",
     role: "MANAGEMENT",
@@ -56,6 +63,7 @@ const seedUsers: SeedUser[] = [
   },
   {
     username: "guest",
+    corporateId: "CORP00007",
     password: "gsifm",
     name: "Guest",
     role: "VIEWER",
@@ -74,6 +82,7 @@ export async function seedAppUsers() {
         .insert(appUsers)
         .values({
           username: user.username,
+          corporateId: user.corporateId,
           passwordHash,
           name: user.name,
           role: user.role,
