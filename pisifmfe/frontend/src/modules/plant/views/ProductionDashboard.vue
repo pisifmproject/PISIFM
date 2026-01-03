@@ -277,7 +277,7 @@ const formatNumber = (num: number) => {
             <div class="fc-footer mt-4 pt-3 border-t border-gray-700 flex justify-between items-center text-xs text-gray-500">
                 <div class="flex items-center gap-1">
                     <div class="w-1.5 h-1.5 rounded-full" :class="m.status === 'RUNNING' ? 'bg-green-500' : 'bg-red-500'"></div>
-                    LIVE TELEMETRY
+                    LIVE DATA
                 </div>
                 <ChevronRight class="w-4 h-4" />
             </div>

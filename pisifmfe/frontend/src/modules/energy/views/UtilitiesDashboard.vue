@@ -355,7 +355,7 @@ watch([selectedPeriod, plantId], () => {
                         </div>
                         <div>
                             <div class="u-name">{{ u.label }}</div>
-                            <div class="u-target text-xs text-gray-500">Target: {{ u.target || 'NaN' }}</div>
+                            <!-- <div class="u-target text-xs text-gray-500">Target: {{ u.target || 'NaN' }}</div> -->
                         </div>
                     </div>
                     <div class="text-right">
