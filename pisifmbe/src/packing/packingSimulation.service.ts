@@ -17,7 +17,7 @@ const machineStates = new Map<string, PackingMachineState>();
 let simulationInterval: NodeJS.Timeout | null = null;
 
 // Constants
-const SIMULATION_TICK_MS = 2000; // 2 seconds
+const SIMULATION_TICK_MS = 3000; // 3 seconds - more visible changes
 const AVG_BAG_WEIGHT_KG = 0.05; // 50g chip bag
 
 /**
@@ -135,24 +135,24 @@ function getMachineConfig(machineId: string): MachineSimulationConfig | undefine
  * Update weigher state with fluctuation logic
  */
 function updateWeigher(weigher: WeigherState, targetBpm: number): void {
-  const config = { minBpm: targetBpm - 10, maxBpm: targetBpm + 5 };
+  const config = { minBpm: targetBpm - 15, maxBpm: targetBpm + 10 };
 
   if (weigher.status === 'RUNNING') {
-    // Drift BPM (random walk)
-    const bpmDrift = (Math.random() - 0.5) * 2;
+    // Drift BPM (random walk) - MORE VISIBLE CHANGES
+    const bpmDrift = (Math.random() - 0.5) * 6; // Increased from 2 to 6
     weigher.bpm = clamp(weigher.bpm + bpmDrift, config.minBpm, config.maxBpm);
 
     // Increment total weight (bpm * avg_bag_weight * time_delta_minutes)
     const timeDeltaMinutes = SIMULATION_TICK_MS / 60000;
     weigher.total_weight += weigher.bpm * AVG_BAG_WEIGHT_KG * timeDeltaMinutes;
 
-    // Drift giveaway percent
-    const giveawayDrift = (Math.random() - 0.5) * 0.1;
+    // Drift giveaway percent - MORE VISIBLE
+    const giveawayDrift = (Math.random() - 0.5) * 0.3; // Increased from 0.1
     weigher.giveaway_percent = clamp(weigher.giveaway_percent + giveawayDrift, 0.3, 3.0);
 
-    // Drift std_dev
-    const stdDrift = (Math.random() - 0.5) * 0.05;
-    weigher.std_dev = clamp(weigher.std_dev + stdDrift, 0.2, 1.0);
+    // Drift std_dev - MORE VISIBLE
+    const stdDrift = (Math.random() - 0.5) * 0.15; // Increased from 0.05
+    weigher.std_dev = clamp(weigher.std_dev + stdDrift, 0.2, 1.2);
   }
 
   // Status state machine
@@ -189,11 +189,11 @@ function updateBagmaker(bagmaker: BagmakerState, linkedWeigher: WeigherState): v
   }
 
   if (bagmaker.status === 'RUNNING') {
-    // Drift efficiency values
-    const effDrift = (Math.random() - 0.5) * 0.1;
-    bagmaker.efficiency.total = clamp(bagmaker.efficiency.total + effDrift, 85, 99);
-    bagmaker.efficiency.weigher = clamp(bagmaker.efficiency.weigher + effDrift * 0.5, 90, 99);
-    bagmaker.efficiency.bagmaker = clamp(bagmaker.efficiency.bagmaker + effDrift, 85, 98);
+    // Drift efficiency values - MORE VISIBLE CHANGES
+    const effDrift = (Math.random() - 0.5) * 0.8; // Increased from 0.1 to 0.8
+    bagmaker.efficiency.total = clamp(bagmaker.efficiency.total + effDrift, 80, 99);
+    bagmaker.efficiency.weigher = clamp(bagmaker.efficiency.weigher + effDrift * 0.6, 85, 99);
+    bagmaker.efficiency.bagmaker = clamp(bagmaker.efficiency.bagmaker + effDrift, 80, 99);
 
     // Increment bag counts based on weigher BPM
     const timeDeltaMinutes = SIMULATION_TICK_MS / 60000;
@@ -201,13 +201,13 @@ function updateBagmaker(bagmaker: BagmakerState, linkedWeigher: WeigherState): v
     bagmaker.bag_counts.good += bagsProduced;
 
     // Small chance of bad bags
-    if (Math.random() < 0.02) {
+    if (Math.random() < 0.05) { // Increased from 0.02
       bagmaker.bag_counts.bad += 1;
     }
 
-    // Drift wasted film percent
-    const filmDrift = (Math.random() - 0.5) * 0.05;
-    bagmaker.wasted_film_percent = clamp(bagmaker.wasted_film_percent + filmDrift, 0.2, 2.0);
+    // Drift wasted film percent - MORE VISIBLE
+    const filmDrift = (Math.random() - 0.5) * 0.2; // Increased from 0.05
+    bagmaker.wasted_film_percent = clamp(bagmaker.wasted_film_percent + filmDrift, 0.2, 3.0);
 
     // Random status change (rare)
     if (Math.random() < 0.003) {

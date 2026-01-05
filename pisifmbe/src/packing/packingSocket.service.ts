@@ -6,7 +6,7 @@ import * as simulation from './packingSimulation.service';
 
 // Polling interval reference
 let pollingInterval: NodeJS.Timeout | null = null;
-const POLLING_INTERVAL_MS = 2000; // Match simulation tick
+const POLLING_INTERVAL_MS = 3000; // 3 seconds - match simulation tick
 
 /**
  * Room name for packing machine

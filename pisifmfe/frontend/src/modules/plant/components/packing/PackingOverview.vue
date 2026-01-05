@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
 import WeigherCard from './WeigherCard.vue';
 import BagmakerCard from './BagmakerCard.vue';
 import PackingDetailModal from './PackingDetailModal.vue';
@@ -85,17 +85,77 @@ const generateBagmakerData = (id: number) => ({
 });
 
 // --- Lifecycle ---
+// --- Alive Simulation (Frontend Polling) ---
+let pollingInterval: any = null;
+
+const updateData = () => {
+    // 1. Update Weighers
+    weighers.value = weighers.value.map(w => {
+        if (w.status !== 'RUNNING') return w;
+        
+        // Drift BPM (+- 3)
+        const bpmDrift = (Math.random() - 0.5) * 6;
+        let newBpm = Math.max(60, Math.min(100, w.bpm + bpmDrift)); // Clamp 60-100
+        
+        // Increment weight slightly based on BPM roughly
+        const weightAdd = newBpm * 0.2; 
+
+        // Drift Giveaway (+- 0.15)
+        const giveawayDrift = (Math.random() - 0.5) * 0.3;
+        let newGiveaway = Math.max(0, Math.min(5, w.giveaway + giveawayDrift));
+
+        return {
+            ...w,
+            bpm: Math.round(newBpm),
+            totalWeight: Math.round(w.totalWeight + weightAdd),
+            giveaway: Number(newGiveaway.toFixed(2))
+        };
+    });
+
+    // 2. Update Bagmakers
+    bagmakers.value = bagmakers.value.map(bm => {
+        if (bm.status !== 'RUNNING') return bm;
+
+        // Drift Efficiency (+- 0.4%)
+        const effDrift = (Math.random() - 0.5) * 0.8;
+        let newEff = Math.max(80, Math.min(99, bm.totalEfficiency + effDrift));
+
+        // Drift Wasted Film (+- 0.1%)
+        const filmDrift = (Math.random() - 0.5) * 0.2;
+        let newFilm = Math.max(0, Math.min(5, bm.wastedFilm + filmDrift));
+
+        return {
+            ...bm,
+            totalEfficiency: Number(newEff.toFixed(1)),
+            wastedFilm: Number(newFilm.toFixed(2)),
+            actualSpeed: Math.round(Math.max(40, Math.min(90, bm.actualSpeed + (Math.random() - 0.5) * 4)))
+        };
+    });
+};
+
+const startPolling = () => {
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = setInterval(updateData, 3000); // 3 seconds
+};
+
+// --- Lifecycle ---
 const initData = () => {
     if (!config.value) return;
     
-    // Generate Weighers
+    // Generate Initial Data
     weighers.value = Array.from({ length: config.value.weighers }, (_, i) => generateWeigherData(i + 1));
-    
-    // Generate Bagmakers
     bagmakers.value = Array.from({ length: config.value.bagmakers }, (_, i) => generateBagmakerData(i + 1));
+    
+    startPolling();
 };
 
-watch(() => props.machineId, initData, { immediate: true });
+watch(() => props.machineId, () => {
+    initData();
+}, { immediate: true });
+
+onUnmounted(() => {
+    if (pollingInterval) clearInterval(pollingInterval);
+});
 
 // --- Interaction ---
 const openDetail = (type: 'weigher' | 'bagmaker', unit: any) => {
