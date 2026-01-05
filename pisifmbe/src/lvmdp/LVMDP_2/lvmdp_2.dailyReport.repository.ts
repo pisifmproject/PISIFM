@@ -116,8 +116,7 @@ export const getAllDailyReports = async () => {
   return await db
     .select()
     .from(dailyReportLVMDP2)
-    .orderBy(desc(dailyReportLVMDP2.reportDate))
-    .limit(30);
+    .orderBy(desc(dailyReportLVMDP2.reportDate));
 };
 
 /**

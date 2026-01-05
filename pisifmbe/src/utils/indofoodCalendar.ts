@@ -167,7 +167,7 @@ const INDOFOOD_2025: IndofoodMonth[] = [
   },
 ];
 
-// 2026 Calendar Data (simplified - add more if needed)
+// 2026 Calendar Data
 const INDOFOOD_2026: IndofoodMonth[] = [
   {
     month: 'January',
@@ -178,10 +178,145 @@ const INDOFOOD_2026: IndofoodMonth[] = [
       { week: 1, startDate: '2026-01-01', endDate: '2026-01-04' },
       { week: 2, startDate: '2026-01-05', endDate: '2026-01-11' },
       { week: 3, startDate: '2026-01-12', endDate: '2026-01-18' },
-      { week: 4, startDate: '2026-01-19', endDate: '2026-02-01' },
+      { week: 4, startDate: '2026-01-19', endDate: '2026-01-25' },
+      { week: 5, startDate: '2026-01-26', endDate: '2026-02-01' },
     ],
   },
-  // Add more months as needed
+  {
+    month: 'February',
+    monthNumber: 2,
+    startDate: '2026-02-02',
+    endDate: '2026-03-01',
+    weeks: [
+      { week: 6, startDate: '2026-02-02', endDate: '2026-02-08' },
+      { week: 7, startDate: '2026-02-09', endDate: '2026-02-15' },
+      { week: 8, startDate: '2026-02-16', endDate: '2026-02-22' },
+      { week: 9, startDate: '2026-02-23', endDate: '2026-03-01' },
+    ],
+  },
+  {
+    month: 'March',
+    monthNumber: 3,
+    startDate: '2026-03-02',
+    endDate: '2026-03-29',
+    weeks: [
+      { week: 10, startDate: '2026-03-02', endDate: '2026-03-08' },
+      { week: 11, startDate: '2026-03-09', endDate: '2026-03-15' },
+      { week: 12, startDate: '2026-03-16', endDate: '2026-03-22' },
+      { week: 13, startDate: '2026-03-23', endDate: '2026-03-29' },
+    ],
+  },
+  {
+    month: 'April',
+    monthNumber: 4,
+    startDate: '2026-03-30',
+    endDate: '2026-05-03',
+    weeks: [
+      { week: 14, startDate: '2026-03-30', endDate: '2026-04-05' },
+      { week: 15, startDate: '2026-04-06', endDate: '2026-04-12' },
+      { week: 16, startDate: '2026-04-13', endDate: '2026-04-19' },
+      { week: 17, startDate: '2026-04-20', endDate: '2026-04-26' },
+      { week: 18, startDate: '2026-04-27', endDate: '2026-05-03' },
+    ],
+  },
+  {
+    month: 'May',
+    monthNumber: 5,
+    startDate: '2026-05-04',
+    endDate: '2026-05-31',
+    weeks: [
+      { week: 19, startDate: '2026-05-04', endDate: '2026-05-10' },
+      { week: 20, startDate: '2026-05-11', endDate: '2026-05-17' },
+      { week: 21, startDate: '2026-05-18', endDate: '2026-05-24' },
+      { week: 22, startDate: '2026-05-25', endDate: '2026-05-31' },
+    ],
+  },
+  {
+    month: 'June',
+    monthNumber: 6,
+    startDate: '2026-06-01',
+    endDate: '2026-06-28',
+    weeks: [
+      { week: 23, startDate: '2026-06-01', endDate: '2026-06-07' },
+      { week: 24, startDate: '2026-06-08', endDate: '2026-06-14' },
+      { week: 25, startDate: '2026-06-15', endDate: '2026-06-21' },
+      { week: 26, startDate: '2026-06-22', endDate: '2026-06-28' },
+    ],
+  },
+  {
+    month: 'July',
+    monthNumber: 7,
+    startDate: '2026-06-29',
+    endDate: '2026-08-02',
+    weeks: [
+      { week: 27, startDate: '2026-06-29', endDate: '2026-07-05' },
+      { week: 28, startDate: '2026-07-06', endDate: '2026-07-12' },
+      { week: 29, startDate: '2026-07-13', endDate: '2026-07-19' },
+      { week: 30, startDate: '2026-07-20', endDate: '2026-07-26' },
+      { week: 31, startDate: '2026-07-27', endDate: '2026-08-02' },
+    ],
+  },
+  {
+    month: 'August',
+    monthNumber: 8,
+    startDate: '2026-08-03',
+    endDate: '2026-08-30',
+    weeks: [
+      { week: 32, startDate: '2026-08-03', endDate: '2026-08-09' },
+      { week: 33, startDate: '2026-08-10', endDate: '2026-08-16' },
+      { week: 34, startDate: '2026-08-17', endDate: '2026-08-23' },
+      { week: 35, startDate: '2026-08-24', endDate: '2026-08-30' },
+    ],
+  },
+  {
+    month: 'September',
+    monthNumber: 9,
+    startDate: '2026-08-31',
+    endDate: '2026-09-27',
+    weeks: [
+      { week: 36, startDate: '2026-08-31', endDate: '2026-09-06' },
+      { week: 37, startDate: '2026-09-07', endDate: '2026-09-13' },
+      { week: 38, startDate: '2026-09-14', endDate: '2026-09-20' },
+      { week: 39, startDate: '2026-09-21', endDate: '2026-09-27' },
+    ],
+  },
+  {
+    month: 'October',
+    monthNumber: 10,
+    startDate: '2026-09-28',
+    endDate: '2026-11-01',
+    weeks: [
+      { week: 40, startDate: '2026-09-28', endDate: '2026-10-04' },
+      { week: 41, startDate: '2026-10-05', endDate: '2026-10-11' },
+      { week: 42, startDate: '2026-10-12', endDate: '2026-10-18' },
+      { week: 43, startDate: '2026-10-19', endDate: '2026-10-25' },
+      { week: 44, startDate: '2026-10-26', endDate: '2026-11-01' },
+    ],
+  },
+  {
+    month: 'November',
+    monthNumber: 11,
+    startDate: '2026-11-02',
+    endDate: '2026-11-29',
+    weeks: [
+      { week: 45, startDate: '2026-11-02', endDate: '2026-11-08' },
+      { week: 46, startDate: '2026-11-09', endDate: '2026-11-15' },
+      { week: 47, startDate: '2026-11-16', endDate: '2026-11-22' },
+      { week: 48, startDate: '2026-11-23', endDate: '2026-11-29' },
+    ],
+  },
+  {
+    month: 'December',
+    monthNumber: 12,
+    startDate: '2026-11-30',
+    endDate: '2026-12-31',
+    weeks: [
+      { week: 49, startDate: '2026-11-30', endDate: '2026-12-06' },
+      { week: 50, startDate: '2026-12-07', endDate: '2026-12-13' },
+      { week: 51, startDate: '2026-12-14', endDate: '2026-12-20' },
+      { week: 52, startDate: '2026-12-21', endDate: '2026-12-31' },
+    ],
+  },
 ];
 
 /**
@@ -226,6 +361,37 @@ export function getCurrentIndofoodWeek(): IndofoodWeek | null {
     }
   }
 
+  return null;
+}
+
+/**
+ * NEW: Get Indofood month by specific date string (YYYY-MM-DD)
+ */
+export function getIndofoodMonthByDate(dateStr: string): IndofoodMonth | null {
+  const year = parseInt(dateStr.split('-')[0]);
+  const calendar = getIndofoodCalendar(year);
+  
+  // Also check previous/next year boundaries if needed, but sticking to year for now
+  for (const month of calendar) {
+    if (dateStr >= month.startDate && dateStr <= month.endDate) {
+      return month;
+    }
+  }
+  return null;
+}
+
+/**
+ * NEW: Get Indofood week by specific date string (YYYY-MM-DD)
+ */
+export function getIndofoodWeekByDate(dateStr: string): IndofoodWeek | null {
+  const month = getIndofoodMonthByDate(dateStr);
+  if (!month) return null;
+
+  for (const week of month.weeks) {
+    if (dateStr >= week.startDate && dateStr <= week.endDate) {
+      return week;
+    }
+  }
   return null;
 }
 

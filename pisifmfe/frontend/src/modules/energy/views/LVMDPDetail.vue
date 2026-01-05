@@ -265,7 +265,7 @@ const fetchChartData = async () => {
         String(now.getDate()).padStart(2, '0')
       ].join('-');
 
-      const trendData = await getLvmdpTrend(
+      let trendData = await getLvmdpTrend(
         lvmdpId.value as any,
         periodMap[timeFilter.value],
         localDate

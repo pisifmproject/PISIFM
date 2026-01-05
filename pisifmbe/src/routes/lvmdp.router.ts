@@ -181,8 +181,8 @@ r.get("/:id/trend", async (req, res) => {
 
     // Import Indofood calendar utilities
     const {
-      getCurrentIndofoodWeek,
-      getCurrentIndofoodMonth,
+      getIndofoodWeekByDate,
+      getIndofoodMonthByDate,
       getIndofoodYearRange,
       getIndofoodMonthByNumber,
     } = await import("../utils/indofoodCalendar");
@@ -222,9 +222,9 @@ r.get("/:id/trend", async (req, res) => {
       }
     } else if (period === "week") {
       // Weekly data based on Indofood calendar
-      const week = getCurrentIndofoodWeek();
+      const week = getIndofoodWeekByDate(dateParam);
       if (!week) {
-        return res.status(404).json({ message: "Current week not found in Indofood calendar" });
+        return res.status(404).json({ message: "Week not found for date " + dateParam });
       }
 
       // Get daily reports for the week range and filter anomalies
@@ -260,9 +260,9 @@ r.get("/:id/trend", async (req, res) => {
       }
     } else if (period === "month") {
       // Monthly data based on Indofood calendar (weekly aggregation)
-      const currentMonth = getCurrentIndofoodMonth();
+      const currentMonth = getIndofoodMonthByDate(dateParam);
       if (!currentMonth) {
-        return res.status(404).json({ message: "Current month not found in Indofood calendar" });
+        return res.status(404).json({ message: "Month not found for date " + dateParam });
       }
 
       const allReports = await dailyReportRepo.getAllDailyReports();
