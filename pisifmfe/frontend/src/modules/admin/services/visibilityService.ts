@@ -151,19 +151,61 @@ const STATIC_REGISTRY: DataItem[] = [
   { id: 'md_pack_9', key: 'PACKING_TOTAL_EFFICIENCY', label: 'KPI: Total Efficiency', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_LINE_KPI, location: 'Machine Detail / Packing', defaultVisible: true },
   { id: 'md_pack_10', key: 'PACKING_EFFICIENCY_WEIGHER', label: 'KPI: Weigher Efficiency', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_LINE_KPI, location: 'Machine Detail / Packing', defaultVisible: true },
   { id: 'md_pack_11', key: 'PACKING_EFFICIENCY_BAGMAKER', label: 'KPI: Bagmaker Efficiency', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_LINE_KPI, location: 'Machine Detail / Packing', defaultVisible: true },
+  
+  // Weigher Cards (up to 11 weighers for PC39)
+  { id: 'md_pack_w1', key: 'PACKING_WEIGHER_CARD_1', label: 'Weigher Card #1', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_w2', key: 'PACKING_WEIGHER_CARD_2', label: 'Weigher Card #2', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_w3', key: 'PACKING_WEIGHER_CARD_3', label: 'Weigher Card #3', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_w4', key: 'PACKING_WEIGHER_CARD_4', label: 'Weigher Card #4', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_w5', key: 'PACKING_WEIGHER_CARD_5', label: 'Weigher Card #5', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_w6', key: 'PACKING_WEIGHER_CARD_6', label: 'Weigher Card #6', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_w7', key: 'PACKING_WEIGHER_CARD_7', label: 'Weigher Card #7', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_w8', key: 'PACKING_WEIGHER_CARD_8', label: 'Weigher Card #8', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_w9', key: 'PACKING_WEIGHER_CARD_9', label: 'Weigher Card #9', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_w10', key: 'PACKING_WEIGHER_CARD_10', label: 'Weigher Card #10', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_w11', key: 'PACKING_WEIGHER_CARD_11', label: 'Weigher Card #11', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  
+  // Weigher Metrics
   { id: 'md_pack_3', key: 'PACKING_WEIGHER_GIVEAWAY', label: 'Weigher Giveaway', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
   { id: 'md_pack_4', key: 'PACKING_WEIGHER_STD_DEV', label: 'Weigher Std. Deviation', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
-  { id: 'md_pack_1', key: 'PACKING_WEIGHER_SPEED_1', label: 'Weigher 1 Speed', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
-  { id: 'md_pack_2', key: 'PACKING_WEIGHER_TOTAL_WEIGHT_1', label: 'Weigher 1 Total Weight', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
-  { id: 'md_pack_19', key: 'PACKING_WEIGHER_SPEED_2', label: 'Weigher 2 Speed', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
-  { id: 'md_pack_20', key: 'PACKING_WEIGHER_TOTAL_WEIGHT_2', label: 'Weigher 2 Total Weight', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_1', key: 'PACKING_WEIGHER_SPEED', label: 'Weigher Speed (BPM)', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_2', key: 'PACKING_WEIGHER_TOTAL_WEIGHT', label: 'Weigher Total Weight', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_wstatus', key: 'PACKING_WEIGHER_STATUS', label: 'Weigher Status', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_WEIGHER, location: 'Machine Detail / Packing', defaultVisible: true },
+  
+  // Bagmaker Cards (up to 22 bagmakers for PC39)
+  { id: 'md_pack_b1', key: 'PACKING_BAGMAKER_CARD_1', label: 'Bagmaker Card #1', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b2', key: 'PACKING_BAGMAKER_CARD_2', label: 'Bagmaker Card #2', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b3', key: 'PACKING_BAGMAKER_CARD_3', label: 'Bagmaker Card #3', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b4', key: 'PACKING_BAGMAKER_CARD_4', label: 'Bagmaker Card #4', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b5', key: 'PACKING_BAGMAKER_CARD_5', label: 'Bagmaker Card #5', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b6', key: 'PACKING_BAGMAKER_CARD_6', label: 'Bagmaker Card #6', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b7', key: 'PACKING_BAGMAKER_CARD_7', label: 'Bagmaker Card #7', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b8', key: 'PACKING_BAGMAKER_CARD_8', label: 'Bagmaker Card #8', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b9', key: 'PACKING_BAGMAKER_CARD_9', label: 'Bagmaker Card #9', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b10', key: 'PACKING_BAGMAKER_CARD_10', label: 'Bagmaker Card #10', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b11', key: 'PACKING_BAGMAKER_CARD_11', label: 'Bagmaker Card #11', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b12', key: 'PACKING_BAGMAKER_CARD_12', label: 'Bagmaker Card #12', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b13', key: 'PACKING_BAGMAKER_CARD_13', label: 'Bagmaker Card #13', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b14', key: 'PACKING_BAGMAKER_CARD_14', label: 'Bagmaker Card #14', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b15', key: 'PACKING_BAGMAKER_CARD_15', label: 'Bagmaker Card #15', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b16', key: 'PACKING_BAGMAKER_CARD_16', label: 'Bagmaker Card #16', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b17', key: 'PACKING_BAGMAKER_CARD_17', label: 'Bagmaker Card #17', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b18', key: 'PACKING_BAGMAKER_CARD_18', label: 'Bagmaker Card #18', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b19', key: 'PACKING_BAGMAKER_CARD_19', label: 'Bagmaker Card #19', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b20', key: 'PACKING_BAGMAKER_CARD_20', label: 'Bagmaker Card #20', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b21', key: 'PACKING_BAGMAKER_CARD_21', label: 'Bagmaker Card #21', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_b22', key: 'PACKING_BAGMAKER_CARD_22', label: 'Bagmaker Card #22', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  
+  // Bagmaker Metrics
   { id: 'md_pack_12', key: 'PACKING_GOOD_BAG_PERCENT', label: 'Good Bag %', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_bad', key: 'PACKING_BAD_BAG_PERCENT', label: 'Bad Bag %', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
   { id: 'md_pack_13', key: 'PACKING_WASTED_FILM', label: 'Wasted Film %', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
-  { id: 'md_pack_14', key: 'PACKING_ACTUAL_SPEED', label: 'Actual Speed', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
-  { id: 'md_pack_15', key: 'PACKING_METAL_DETECT', label: 'Stop Ctr: Metal Detect', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
-  { id: 'md_pack_16', key: 'PACKING_PRINTER_ERROR', label: 'Stop Ctr: Printer Error', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
-  { id: 'md_pack_17', key: 'PACKING_PRODUCT_IN_SEAL', label: 'Stop Ctr: Product in Seal', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
-  { id: 'md_pack_18', key: 'PACKING_SPLICE_DETECT', label: 'Stop Ctr: Splice Detect', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_14', key: 'PACKING_ACTUAL_SPEED', label: 'Actual Speed (BPM)', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_bstatus', key: 'PACKING_BAGMAKER_STATUS', label: 'Bagmaker Status', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_15', key: 'PACKING_METAL_DETECT', label: 'Alarm: Metal Detect', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_16', key: 'PACKING_PRINTER_ERROR', label: 'Alarm: Printer Error', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_17', key: 'PACKING_PRODUCT_IN_SEAL', label: 'Alarm: Product in Seal', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
+  { id: 'md_pack_18', key: 'PACKING_SPLICE_DETECT', label: 'Alarm: Splice Detect', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PACKING_BAGMAKER, location: 'Machine Detail / Packing', defaultVisible: true },
 
   // --- MACHINE DETAIL: PROCESS ---
   { id: 'md_proc_1', key: 'PARAM_SCREW_SPEED', label: 'Param: Screw Speed', category: VisibilityCategory.MACHINE_DETAIL, group: VisibilityGroup.PROCESS_PARAM, location: 'Machine Detail / Process', defaultVisible: true },
@@ -280,9 +322,15 @@ const getAuthToken = (): string | null => {
 const apiRequest = async (url: string, options: RequestInit = {}) => {
   const token = getAuthToken();
   
+  // If no token, return empty data instead of making request
+  if (!token) {
+    console.warn('No auth token available for visibility API request');
+    return null;
+  }
+  
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    'Authorization': `Bearer ${token}`,
     ...options.headers,
   };
   
@@ -294,6 +342,8 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
   if (!response.ok) {
     if (response.status === 401) {
        console.warn('Unauthorized access to visibility settings - token may be expired');
+       // Return null instead of throwing for 401 errors
+       return null;
     }
     throw new Error(`API error: ${response.status}`);
   }
@@ -427,6 +477,7 @@ export const bulkUpdateVisibilityRules = async (
   updates: Record<string, boolean>
 ): Promise<void> => {
   const scopeKey = getScopeKey(context);
+  const role = targetKey; // targetKey is the role name
   
   // Update local state immediately
   ensureScope(role, scopeKey);
