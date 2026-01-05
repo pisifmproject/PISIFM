@@ -10,6 +10,8 @@ import { findLatestLVMDP2 } from "./lvmdp/LVMDP_2/lvmdp_2.repository";
 import { findLatestLVMDP3 } from "./lvmdp/LVMDP_3/lvmdp_3.repository";
 import { findLatestLVMDP4 } from "./lvmdp/LVMDP_4/lvmdp_4.repository";
 import { seedPlantsAndMachines } from "./db/seedPlantsAndMachines";
+import { startSimulation } from "./packing/packingSimulation.service";
+import { initPackingSocketHandlers, startPackingPolling } from "./packing/packingSocket.service";
 
 const server = http.createServer(app);
 initSocket(server);
@@ -86,5 +88,15 @@ server.listen(PORT, "0.0.0.0", async () => {
     console.log("✓ LVMDP polling initialized for panels 1-4");
   } catch (err) {
     console.error("✗ Failed to init LVMDP polling:", err);
+  }
+
+  // Start Packing Module simulation engine
+  try {
+    startSimulation();
+    initPackingSocketHandlers();
+    startPackingPolling();
+    console.log("✓ Packing simulation engine initialized (8 machines)");
+  } catch (err) {
+    console.error("✗ Failed to init packing simulation:", err);
   }
 });

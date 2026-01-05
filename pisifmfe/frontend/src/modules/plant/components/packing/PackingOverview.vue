@@ -31,6 +31,18 @@ const config = computed(() => {
     if (id.includes('pc39')) return LINE_CONFIG.pc39;
     if (id.includes('pc14')) return LINE_CONFIG.pc14;
     
+    // Explicit Cassava handlers
+    if (id.includes('copack')) return LINE_CONFIG.copack;
+    if (id.includes('inhouse')) return LINE_CONFIG.inhouse;
+
+    // Other matches
+    if (id.includes('tortilla')) return LINE_CONFIG.tortilla;
+    if (id.includes('fcp')) return LINE_CONFIG.fcp; 
+    if (id.includes('tws')) {
+        if (id.includes('56')) return LINE_CONFIG.tws56;
+        if (id.includes('72')) return LINE_CONFIG.tws72;
+    }
+    
     return null;
 });
 

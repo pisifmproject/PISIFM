@@ -1,87 +1,70 @@
 // src/packing/packing.services.ts
-import * as repo from "./packing.repository";
+// Service layer for Packing Module - wraps simulation service
 
-/* ===========================
-   WEIGHER OPERATIONS
-=========================== */
+import * as simulation from './packingSimulation.service';
+import type { PackingMachineState } from './packing.types';
 
-export const getAllWeigher = async (limit: number = 100) => {
-  return await repo.findAllWeigher(limit);
-};
+/**
+ * Get state for a specific machine
+ */
+export function getMachineState(machineId: string): PackingMachineState | undefined {
+  return simulation.getMachineState(machineId);
+}
 
-export const getLatestWeigher = async () => {
-  return await repo.findLatestWeigher();
-};
+/**
+ * Get all machine states
+ */
+export function getAllMachineStates(): PackingMachineState[] {
+  return simulation.getAllMachineStates();
+}
 
-export const createWeigherData = async (data: any) => {
-  return await repo.insertWeigher(data);
-};
+/**
+ * Get available machine IDs
+ */
+export function getAvailableMachineIds(): string[] {
+  return simulation.getAvailableMachineIds();
+}
 
-/* ===========================
-   BAGMAKER OPERATIONS
-=========================== */
-
-export const getAllBagMaker = async (limit: number = 100) => {
-  return await repo.findAllBagMaker(limit);
-};
-
-export const getLatestBagMaker = async () => {
-  return await repo.findLatestBagMaker();
-};
-
-export const createBagMakerData = async (data: any) => {
-  return await repo.insertBagMaker(data);
-};
-
-/* ===========================
-   ANALYTICS & CALCULATIONS
-=========================== */
-
-// Calculate efficiency untuk packing line
-export const calculateEfficiency = (actual: number, target: number): number => {
+/**
+ * Calculate efficiency for packing line
+ */
+export function calculateEfficiency(actual: number, target: number): number {
   if (target === 0) return 0;
   return (actual / target) * 100;
-};
+}
 
-// Get summary for both weigher and bagmaker
-export const getPackingSummary = async () => {
-  const weigher = await repo.findLatestWeigher();
-  const bagmaker = await repo.findLatestBagMaker();
+/**
+ * Get packing summary for a machine
+ */
+export function getPackingSummary(machineId: string) {
+  const state = simulation.getMachineState(machineId);
+  if (!state) return null;
+
+  const runningWeighers = state.weighers.filter(w => w.status === 'RUNNING').length;
+  const runningBagmakers = state.bagmakers.filter(b => b.status === 'RUNNING').length;
+  
+  const avgBpm = state.weighers.length > 0
+    ? state.weighers.reduce((sum, w) => sum + w.bpm, 0) / state.weighers.length
+    : 0;
+
+  const totalGoodBags = state.bagmakers.reduce((sum, b) => sum + b.bag_counts.good, 0);
+  const totalBadBags = state.bagmakers.reduce((sum, b) => sum + b.bag_counts.bad, 0);
 
   return {
-    weigher: weigher || {
-      targetPacks: 0,
-      actualPacks: 0,
-      rejectCount: 0,
-      efficiency: 0,
-      status: "idle",
+    machine_id: state.machine_id,
+    last_updated: state.last_updated,
+    weighers: {
+      total: state.weighers.length,
+      running: runningWeighers,
     },
-    bagmaker: bagmaker || {
-      targetBags: 0,
-      actualBags: 0,
-      defectBags: 0,
-      efficiency: 0,
-      status: "idle",
+    bagmakers: {
+      total: state.bagmakers.length,
+      running: runningBagmakers,
     },
-  };
-};
-
-// Get shift summary untuk packing
-export const getShiftSummary = async (date?: string) => {
-  // TODO: Implement shift-based calculation
-  // For now, return dummy data
-  return {
-    shift1: {
-      weigher: { targetPacks: 5000, actualPacks: 4800, rejectCount: 50 },
-      bagmaker: { targetBags: 5000, actualBags: 4850, defectBags: 30 },
-    },
-    shift2: {
-      weigher: { targetPacks: 5000, actualPacks: 4900, rejectCount: 40 },
-      bagmaker: { targetBags: 5000, actualBags: 4900, defectBags: 25 },
-    },
-    shift3: {
-      weigher: { targetPacks: 5000, actualPacks: 4700, rejectCount: 60 },
-      bagmaker: { targetBags: 5000, actualBags: 4750, defectBags: 40 },
+    production: {
+      avg_bpm: Math.round(avgBpm * 10) / 10,
+      total_good_bags: totalGoodBags,
+      total_bad_bags: totalBadBags,
     },
   };
-};
+}
