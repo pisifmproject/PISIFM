@@ -6,6 +6,7 @@ import { ArrowLeft, Zap, Cloud, Droplet, Wind, Activity, Timer, Wrench, Package 
 import { getMachineProcessData, getMachinePerformanceData, getMachineUtilityData } from '@/lib/api';
 import { useVisibility } from '@/composables/useVisibility';
 import { useAuth } from '@/stores/auth';
+import PackingOverview from '../components/packing/PackingOverview.vue';
 
 // Charts
 import { use } from "echarts/core";
@@ -788,12 +789,13 @@ function formatNumber(num: number, dec = 0) {
              </div>
         </div>
 
+        <!-- PACKING TAB -->
+        <div v-else-if="activeTab === 'PACKING'" class="fade-in">
+            <PackingOverview :machine-id="machineId" />
+        </div>
+
         <!-- COMING SOON TABS -->
         <div v-else class="flex flex-col items-center justify-center h-[400px] text-center fade-in card p-10">
-            <template v-if="activeTab === 'PACKING'">
-                <Package class="w-16 h-16 text-gray-600 mb-4" />
-                <h2 class="text-2xl font-bold text-gray-300">Packing Module</h2>
-            </template>
             <template v-if="activeTab === 'ALARMS'">
                 <Activity class="w-16 h-16 text-gray-600 mb-4" />
                 <h2 class="text-2xl font-bold text-gray-300">Alarms History</h2>
