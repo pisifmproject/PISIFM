@@ -257,10 +257,18 @@ const fetchChartData = async () => {
         Year: "year",
       };
 
+      // Ensure we use LOCAL DATE for the query to match Shift Data
+      const now = new Date();
+      const localDate = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0')
+      ].join('-');
+
       const trendData = await getLvmdpTrend(
         lvmdpId.value as any,
         periodMap[timeFilter.value],
-        new Date().toISOString().split("T")[0]
+        localDate
       );
 
       // Calculate total energy from trend data
@@ -342,14 +350,40 @@ const fetchShiftData = async () => {
 };
 
 const fetchHistoricalData = async () => {
-    fetchChartData();
-    fetchShiftData();
+    // Fetch both in parallel
+    await Promise.all([fetchChartData(), fetchShiftData()]);
+
+    // Data Consistency Check / Fallback
+    // If Trend API returns 0 (totalEnergy=0) but Shift Data has values, use Shift Total.
+    if (totalEnergy.value === 0 && timeFilter.value === 'Day') {
+        const sumShifts = shiftData.value.reduce((acc, s) => {
+            // s.kwh might be string "123.45" or number. handle potential format.
+            // Original code forces toFixed(2) which is string.
+            let val = 0;
+            if (typeof s.kwh === 'string') {
+                if (s.kwh !== '-') {
+                    val = parseFloat(s.kwh.replace(',', '.')); // Handle ID format if used
+                }
+            } else if (typeof s.kwh === 'number') {
+                val = s.kwh;
+            }
+            return acc + (isNaN(val) ? 0 : val);
+        }, 0);
+        
+        if (sumShifts > 0) {
+            totalEnergy.value = sumShifts;
+        }
+    }
 };
+
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
 
 watch(
   [plantId, lvmdpId],
   () => {
     if (unsubscribe) unsubscribe();
+    if (pollingInterval) clearInterval(pollingInterval);
+    
     loading.value = true;
 
     // Subscribe Real-time
@@ -364,6 +398,9 @@ watch(
 
     // Fetch Historical
     fetchHistoricalData();
+    
+    // Setup Auto-Refresh (5 minutes)
+    pollingInterval = setInterval(fetchHistoricalData, 300000);
   },
   { immediate: true }
 );
@@ -380,6 +417,7 @@ watch(shiftDate, () => {
 
 onUnmounted(() => {
   if (unsubscribe) unsubscribe();
+  if (pollingInterval) clearInterval(pollingInterval);
 });
 
 // Formatters
