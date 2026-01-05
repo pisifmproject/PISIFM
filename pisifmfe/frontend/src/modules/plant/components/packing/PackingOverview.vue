@@ -7,6 +7,7 @@ import { Package, Clock } from 'lucide-vue-next';
 
 const props = defineProps<{
   machineId: string;
+  plantId: string;
 }>();
 
 // --- Configuration ---
@@ -23,6 +24,11 @@ const LINE_CONFIG: Record<string, { weighers: number; bagmakers: number }> = {
 
 // --- State ---
 const config = computed(() => {
+    // Only 'cikupa' plant has active packing module currently
+    if (props.plantId.toLowerCase() !== 'cikupa') {
+        return null; // Triggers "Coming Soon" state for other plants
+    }
+
     const id = props.machineId.toLowerCase().replace(/[^a-z0-9]/g, '');
     // Handle special mappings if needed, but assuming strict match for now
     if (LINE_CONFIG[id]) return LINE_CONFIG[id];

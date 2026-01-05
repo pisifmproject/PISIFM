@@ -791,7 +791,7 @@ function formatNumber(num: number, dec = 0) {
 
         <!-- PACKING TAB -->
         <div v-else-if="activeTab === 'PACKING'" class="fade-in">
-            <PackingOverview :machine-id="machineId" />
+            <PackingOverview :machine-id="machineId" :plant-id="plantId" />
         </div>
 
         <!-- COMING SOON TABS -->
