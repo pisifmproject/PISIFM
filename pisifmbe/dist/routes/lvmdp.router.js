@@ -191,7 +191,7 @@ r.get("/:id/trend", async (req, res) => {
             return res.status(400).json({ message: "Bad id (must be 1..4)" });
         }
         // Import Indofood calendar utilities
-        const { getCurrentIndofoodWeek, getCurrentIndofoodMonth, getIndofoodYearRange, getIndofoodMonthByNumber, } = await Promise.resolve().then(() => __importStar(require("../utils/indofoodCalendar")));
+        const { getIndofoodWeekByDate, getIndofoodMonthByDate, getIndofoodYearRange, getIndofoodMonthByNumber, } = await Promise.resolve().then(() => __importStar(require("../utils/indofoodCalendar")));
         // Import appropriate repository
         let dailyReportRepo;
         switch (id) {
@@ -223,9 +223,9 @@ r.get("/:id/trend", async (req, res) => {
         }
         else if (period === "week") {
             // Weekly data based on Indofood calendar
-            const week = getCurrentIndofoodWeek();
+            const week = getIndofoodWeekByDate(dateParam);
             if (!week) {
-                return res.status(404).json({ message: "Current week not found in Indofood calendar" });
+                return res.status(404).json({ message: "Week not found for date " + dateParam });
             }
             // Get daily reports for the week range and filter anomalies
             const allReports = await dailyReportRepo.getAllDailyReports();
@@ -253,9 +253,9 @@ r.get("/:id/trend", async (req, res) => {
         }
         else if (period === "month") {
             // Monthly data based on Indofood calendar (weekly aggregation)
-            const currentMonth = getCurrentIndofoodMonth();
+            const currentMonth = getIndofoodMonthByDate(dateParam);
             if (!currentMonth) {
-                return res.status(404).json({ message: "Current month not found in Indofood calendar" });
+                return res.status(404).json({ message: "Month not found for date " + dateParam });
             }
             const allReports = await dailyReportRepo.getAllDailyReports();
             const reports = allReports.filter((r) => {

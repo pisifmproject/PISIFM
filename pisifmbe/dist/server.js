@@ -15,6 +15,8 @@ const lvmdp_2_repository_1 = require("./lvmdp/LVMDP_2/lvmdp_2.repository");
 const lvmdp_3_repository_1 = require("./lvmdp/LVMDP_3/lvmdp_3.repository");
 const lvmdp_4_repository_1 = require("./lvmdp/LVMDP_4/lvmdp_4.repository");
 const seedPlantsAndMachines_1 = require("./db/seedPlantsAndMachines");
+const packingSimulation_service_1 = require("./packing/packingSimulation.service");
+const packingSocket_service_1 = require("./packing/packingSocket.service");
 const server = http_1.default.createServer(index_1.default);
 (0, socket_1.initSocket)(server);
 // mesin 1–4, random-walk biar halus
@@ -78,5 +80,15 @@ server.listen(PORT, "0.0.0.0", async () => {
     }
     catch (err) {
         console.error("✗ Failed to init LVMDP polling:", err);
+    }
+    // Start Packing Module simulation engine
+    try {
+        (0, packingSimulation_service_1.startSimulation)();
+        (0, packingSocket_service_1.initPackingSocketHandlers)();
+        (0, packingSocket_service_1.startPackingPolling)();
+        console.log("✓ Packing simulation engine initialized (8 machines)");
+    }
+    catch (err) {
+        console.error("✗ Failed to init packing simulation:", err);
     }
 });

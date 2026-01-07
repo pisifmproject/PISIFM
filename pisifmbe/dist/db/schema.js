@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.dailyElectricalReports = exports.packingLinePackingPouchBagMaker = exports.packingLineTWS72BagMaker = exports.packingLineTWS56BagMaker = exports.packingLineFCPBagMaker = exports.packingLineTortilaBagMaker = exports.packingLineCassavaCopackBagMaker = exports.packingLineCassavaInhouseBagMaker = exports.packingLinePC39BagMaker = exports.packingLinePackingPouchWeigher = exports.packingLineTWS72Weigher = exports.packingLineTWS56Weigher = exports.packingLineFCPWeigher = exports.packingLineTortilaWeigher = exports.packingLineCassavaCopackWeigher = exports.packingLineCassavaInhouseWeigher = exports.packingLinePC39Weigher = exports.productionLineAIHP = exports.productionLineACOPACK = exports.productionLineATWS72 = exports.productionLineATWS56 = exports.productionLineAFCP = exports.productionLineATS1000 = exports.productionLineAPC14 = exports.packingLineABagMaker = exports.packingLineAWeigher = exports.productionLineAPC39 = exports.hourlyReportLVMDP4 = exports.hourlyReportLVMDP3 = exports.hourlyReportLVMDP2 = exports.hourlyReportLVMDP1 = exports.dailyReportLVMDP4 = exports.dailyReportLVMDP3 = exports.dailyReportLVMDP2 = exports.dailyReportLVMDP1 = exports.machines = exports.plants = exports.user = void 0;
+exports.dailyElectricalReports = exports.visibilitySettings = exports.productionIHP = exports.productionCOPACK = exports.productionTWS72 = exports.productionTWS56 = exports.productionFCP = exports.productionTS1000 = exports.productionPC14 = exports.productionLineAPC39 = exports.hourlyReportLVMDP4 = exports.hourlyReportLVMDP3 = exports.hourlyReportLVMDP2 = exports.hourlyReportLVMDP1 = exports.dailyReportLVMDP4 = exports.dailyReportLVMDP3 = exports.dailyReportLVMDP2 = exports.dailyReportLVMDP1 = exports.machines = exports.plants = exports.user = void 0;
 // src/db/schema.ts
 const pg_core_1 = require("drizzle-orm/pg-core");
 /* ===========================
@@ -250,52 +250,15 @@ exports.productionLineAPC39 = (0, pg_core_1.pgTable)("production_line_a_pc39", {
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
 });
 /* ===========================
-   PACKING LINE TABLES
-   (Menyimpan data packing line)
+   PRODUCTION TABLES
+   (Menyimpan data production per mesin)
+   Nama tabel: production_<nama_mesin>
 =========================== */
-/** Packing Line A - Weigher */
-exports.packingLineAWeigher = (0, pg_core_1.pgTable)("packing_line_a_weigher", {
+// Production PC14
+exports.productionPC14 = (0, pg_core_1.pgTable)("production_pc14", {
     id: (0, pg_core_1.text)("id").primaryKey(),
     timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default("LINE_PC14_WEIGHER"),
-    // Packing Metrics
-    targetPacks: (0, pg_core_1.integer)("target_packs").default(0),
-    actualPacks: (0, pg_core_1.integer)("actual_packs").default(0),
-    rejectCount: (0, pg_core_1.integer)("reject_count").default(0),
-    // Weight Metrics
-    avgWeight: (0, pg_core_1.doublePrecision)("avg_weight").default(0),
-    minWeight: (0, pg_core_1.doublePrecision)("min_weight").default(0),
-    maxWeight: (0, pg_core_1.doublePrecision)("max_weight").default(0),
-    // Machine Status
-    status: (0, pg_core_1.text)("status").default("idle"), // running, idle, maintenance, down
-    efficiency: (0, pg_core_1.doublePrecision)("efficiency").default(0),
-    createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
-    updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
-});
-/** Packing Line A - BagMaker */
-exports.packingLineABagMaker = (0, pg_core_1.pgTable)("packing_line_a_bagmaker", {
-    id: (0, pg_core_1.text)("id").primaryKey(),
-    timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default("LINE_PC14_BAGMAKER"),
-    // Packing Metrics
-    targetBags: (0, pg_core_1.integer)("target_bags").default(0),
-    actualBags: (0, pg_core_1.integer)("actual_bags").default(0),
-    defectBags: (0, pg_core_1.integer)("defect_bags").default(0),
-    // Machine Status
-    status: (0, pg_core_1.text)("status").default("idle"), // running, idle, maintenance, down
-    efficiency: (0, pg_core_1.doublePrecision)("efficiency").default(0),
-    speedRpm: (0, pg_core_1.doublePrecision)("speed_rpm").default(0),
-    createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
-    updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
-});
-/* ===========================
-   ADDITIONAL PRODUCTION LINES
-=========================== */
-// Production Line A - PC14
-exports.productionLineAPC14 = (0, pg_core_1.pgTable)("production_line_a_pc14", {
-    id: (0, pg_core_1.text)("id").primaryKey(),
-    timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default("LINE_A_PC14"),
+    machineId: (0, pg_core_1.text)("machine_id").notNull().default("PC14"),
     targetProduction: (0, pg_core_1.integer)("target_production").default(0),
     actualProduction: (0, pg_core_1.integer)("actual_production").default(0),
     defectCount: (0, pg_core_1.integer)("defect_count").default(0),
@@ -307,11 +270,11 @@ exports.productionLineAPC14 = (0, pg_core_1.pgTable)("production_line_a_pc14", {
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
 });
-// Production Line A - TS1000
-exports.productionLineATS1000 = (0, pg_core_1.pgTable)("production_line_a_ts1000", {
+// Production TS1000
+exports.productionTS1000 = (0, pg_core_1.pgTable)("production_ts1000", {
     id: (0, pg_core_1.text)("id").primaryKey(),
     timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default("LINE_A_TS1000"),
+    machineId: (0, pg_core_1.text)("machine_id").notNull().default("TS1000"),
     targetProduction: (0, pg_core_1.integer)("target_production").default(0),
     actualProduction: (0, pg_core_1.integer)("actual_production").default(0),
     defectCount: (0, pg_core_1.integer)("defect_count").default(0),
@@ -323,11 +286,11 @@ exports.productionLineATS1000 = (0, pg_core_1.pgTable)("production_line_a_ts1000
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
 });
-// Production Line A - FCP
-exports.productionLineAFCP = (0, pg_core_1.pgTable)("production_line_a_fcp", {
+// Production FCP
+exports.productionFCP = (0, pg_core_1.pgTable)("production_fcp", {
     id: (0, pg_core_1.text)("id").primaryKey(),
     timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default("LINE_A_FCP"),
+    machineId: (0, pg_core_1.text)("machine_id").notNull().default("FCP"),
     targetProduction: (0, pg_core_1.integer)("target_production").default(0),
     actualProduction: (0, pg_core_1.integer)("actual_production").default(0),
     defectCount: (0, pg_core_1.integer)("defect_count").default(0),
@@ -339,11 +302,11 @@ exports.productionLineAFCP = (0, pg_core_1.pgTable)("production_line_a_fcp", {
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
 });
-// Production Line A - TWS56
-exports.productionLineATWS56 = (0, pg_core_1.pgTable)("production_line_a_tws56", {
+// Production TWS56
+exports.productionTWS56 = (0, pg_core_1.pgTable)("production_tws56", {
     id: (0, pg_core_1.text)("id").primaryKey(),
     timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default("LINE_A_TWS56"),
+    machineId: (0, pg_core_1.text)("machine_id").notNull().default("TWS56"),
     targetProduction: (0, pg_core_1.integer)("target_production").default(0),
     actualProduction: (0, pg_core_1.integer)("actual_production").default(0),
     defectCount: (0, pg_core_1.integer)("defect_count").default(0),
@@ -355,11 +318,11 @@ exports.productionLineATWS56 = (0, pg_core_1.pgTable)("production_line_a_tws56",
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
 });
-// Production Line A - TWS72
-exports.productionLineATWS72 = (0, pg_core_1.pgTable)("production_line_a_tws72", {
+// Production TWS72
+exports.productionTWS72 = (0, pg_core_1.pgTable)("production_tws72", {
     id: (0, pg_core_1.text)("id").primaryKey(),
     timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default("LINE_A_TWS72"),
+    machineId: (0, pg_core_1.text)("machine_id").notNull().default("TWS72"),
     targetProduction: (0, pg_core_1.integer)("target_production").default(0),
     actualProduction: (0, pg_core_1.integer)("actual_production").default(0),
     defectCount: (0, pg_core_1.integer)("defect_count").default(0),
@@ -371,11 +334,11 @@ exports.productionLineATWS72 = (0, pg_core_1.pgTable)("production_line_a_tws72",
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
 });
-// Production Line A - COPACK
-exports.productionLineACOPACK = (0, pg_core_1.pgTable)("production_line_a_copack", {
+// Production COPACK
+exports.productionCOPACK = (0, pg_core_1.pgTable)("production_copack", {
     id: (0, pg_core_1.text)("id").primaryKey(),
     timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default("LINE_A_COPACK"),
+    machineId: (0, pg_core_1.text)("machine_id").notNull().default("COPACK"),
     targetProduction: (0, pg_core_1.integer)("target_production").default(0),
     actualProduction: (0, pg_core_1.integer)("actual_production").default(0),
     defectCount: (0, pg_core_1.integer)("defect_count").default(0),
@@ -387,11 +350,11 @@ exports.productionLineACOPACK = (0, pg_core_1.pgTable)("production_line_a_copack
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
 });
-// Production Line A - IHP
-exports.productionLineAIHP = (0, pg_core_1.pgTable)("production_line_a_ihp", {
+// Production IHP
+exports.productionIHP = (0, pg_core_1.pgTable)("production_ihp", {
     id: (0, pg_core_1.text)("id").primaryKey(),
     timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default("LINE_A_IHP"),
+    machineId: (0, pg_core_1.text)("machine_id").notNull().default("IHP"),
     targetProduction: (0, pg_core_1.integer)("target_production").default(0),
     actualProduction: (0, pg_core_1.integer)("actual_production").default(0),
     defectCount: (0, pg_core_1.integer)("defect_count").default(0),
@@ -404,55 +367,20 @@ exports.productionLineAIHP = (0, pg_core_1.pgTable)("production_line_a_ihp", {
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
 });
 /* ===========================
-   ADDITIONAL PACKING LINES (B-I)
+   VISIBILITY SETTINGS TABLE
+   (Persistent role-based UI visibility settings)
 =========================== */
-// Helper function to create packing line schemas (untuk menghindari repetisi)
-const createPackingWeigherTable = (line) => (0, pg_core_1.pgTable)(`packing_line_${line.toLowerCase()}_weigher`, {
-    id: (0, pg_core_1.text)("id").primaryKey(),
-    timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default(`LINE_${line}_WEIGHER`),
-    targetPacks: (0, pg_core_1.integer)("target_packs").default(0),
-    actualPacks: (0, pg_core_1.integer)("actual_packs").default(0),
-    rejectCount: (0, pg_core_1.integer)("reject_count").default(0),
-    avgWeight: (0, pg_core_1.doublePrecision)("avg_weight").default(0),
-    minWeight: (0, pg_core_1.doublePrecision)("min_weight").default(0),
-    maxWeight: (0, pg_core_1.doublePrecision)("max_weight").default(0),
-    status: (0, pg_core_1.text)("status").default("idle"),
-    efficiency: (0, pg_core_1.doublePrecision)("efficiency").default(0),
+exports.visibilitySettings = (0, pg_core_1.pgTable)("visibility_settings", {
+    id: (0, pg_core_1.serial)("id").primaryKey(),
+    role: (0, pg_core_1.text)("role").notNull(),
+    scopeKey: (0, pg_core_1.text)("scope_key").notNull(),
+    itemKey: (0, pg_core_1.text)("item_key").notNull(),
+    visible: (0, pg_core_1.boolean)("visible").notNull().default(true),
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
-});
-const createPackingBagMakerTable = (line) => (0, pg_core_1.pgTable)(`packing_line_${line.toLowerCase()}_bagmaker`, {
-    id: (0, pg_core_1.text)("id").primaryKey(),
-    timestamp: (0, pg_core_1.timestamp)("timestamp").notNull(),
-    lineId: (0, pg_core_1.text)("line_id").notNull().default(`LINE_${line}_BAGMAKER`),
-    targetBags: (0, pg_core_1.integer)("target_bags").default(0),
-    actualBags: (0, pg_core_1.integer)("actual_bags").default(0),
-    defectBags: (0, pg_core_1.integer)("defect_bags").default(0),
-    status: (0, pg_core_1.text)("status").default("idle"),
-    efficiency: (0, pg_core_1.doublePrecision)("efficiency").default(0),
-    speedRpm: (0, pg_core_1.doublePrecision)("speed_rpm").default(0),
-    createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
-    updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
-});
-// Packing Lines - Weigher (by machine name)
-exports.packingLinePC39Weigher = createPackingWeigherTable("PC39");
-exports.packingLineCassavaInhouseWeigher = createPackingWeigherTable("CASSAVA_INHOUSE");
-exports.packingLineCassavaCopackWeigher = createPackingWeigherTable("CASSAVA_COPACK");
-exports.packingLineTortilaWeigher = createPackingWeigherTable("TORTILA");
-exports.packingLineFCPWeigher = createPackingWeigherTable("FCP");
-exports.packingLineTWS56Weigher = createPackingWeigherTable("TWS56");
-exports.packingLineTWS72Weigher = createPackingWeigherTable("TWS72");
-exports.packingLinePackingPouchWeigher = createPackingWeigherTable("PACKING_POUCH");
-// Packing Lines - BagMaker (by machine name)
-exports.packingLinePC39BagMaker = createPackingBagMakerTable("PC39");
-exports.packingLineCassavaInhouseBagMaker = createPackingBagMakerTable("CASSAVA_INHOUSE");
-exports.packingLineCassavaCopackBagMaker = createPackingBagMakerTable("CASSAVA_COPACK");
-exports.packingLineTortilaBagMaker = createPackingBagMakerTable("TORTILA");
-exports.packingLineFCPBagMaker = createPackingBagMakerTable("FCP");
-exports.packingLineTWS56BagMaker = createPackingBagMakerTable("TWS56");
-exports.packingLineTWS72BagMaker = createPackingBagMakerTable("TWS72");
-exports.packingLinePackingPouchBagMaker = createPackingBagMakerTable("PACKING_POUCH");
+}, (table) => ({
+    uniqueVisibilitySetting: (0, pg_core_1.unique)().on(table.role, table.scopeKey, table.itemKey),
+}));
 /* ===========================
    ELECTRICAL REPORTING TABLES
    (Professional energy monitoring - ISO 50001 compliant)

@@ -1,4 +1,6 @@
 "use strict";
+// src/packing/packing.services.ts
+// Service layer for Packing Module - wraps simulation service
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -33,88 +35,67 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getShiftSummary = exports.getPackingSummary = exports.calculateEfficiency = exports.createBagMakerData = exports.getLatestBagMaker = exports.getAllBagMaker = exports.createWeigherData = exports.getLatestWeigher = exports.getAllWeigher = void 0;
-// src/packing/packing.services.ts
-const repo = __importStar(require("./packing.repository"));
-/* ===========================
-   WEIGHER OPERATIONS
-=========================== */
-const getAllWeigher = async (limit = 100) => {
-    return await repo.findAllWeigher(limit);
-};
-exports.getAllWeigher = getAllWeigher;
-const getLatestWeigher = async () => {
-    return await repo.findLatestWeigher();
-};
-exports.getLatestWeigher = getLatestWeigher;
-const createWeigherData = async (data) => {
-    return await repo.insertWeigher(data);
-};
-exports.createWeigherData = createWeigherData;
-/* ===========================
-   BAGMAKER OPERATIONS
-=========================== */
-const getAllBagMaker = async (limit = 100) => {
-    return await repo.findAllBagMaker(limit);
-};
-exports.getAllBagMaker = getAllBagMaker;
-const getLatestBagMaker = async () => {
-    return await repo.findLatestBagMaker();
-};
-exports.getLatestBagMaker = getLatestBagMaker;
-const createBagMakerData = async (data) => {
-    return await repo.insertBagMaker(data);
-};
-exports.createBagMakerData = createBagMakerData;
-/* ===========================
-   ANALYTICS & CALCULATIONS
-=========================== */
-// Calculate efficiency untuk packing line
-const calculateEfficiency = (actual, target) => {
+exports.getMachineState = getMachineState;
+exports.getAllMachineStates = getAllMachineStates;
+exports.getAvailableMachineIds = getAvailableMachineIds;
+exports.calculateEfficiency = calculateEfficiency;
+exports.getPackingSummary = getPackingSummary;
+const simulation = __importStar(require("./packingSimulation.service"));
+/**
+ * Get state for a specific machine
+ */
+function getMachineState(machineId) {
+    return simulation.getMachineState(machineId);
+}
+/**
+ * Get all machine states
+ */
+function getAllMachineStates() {
+    return simulation.getAllMachineStates();
+}
+/**
+ * Get available machine IDs
+ */
+function getAvailableMachineIds() {
+    return simulation.getAvailableMachineIds();
+}
+/**
+ * Calculate efficiency for packing line
+ */
+function calculateEfficiency(actual, target) {
     if (target === 0)
         return 0;
     return (actual / target) * 100;
-};
-exports.calculateEfficiency = calculateEfficiency;
-// Get summary for both weigher and bagmaker
-const getPackingSummary = async () => {
-    const weigher = await repo.findLatestWeigher();
-    const bagmaker = await repo.findLatestBagMaker();
+}
+/**
+ * Get packing summary for a machine
+ */
+function getPackingSummary(machineId) {
+    const state = simulation.getMachineState(machineId);
+    if (!state)
+        return null;
+    const runningWeighers = state.weighers.filter(w => w.status === 'RUNNING').length;
+    const runningBagmakers = state.bagmakers.filter(b => b.status === 'RUNNING').length;
+    const avgBpm = state.weighers.length > 0
+        ? state.weighers.reduce((sum, w) => sum + w.bpm, 0) / state.weighers.length
+        : 0;
+    const totalGoodBags = state.bagmakers.reduce((sum, b) => sum + b.bag_counts.good, 0);
+    const totalBadBags = state.bagmakers.reduce((sum, b) => sum + b.bag_counts.bad, 0);
     return {
-        weigher: weigher || {
-            targetPacks: 0,
-            actualPacks: 0,
-            rejectCount: 0,
-            efficiency: 0,
-            status: "idle",
+        machine_id: state.machine_id,
+        last_updated: state.last_updated,
+        weighers: {
+            total: state.weighers.length,
+            running: runningWeighers,
         },
-        bagmaker: bagmaker || {
-            targetBags: 0,
-            actualBags: 0,
-            defectBags: 0,
-            efficiency: 0,
-            status: "idle",
+        bagmakers: {
+            total: state.bagmakers.length,
+            running: runningBagmakers,
+        },
+        production: {
+            avg_bpm: Math.round(avgBpm * 10) / 10,
+            total_good_bags: totalGoodBags,
+            total_bad_bags: totalBadBags,
         },
     };
-};
-exports.getPackingSummary = getPackingSummary;
-// Get shift summary untuk packing
-const getShiftSummary = async (date) => {
-    // TODO: Implement shift-based calculation
-    // For now, return dummy data
-    return {
-        shift1: {
-            weigher: { targetPacks: 5000, actualPacks: 4800, rejectCount: 50 },
-            bagmaker: { targetBags: 5000, actualBags: 4850, defectBags: 30 },
-        },
-        shift2: {
-            weigher: { targetPacks: 5000, actualPacks: 4900, rejectCount: 40 },
-            bagmaker: { targetBags: 5000, actualBags: 4900, defectBags: 25 },
-        },
-        shift3: {
-            weigher: { targetPacks: 5000, actualPacks: 4700, rejectCount: 60 },
-            bagmaker: { targetBags: 5000, actualBags: 4750, defectBags: 40 },
-        },
-    };
-};
-exports.getShiftSummary = getShiftSummary;
+}
