@@ -838,41 +838,68 @@ const generateReport = async () => {
         <div class="modal-body">
           <div class="help-section">
             <h3>LVMDP 1 (Main Production Area)</h3>
-            <p>
-              Supplies electrical power to the main production activities as
-              well as raw material and finished goods warehouses. This panel
-              supports daily production processes, packing operations, and
-              internal distribution. The performance of LVMDP 1 has a
-              significant impact on overall plant operational continuity.
-            </p>
+            <ul>
+              <li>SDP Process A</li>
+              <li>SDP Process B</li>
+              <li>SDP Process C</li>
+              <li>SDP Process</li>
+              <li>SDP Raw Material Warehouse</li>
+              <li>SDP Finished Goods Warehouse</li>
+              <li>SDP Packing</li>
+              <li>SDP Process Line B</li>
+              <li>SDP X&amp;P</li>
+            </ul>
           </div>
+
           <div class="help-section">
             <h3>LVMDP 2 (Utilities & Supporting Facilities)</h3>
-            <p>
-              Provides electrical power to supporting facilities such as
-              offices, workshops, air and gas systems, and various pumping and
-              water treatment installations. Although not directly connected to
-              core production, this panel plays a critical role in ensuring
-              smooth and reliable plant operations.
-            </p>
+            <ul>
+              <li>SDP Office</li>
+              <li>SDP Workshop</li>
+              <li>SDP Compressor</li>
+              <li>SDP Nitrogen</li>
+              <li>SDP Cooking Oil Pump</li>
+              <li>SDP Fuel Pump</li>
+              <li>SDP Deepwell</li>
+              <li>SDP WWTP 1 (By WWTP)</li>
+              <li>SDP Water Pump</li>
+              <li>SDP Oil</li>
+              <li>SDP pH System</li>
+              <li>SDP Booster Pump</li>
+              <li>SDP Compressor 5</li>
+            </ul>
           </div>
+
           <div class="help-section">
             <h3>LVMDP 3 (Extended Production & Storage Areas)</h3>
-            <p>
-              Supplies power to additional production lines, extended storage
-              areas, and supporting facilities related to quality control and
-              cooling systems. This panel helps ensure stable operations across
-              supplementary production and storage functions.
-            </p>
+            <ul>
+              <li>SDP TC Line</li>
+              <li>SDP Raw Material Warehouse 2</li>
+              <li>SDP Finished Goods Warehouse 2</li>
+              <li>P VAC 2</li>
+              <li>P WWTP 2</li>
+              <li>P WTP</li>
+              <li>P Cold Room</li>
+              <li>PDQC</li>
+              <li>SDP Process Line 7</li>
+              <li>SDP Compressor 4</li>
+            </ul>
           </div>
+
           <div class="help-section">
             <h3>LVMDP 4 (Boiler & Specialized Production Lines)</h3>
-            <p>
-              Supports electrical supply for boiler systems and specialized
-              production lines. This panel is essential for maintaining stable
-              energy availability for processes that require high reliability
-              and directly affect production efficiency.
-            </p>
+            <ul>
+              <li>SDB Line 9</li>
+              <li>SDB Line 10</li>
+              <li>P Boiler</li>
+              <li>SDB Finished Goods Mezzanine</li>
+              <li>SDB VAC 3.1</li>
+              <li>P Compressor 3</li>
+              <li>SDB VAC 3.2</li>
+              <li>SDB Raw Material 3</li>
+              <li>P WTP</li>
+              <li>SDB Line 11</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -1544,5 +1571,14 @@ h1 {
   color: #cbd5e1;
   line-height: 1.6;
   margin: 0;
+}
+.help-section ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0;
+  color: #cbd5e1;
+}
+.help-section li {
+  margin-bottom: 0.25rem;
 }
 </style>
