@@ -173,7 +173,7 @@ const Layout: React.FC<LayoutProps> = ({
   ];
 
   return (
-    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300">
+    <div className="h-screen w-full flex bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
       <style>{`
         @keyframes bell-shake {
           0% { transform: rotate(0); }
@@ -285,7 +285,7 @@ const Layout: React.FC<LayoutProps> = ({
         transform transition-transform duration-300
         lg:transform-none lg:fixed lg:inset-y-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        flex flex-col shadow-2xl relative overflow-hidden
+        flex flex-col shadow-2xl overflow-hidden
       `}>
         <div className="absolute inset-0 blueprint-grid opacity-[0.05] pointer-events-none"></div>
         <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-950 shrink-0">
