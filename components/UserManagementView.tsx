@@ -67,7 +67,7 @@ const UserManagementView: React.FC<UserManagementProps> = ({
   );
 
   return (
-    <div className="space-y-10 animate-fadeIn">
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-10 animate-fadeIn">
       {/* Admin Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div>
