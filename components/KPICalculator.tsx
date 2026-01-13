@@ -36,7 +36,11 @@ export default function KPICalculator({ user, submissions = [] }: KPICalculatorP
     PERFORMANCE_REVIEW_DATA.forEach(category => {
       category.items.forEach(item => {
         const selectedIdx = selections[item.id];
-        if (selectedIdx !== undefined) total += item.options[selectedIdx].weightScore;
+        // DATA STRUCTURE FIX: Use scoringGuidance instead of options
+        const options = item.scoringGuidance || [];
+        if (selectedIdx !== undefined && options[selectedIdx]) {
+           total += options[selectedIdx].weightScore;
+        }
       });
     });
     setTotalWeightScore(total);
@@ -120,7 +124,8 @@ export default function KPICalculator({ user, submissions = [] }: KPICalculatorP
                   </tr>
                   {category.items.map((item) => {
                     const selectedIdx = selections[item.id] ?? -1;
-                    const currentOption = selectedIdx !== -1 ? item.options[selectedIdx] : null;
+                    const options = item.scoringGuidance || [];
+                    const currentOption = selectedIdx !== -1 ? options[selectedIdx] : null;
                     const score = currentOption ? currentOption.weightScore : 0;
                     const tier = getTierLabel(score, item.weight);
                     const badgeClass = getBadgeStyle(score, item.weight);
@@ -147,8 +152,8 @@ export default function KPICalculator({ user, submissions = [] }: KPICalculatorP
                             onChange={(e) => handleSelectionChange(item.id, parseInt(e.target.value))}
                           >
                             <option value={-1}>SELECT LEVEL...</option>
-                            {item.options.map((opt, idx) => (
-                              <option key={idx} value={idx}>{opt.label}</option>
+                            {(item.scoringGuidance || []).map((opt, idx) => (
+                              <option key={idx} value={idx}>{opt.realization} (Score: {opt.scoring})</option>
                             ))}
                           </select>
                         </td>

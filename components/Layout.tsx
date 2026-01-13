@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 // Fix: Removed non-existent UserFeedback from imports
 import { User, Notification } from '../types';
 import { NAV_ITEMS, MOCK_EVENTS } from '../constants';
 import ChatDrawer from './Collaboration/ChatDrawer';
 import {
   Menu, Bell, Search, LogOut,
-  ChevronRight, X, Briefcase,
+  ChevronRight, ChevronDown, X, Briefcase,
   Clock, AlertTriangle, Info, BellRing, Trash2, Check, ExternalLink,
   History, ArrowRight, MessageSquare, Star, Smile, Frown, Meh, Laugh, Angry, Loader2,
   CheckCircle, Sun, Moon, AlertOctagon
@@ -49,9 +50,28 @@ const Layout: React.FC<LayoutProps> = ({
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackCategory, setFeedbackCategory] = useState('');
   const [feedbackComment, setFeedbackComment] = useState('');
+  // Use useLocation to get reactive path updates
+  const location = useLocation();
+  const activePath = location.pathname;
+  
+  // Determine if we are in a Command Center module
+  const commandCenterIds = ['projects', 'resources', 'performance', 'requests', 'finance', 'ai_copilot'];
+  const isCommandCenterActive = NAV_ITEMS.some(item => 
+    commandCenterIds.includes(item.id) && activePath.startsWith(item.path) && item.path !== '/'
+  );
+
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  // Initialize Open state based on active path
+  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(isCommandCenterActive);
+
+  // Sync open state when path changes (optional, but good for deep linking)
+  useEffect(() => {
+    if (isCommandCenterActive) {
+      setIsCommandCenterOpen(true);
+    }
+  }, [isCommandCenterActive]);
 
   const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -261,8 +281,9 @@ const Layout: React.FC<LayoutProps> = ({
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-30 w-72 bg-slate-900 text-white transform transition-transform duration-300
-        lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen
+        fixed inset-y-0 left-0 z-30 w-72 bg-slate-900 text-white
+        transform transition-transform duration-300
+        lg:transform-none lg:fixed lg:inset-y-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         flex flex-col shadow-2xl relative overflow-hidden
       `}>
@@ -277,34 +298,101 @@ const Layout: React.FC<LayoutProps> = ({
         </div>
 
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-          {filteredNavItems.map(item => {
-            const Icon = item.icon;
-            const isActive = currentPath === item.path;
+          {(() => {
+            const dashboardItem = filteredNavItems.find(item => item.id === 'dashboard');
+            const commandCenterItems = filteredNavItems.filter(item => commandCenterIds.includes(item.id));
+            const otherItems = filteredNavItems.filter(item => !commandCenterIds.includes(item.id) && item.id !== 'dashboard');
+            
+            const isDashboardActive = activePath === '/';
+
             return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onNavigate(item.path);
-                  setIsSidebarOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 group relative ${isActive
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-900/20 animate-nav-glow'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white nav-hover-glow'
-                  }`}
-              >
-                {isActive && (
-                  <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[nav-scan_2s_linear_infinite]"></div>
+              <>
+                {/* Command Center Group */}
+                {dashboardItem && (
+                  <div className="space-y-1">
+                    <div
+                      className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 group relative cursor-pointer ${isDashboardActive 
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
+                        : (isCommandCenterActive ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white')
+                      }`}
+                      onClick={() => {
+                        if (activePath !== '/') onNavigate('/');
+                        setIsCommandCenterOpen(!isCommandCenterOpen);
+                      }}
+                    >
+                      <div className="flex items-center space-x-3 relative z-10">
+                        <dashboardItem.icon size={20} className={`${isDashboardActive ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
+                        <span className="font-medium text-sm tracking-wide">{dashboardItem.label}</span>
+                      </div>
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsCommandCenterOpen(!isCommandCenterOpen);
+                        }}
+                        className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                      >
+                        {isCommandCenterOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </div>
+                    </div>
+
+                    {/* Dropdown Items */}
+                    {isCommandCenterOpen && (
+                      <div className="pl-4 space-y-1 animate-slide-in-right">
+                        {commandCenterItems.map(item => {
+                          const Icon = item.icon;
+                          const isActive = activePath === item.path || activePath.startsWith(item.path + '/');
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => {
+                                onNavigate(item.path);
+                                setIsSidebarOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group relative ${isActive
+                                ? 'bg-white text-slate-900 shadow-md font-bold'
+                                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}
+                            >
+                              <div className="flex items-center space-x-3 relative z-10">
+                                <Icon size={18} className={`${isActive ? 'text-blue-600' : 'text-slate-500 group-hover:text-white'}`} />
+                                <span className="font-medium text-sm tracking-wide">{item.label}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
-                <div className="flex items-center space-x-3 relative z-10">
-                  <Icon size={20} className={`${isActive ? 'text-blue-100' : 'text-slate-500 group-hover:text-white transition-colors'}`} />
-                  <span className="font-medium text-sm tracking-wide">{item.label}</span>
+
+                {/* Other Items */}
+                <div className="pt-2 mt-2 border-t border-slate-800/50">
+                  {otherItems.map(item => {
+                    const Icon = item.icon;
+                    const isActive = activePath === item.path || activePath.startsWith(item.path + '/');
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          onNavigate(item.path);
+                          setIsSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 group relative ${isActive
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                          : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                          }`}
+                      >
+                        <div className="flex items-center space-x-3 relative z-10">
+                          <Icon size={20} className={`${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
+                          <span className="font-medium text-sm tracking-wide">{item.label}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-                {isActive && <ChevronRight size={16} className="text-blue-200" />}
-              </button>
+              </>
             );
-          })}
+          })()}
         </nav>
 
         <div className="p-4 border-t border-slate-800 bg-slate-950 shrink-0 mt-auto">
@@ -324,7 +412,7 @@ const Layout: React.FC<LayoutProps> = ({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative transition-colors duration-300">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative transition-colors duration-300 lg:pl-72">
         <header className="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 px-6 flex items-center justify-between sticky top-0 z-10 shrink-0">
           <button
             className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg"
