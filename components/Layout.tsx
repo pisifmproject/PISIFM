@@ -571,8 +571,8 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
         )}
 
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar transition-colors duration-300">
-          <div className="max-w-7xl mx-auto h-full">
+        <main className="flex-1 overflow-y-auto custom-scrollbar transition-colors duration-300">
+          <div className="h-full w-full">
             {children}
           </div>
         </main>

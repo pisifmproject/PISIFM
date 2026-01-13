@@ -55,7 +55,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ currentUser, projects, user
     );
 
     return (
-        <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
 
             {/* Header */}
             <div className="px-8 py-6 flex flex-col gap-6 shrink-0">

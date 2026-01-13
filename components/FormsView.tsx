@@ -123,7 +123,7 @@ const FormsView: React.FC<FormsViewProps> = ({ user, submissions, jobs, projects
     );
 
     return (
-        <div className="space-y-10 animate-fadeIn">
+        <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fadeIn">
             <div className="flex justify-between items-end">
                 <div>
                     <h2 className="text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight">Operations Hub</h2>
@@ -149,37 +149,46 @@ const FormsView: React.FC<FormsViewProps> = ({ user, submissions, jobs, projects
                             </h3>
                         </div>
 
-                        <div className="p-10">
-                            <form onSubmit={handleSubmit} className="space-y-8">
+                        <div className="p-8">
+                            <form onSubmit={handleSubmit} className="space-y-6">
                                 {activeForm === 'daily_report' && (
                                     <>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Reference Job</label>
-                                                <select required className="w-full p-4 bg-gray-50 dark:bg-slate-800 border-2 border-transparent rounded-2xl font-bold dark:text-slate-200 outline-none focus:border-indigo-500 transition-all"
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Reference Job</label>
+                                                <select required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                                     value={dailyReport.jobId} onChange={e => setDailyReport({ ...dailyReport, jobId: e.target.value })}>
                                                     <option value="">Select Activity...</option>
                                                     {jobs.map(j => <option key={j.id} value={j.id}>{j.projectName}</option>)}
                                                 </select>
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Activity Date</label>
-                                                <input required type="date" className="w-full p-4 bg-gray-50 dark:bg-slate-800 border-2 border-transparent rounded-2xl font-bold dark:text-slate-200 outline-none focus:border-indigo-500 transition-all"
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Activity Date</label>
+                                                <input required type="date" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                                     value={dailyReport.activityDate} onChange={e => setDailyReport({ ...dailyReport, activityDate: e.target.value })} />
                                             </div>
                                         </div>
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between">
-                                                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Percent Completed</label>
-                                                <span className="text-indigo-600 font-black">{dailyReport.progress}%</span>
+                                        
+                                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700 space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                                    <TrendingUp size={16} /> Progress
+                                                </label>
+                                                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold rounded-lg text-sm">{dailyReport.progress}%</span>
                                             </div>
-                                            <input type="range" min="0" max="100" className="w-full h-2 bg-gray-100 rounded-full appearance-none cursor-pointer"
+                                            <input type="range" min="0" max="100" className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
                                                 value={dailyReport.progress} onChange={e => setDailyReport({ ...dailyReport, progress: parseInt(e.target.value) })} />
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                <span>Not Started</span>
+                                                <span>In Progress</span>
+                                                <span>Completed</span>
+                                            </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Technical Summary</label>
-                                            <textarea required className="w-full p-5 bg-gray-50 dark:bg-slate-800 border-2 border-transparent rounded-2xl font-medium dark:text-slate-200 outline-none focus:border-indigo-500 transition-all min-h-[150px]"
-                                                placeholder="Detailed description of works completed today..."
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Technical Summary</label>
+                                            <textarea required className="w-full p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-h-[120px] resize-none"
+                                                placeholder="Describe the work completed, issues encountered, and next steps..."
                                                 value={dailyReport.description} onChange={e => setDailyReport({ ...dailyReport, description: e.target.value })} />
                                         </div>
                                     </>
@@ -187,15 +196,15 @@ const FormsView: React.FC<FormsViewProps> = ({ user, submissions, jobs, projects
 
                                 {activeForm === 'overtime' && (
                                     <>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Date of Work</label>
-                                                <input required type="date" className="w-full p-4 bg-gray-50 dark:bg-slate-800 border-2 border-transparent rounded-2xl font-bold dark:text-slate-200 outline-none focus:border-indigo-500 transition-all"
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Date of Work</label>
+                                                <input required type="date" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                                     value={overtime.date} onChange={e => setOvertime({ ...overtime, date: e.target.value })} />
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Link to Project</label>
-                                                <select required className="w-full p-4 bg-gray-50 dark:bg-slate-800 border-2 border-transparent rounded-2xl font-bold dark:text-slate-200 outline-none focus:border-indigo-500 transition-all"
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Link to Project</label>
+                                                <select required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                                     value={overtime.jobId} onChange={e => setOvertime({ ...overtime, jobId: e.target.value })}>
                                                     <option value="">Select Reference...</option>
                                                     {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -205,10 +214,10 @@ const FormsView: React.FC<FormsViewProps> = ({ user, submissions, jobs, projects
                                     </>
                                 )}
 
-                                <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex justify-end">
-                                    <button type="submit" disabled={isSubmitting} className="bg-indigo-600 text-white px-12 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 active:scale-95 transition-all shadow-xl shadow-indigo-100 dark:shadow-none flex items-center gap-3">
+                                <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                                    <button type="submit" disabled={isSubmitting} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2">
                                         {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                                        {isSubmitting ? 'Transmitting...' : 'Submit Form'}
+                                        {isSubmitting ? 'Submitting...' : 'Submit Request'}
                                     </button>
                                 </div>
                             </form>
