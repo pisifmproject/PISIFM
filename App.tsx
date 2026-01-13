@@ -13,6 +13,7 @@ const ResourcePlanningView = React.lazy(() => import('./components/ResourcePlann
 const ProjectsView = React.lazy(() => import('./components/Projects/ProjectsView'));
 
 import AuthView from './components/Auth/AuthView';
+import LandingPage from './components/LandingPage';
 import { User, UserRole, ApprovalFlow, Submission, Notification, JobAssignment, Project } from './types';
 import { MOCK_USERS_DB, DEFAULT_APPROVAL_FLOWS, MOCK_SUBMISSIONS, MOCK_JOB_ASSIGNMENTS, MOCK_PROJECTS } from './constants';
 
@@ -141,8 +142,9 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/login" element={<AuthView onLogin={() => setIsAuthenticated(true)} />} />
         <Route path="/signup" element={<AuthView onLogin={() => setIsAuthenticated(true)} />} />
+        <Route path="/welcome" element={<LandingPage />} />
         <Route path="*" element={
-          !isAuthenticated ? <Navigate to="/login" /> :
+          !isAuthenticated ? <Navigate to="/welcome" /> :
             <Layout
               user={currentUser}
               theme={theme}
