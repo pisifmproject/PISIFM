@@ -1,0 +1,5 @@
+{
+  "name": "PEAK (Project Engineering Analysis & Performance Review)",
+  "description": "A modular, role-based Project Engineering Analysis & Performance Review system featuring dashboarding, KPI calculation, and architectural proposal documentation.",
+  "requestFramePermissions": []
+}
