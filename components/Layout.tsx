@@ -577,25 +577,27 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
         </main>
 
-        <footer className="h-10 bg-slate-900 border-t border-slate-800 flex items-center overflow-hidden whitespace-nowrap px-4 text-slate-400 shrink-0">
-          <div className="flex items-center gap-2 mr-6 text-slate-300 font-bold shrink-0 bg-slate-800 px-3 py-1 rounded">
+        <footer className="h-10 bg-slate-900 border-t border-slate-800 flex items-center px-4 text-slate-400 shrink-0 relative z-20">
+          <div className="flex items-center gap-2 mr-4 text-slate-300 font-bold shrink-0 bg-slate-800 px-3 py-1 rounded z-20 relative shadow-lg">
             <Clock size={14} /> LIVE EVENTS
           </div>
-          <div className="flex items-center gap-8 animate-marquee">
-            {MOCK_EVENTS.map(event => (
-              <div key={event.id} className="flex items-center gap-2 text-xs">
-                <span className={`w-2 h-2 rounded-full ${event.type === 'Deadline' ? 'bg-red-500' : 'bg-blue-400'}`}></span>
-                <span className="font-bold text-slate-200">{event.title}</span>
-                <span className="text-slate-500">@{event.time}</span>
-              </div>
-            ))}
-            {MOCK_EVENTS.map(event => (
-              <div key={`${event.id}-dup`} className="flex items-center gap-2 text-xs">
-                <span className={`w-2 h-2 rounded-full ${event.type === 'Deadline' ? 'bg-red-500' : 'bg-blue-400'}`}></span>
-                <span className="font-bold text-slate-200">{event.title}</span>
-                <span className="text-slate-500">@{event.time}</span>
-              </div>
-            ))}
+          <div className="flex-1 overflow-hidden h-full flex items-center relative">
+            <div className="flex items-center gap-8 animate-marquee">
+              {MOCK_EVENTS.map(event => (
+                <div key={event.id} className="flex items-center gap-2 text-xs whitespace-nowrap">
+                  <span className={`w-2 h-2 rounded-full ${event.type === 'Deadline' ? 'bg-red-500' : 'bg-blue-400'}`}></span>
+                  <span className="font-bold text-slate-200">{event.title}</span>
+                  <span className="text-slate-500">@{event.time}</span>
+                </div>
+              ))}
+              {MOCK_EVENTS.map(event => (
+                <div key={`${event.id}-dup`} className="flex items-center gap-2 text-xs whitespace-nowrap">
+                  <span className={`w-2 h-2 rounded-full ${event.type === 'Deadline' ? 'bg-red-500' : 'bg-blue-400'}`}></span>
+                  <span className="font-bold text-slate-200">{event.title}</span>
+                  <span className="text-slate-500">@{event.time}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </footer>
       </div>
