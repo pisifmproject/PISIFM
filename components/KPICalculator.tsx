@@ -280,7 +280,7 @@ export default function KPICalculator({ user, submissions = [] }: KPICalculatorP
                 <div className="space-y-10 animate-fadeIn">
                    <div className="border-b border-gray-100 dark:border-slate-800 pb-8">
                       <h4 className="text-3xl font-black text-gray-900 dark:text-slate-100">Core Value Alignment</h4>
-                      <p className="text-sm text-gray-500 font-medium">Evaluation of professional conduct and adherence to PEAK standards.</p>
+                      <p className="text-sm text-gray-500 font-medium">Evaluation of professional conduct and adherence to PISIFM standards.</p>
                    </div>
 
                    <div className="space-y-8">

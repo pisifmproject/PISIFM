@@ -1,7 +1,7 @@
 {
     "name": "peak-server",
     "version": "1.0.0",
-    "description": "Backend API for PEAK System",
+    "description": "Backend API for PISIFM System",
     "main": "index.js",
     "scripts": {
         "start": "node index.js",

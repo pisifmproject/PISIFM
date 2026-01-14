@@ -6,7 +6,7 @@ const ProposalView: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center mb-10">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100 transition-colors">Technical Proposal</h2>
-        <p className="text-gray-500 dark:text-slate-400 mt-2">PEAK: Project Engineering Analysis & Performance Review</p>
+        <p className="text-gray-500 dark:text-slate-400 mt-2">PISIFM: Project Information System IFM</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -87,7 +87,7 @@ const AICopilotView: React.FC<AICopilotViewProps> = ({ user, projects }) => {
       ` : 'Note: No specific project context selected. Provide general engineering guidance.';
 
       const systemInstruction = `
-        You are the PEAK Engineering Intelligence (v1.5 Flash), an elite Project & Engineering Department Assistant for PT. Indofood Fortuna Makmur.
+        You are the PISIFM Engineering Intelligence (v1.5 Flash), an elite Project & Engineering Department Assistant for PT. Indofood Fortuna Makmur.
         Your interface is being accessed by ${user.name}, who holds the rank of ${user.jobTitle} (Clearance: ${user.jobGrade || 'L1'}).
         
         ${contextString}

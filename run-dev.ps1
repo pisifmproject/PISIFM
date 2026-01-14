@@ -1,8 +1,8 @@
-# PEAK Development Server Starter
+# PISIFM Development Server Starter
 # Menjalankan Frontend dan Backend sekaligus
 
 Write-Host "================================" -ForegroundColor Cyan
-Write-Host "  PEAK Development Server" -ForegroundColor Cyan
+Write-Host "  PISIFM Development Server" -ForegroundColor Cyan
 Write-Host "================================" -ForegroundColor Cyan
 Write-Host ""
 

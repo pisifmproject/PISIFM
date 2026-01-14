@@ -39,7 +39,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) =>
 
                 {/* Footer */}
                 <p className="mt-8 text-center text-sm text-gray-500">
-                    © {new Date().getFullYear()} PEAK System. Secure Enclave.
+                    © {new Date().getFullYear()} PISIFM System. Secure Enclave.
                 </p>
             </div>
         </div>

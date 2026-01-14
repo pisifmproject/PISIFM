@@ -54,7 +54,7 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin }) => {
                             <Zap className="text-blue-400 w-8 h-8 group-hover:animate-pulse" />
                         </div>
                         <h1 className="text-2xl font-bold text-white tracking-tight">
-                            PEAK <span className="text-blue-500 font-light">SYSTEM</span>
+                            PISIFM <span className="text-blue-500 font-light">SYSTEM</span>
                         </h1>
                         <p className="text-slate-400 text-sm mt-1 uppercase tracking-widest font-medium">Operation Terminal</p>
                     </div>
