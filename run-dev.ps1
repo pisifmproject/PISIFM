@@ -21,9 +21,9 @@ Write-Host ""
 Write-Host "[1/2] Starting Backend Server..." -ForegroundColor Yellow
 $backendPath = Join-Path $rootPath "server"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$backendPath'; npm run dev" -WindowStyle Normal
-Write-Host "      Backend starting on http://localhost:5001" -ForegroundColor Green
+Write-Host "      Backend starting on http://localhost:3026" -ForegroundColor Green
 
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds 3
 
 # Start Frontend
 Write-Host "[2/2] Starting Frontend Server..." -ForegroundColor Yellow
@@ -37,11 +37,11 @@ Write-Host "================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Local Access:" -ForegroundColor White
 Write-Host "  Frontend: http://localhost:5173" -ForegroundColor Gray
-Write-Host "  Backend:  http://localhost:5001" -ForegroundColor Gray
+Write-Host "  Backend:  http://localhost:3026" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Network Access (dari laptop lain):" -ForegroundColor Yellow
 Write-Host "  Frontend: http://$ipAddress`:5173" -ForegroundColor Cyan -BackgroundColor DarkBlue
-Write-Host "  Backend:  http://$ipAddress`:5001" -ForegroundColor Cyan
+Write-Host "  Backend:  http://$ipAddress`:3026" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Tekan Enter untuk buka browser..." -ForegroundColor Gray
 Read-Host
