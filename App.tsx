@@ -107,20 +107,19 @@ const App: React.FC = () => {
             submissionService.getAll(),
           ]);
 
-        // If DB is empty, use mock data and seed it (simulated)
-        setProjects(projectsData.length > 0 ? projectsData : MOCK_PROJECTS);
-        setUsers(usersData.length > 0 ? usersData : MOCK_USERS_DB);
-        setJobs(jobsData.length > 0 ? jobsData : MOCK_JOB_ASSIGNMENTS);
-        setSubmissions(
-          submissionsData.length > 0 ? submissionsData : MOCK_SUBMISSIONS
-        );
+        // Always use data from API - no fallback to mock data
+        // Status is calculated on backend, frontend just displays it
+        setProjects(projectsData.data || []);
+        setUsers(usersData.data || []);
+        setJobs(jobsData.data || []);
+        setSubmissions(submissionsData.data || []);
       } catch (error) {
         console.error("Error fetching data:", error);
-        // Fallback to mock data on error
-        setProjects(MOCK_PROJECTS);
-        setUsers(MOCK_USERS_DB);
-        setJobs(MOCK_JOB_ASSIGNMENTS);
-        setSubmissions(MOCK_SUBMISSIONS);
+        // On error, show empty arrays - don't use mock data
+        setProjects([]);
+        setUsers(MOCK_USERS_DB); // Keep users for login to work
+        setJobs([]);
+        setSubmissions([]);
       } finally {
         setLoading(false);
       }
@@ -275,9 +274,10 @@ const App: React.FC = () => {
                           users={users}
                           projects={projects}
                           onNavigate={(path) => (window.location.hash = path)}
-                          onRefresh={async () =>
-                            setProjects(await projectService.getAll())
-                          }
+                          onRefresh={async () => {
+                            const response = await projectService.getAll();
+                            setProjects(response.data || []);
+                          }}
                         />
                       }
                     />
